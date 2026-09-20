@@ -59,6 +59,9 @@ export class ChatService {
     if (!trimmed) {
       return throwError(() => new Error('Message cannot be empty'));
     }
+    if (this.uiStateService.state().emergencyBlocked) {
+      return throwError(() => new Error('Normal workflow is blocked during an emergency alert'));
+    }
 
     const userMessage: ChatMessage = {
       id: `msg-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,

@@ -22,13 +22,19 @@ export type UIActionType =
   | 'SHOW_LAB_RESULTS'
   | 'SHOW_LAB_EVIDENCE'
   | 'HIDE_COMPONENT'
-  | 'CLEAR_DASHBOARD';
+  | 'CLEAR_DASHBOARD'
+  | 'SHOW_EMERGENCY_ALERT'
+  | 'SHOW_EMERGENCY_CONTACTS'
+  | 'SHOW_EMERGENCY_DEPARTMENTS'
+  | 'BLOCK_NORMAL_WORKFLOW'
+  | 'CLEAR_EMERGENCY_STATE';
 
 export interface UIState {
   currentComponent: UIActionType;
   currentData: any;
   conversationContext?: any;
   lastUpdated: string;
+  emergencyBlocked?: boolean;
 }
 
 const INITIAL_UI_STATE: UIState = {
@@ -36,6 +42,7 @@ const INITIAL_UI_STATE: UIState = {
   currentData: null,
   conversationContext: null,
   lastUpdated: new Date().toISOString(),
+  emergencyBlocked: false,
 };
 
 @Injectable({
@@ -49,11 +56,16 @@ export class UIStateService {
    */
   dispatchAction(action: string, data: any, context?: any): void {
     const normalized = this.normalizeAction(action);
+    if (normalized === 'CLEAR_EMERGENCY_STATE') {
+      this.clearEmergencyState();
+      return;
+    }
     this.state.set({
       currentComponent: normalized,
       currentData: data,
       conversationContext: context || this.state().conversationContext,
       lastUpdated: new Date().toISOString(),
+      emergencyBlocked: normalized === 'SHOW_EMERGENCY_ALERT',
     });
   }
 
@@ -73,9 +85,24 @@ export class UIStateService {
     this.clearDashboard();
   }
 
+  clearEmergencyState(): void {
+    this.state.set({
+      ...INITIAL_UI_STATE,
+      lastUpdated: new Date().toISOString(),
+      emergencyBlocked: false,
+    });
+  }
+
   private normalizeAction(action: string): UIActionType {
     const act = (action || '').toUpperCase().trim();
     switch (act) {
+      case 'SHOW_EMERGENCY_ALERT':
+      case 'SHOW_EMERGENCY_CONTACTS':
+      case 'SHOW_EMERGENCY_DEPARTMENTS':
+      case 'BLOCK_NORMAL_WORKFLOW':
+        return 'SHOW_EMERGENCY_ALERT';
+      case 'CLEAR_EMERGENCY_STATE':
+        return 'CLEAR_EMERGENCY_STATE';
       case 'SHOW_WELCOME':
         return 'SHOW_WELCOME';
       case 'SHOW_PATIENT_INFO':

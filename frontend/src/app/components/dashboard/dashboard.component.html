@@ -1,6 +1,10 @@
 <div class="dashboard-canvas">
   @switch (uiState.state().currentComponent) {
 
+    @case ('SHOW_EMERGENCY_ALERT') {
+      <app-emergency-alert [data]="uiState.state().currentData" />
+    }
+
     @case ('SHOW_PATIENT_INFO') {
       <app-patient-info [data]="uiState.state().currentData" />
     }

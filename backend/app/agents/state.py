@@ -38,4 +38,9 @@ class AgentState(TypedDict):
     primary_ui_action: Optional[str]
     primary_ui_data: Optional[Dict[str, Any]]
     final_response: str
-
+    country_region: Optional[str]
+    triage_status: Optional[str]
+    triage_reason: Optional[str]
+    triage_action: Optional[str]
+    matched_categories: List[str]
+    normal_workflow_allowed: bool

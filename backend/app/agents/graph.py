@@ -19,16 +19,18 @@ from app.agents.insurance_agent import insurance_agent_node
 from app.agents.document_agent import document_agent_node
 from app.agents.llm_agent import llm_node
 from app.agents.ui_agent import ui_action_node
+from app.agents.triage_agent import triage_node, route_after_triage
 
 
 def build_health_coordinator_graph():
     """
     Constructs and compiles the full LangGraph coordinator:
-    LLM Node -> Supervisor -> Domain Agents -> UI Agent (Action Layer) -> Final Response -> END
+    Triage -> LLM Node -> Supervisor -> Domain Agents -> UI Agent -> Final Response
     """
     builder = StateGraph(AgentState)
 
     # Add agent nodes
+    builder.add_node("triage", triage_node)
     builder.add_node("llm_node", llm_node)
     builder.add_node("supervisor", supervisor_node)
     builder.add_node("document_agent", document_agent_node)
@@ -44,7 +46,12 @@ def build_health_coordinator_graph():
     builder.add_node("final_response", final_response_node)
 
     # Set LLM intent extraction as entry point
-    builder.set_entry_point("llm_node")
+    builder.set_entry_point("triage")
+    builder.add_conditional_edges(
+        "triage",
+        route_after_triage,
+        {"emergency": END, "continue": "llm_node"},
+    )
     builder.add_edge("llm_node", "supervisor")
 
     # Supervisor conditional routing

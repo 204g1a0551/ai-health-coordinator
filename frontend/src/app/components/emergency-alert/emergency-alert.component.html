@@ -1,0 +1,32 @@
+<section class="emergency-card" role="alert" aria-labelledby="emergency-title">
+  <div class="emergency-banner">EMERGENCY SAFETY ALERT</div>
+  <h2 id="emergency-title">Seek immediate emergency medical care</h2>
+  <p class="lead">Your message may describe a medical emergency. Call an emergency service now or go to the nearest emergency department. Do not wait for this app.</p>
+  <p class="disclaimer">This application is not a substitute for emergency medical care and does not diagnose symptoms or recommend medication.</p>
+  <div class="contact-section">
+    <h3>Emergency contacts</h3>
+    @for (contact of contacts; track contact['number'] ?? contact['label']) {
+      @if (contact['number']) {
+        <a class="contact-button" [href]="'tel:' + contact['number']"><span>{{ contact['label'] }}</span><strong>{{ contact['number'] }}</strong></a>
+      } @else {
+        <p>{{ contact['instruction'] }}</p>
+      }
+      @if (contact['source_url']) {
+        <a class="source-link" [href]="contact['source_url']" target="_blank" rel="noopener">Verify contact source: {{ contact['source_name'] }}</a>
+      }
+    }
+  </div>
+  <div class="department-section">
+    <h3>Find a nearby emergency department</h3>
+    <button type="button" class="location-button" (click)="locateEmergencyDepartment()">Use my location</button>
+    <div class="locality-row">
+      <input type="text" [(ngModel)]="locality" placeholder="Enter city or locality" aria-label="City or locality" />
+      <button type="button" (click)="searchByLocality()" [disabled]="!locality.trim()">Search</button>
+    </div>
+    @if (locationError) { <p class="location-error">{{ locationError }}</p> }
+    @if (locationUrl) {
+      <a class="map-link" [href]="locationUrl" target="_blank" rel="noopener">Open nearby emergency departments</a>
+    }
+  </div>
+  <button type="button" class="clear-button" (click)="clearEmergencyState()">Clear emergency alert</button>
+</section>

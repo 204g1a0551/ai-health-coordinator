@@ -31,10 +31,16 @@ async def handle_chat_message(request: ChatRequest) -> ChatResponse:
         "user_message": user_text,
         "session_id": session_id,
         "user_coordinates": request.coordinates,
+        "country_region": request.country_region,
         "route": "",
         "symptoms": [],
         "actions": [],
         "final_response": "",
+        "triage_status": None,
+        "triage_reason": None,
+        "triage_action": None,
+        "matched_categories": [],
+        "normal_workflow_allowed": True,
     }
 
     result_state = health_graph.invoke(initial_state)
@@ -65,6 +71,11 @@ async def handle_chat_message(request: ChatRequest) -> ChatResponse:
         data=primary_data,
         actions=actions,
         sessionId=session_id,
+        triageStatus=result_state.get("triage_status"),
+        reason=result_state.get("triage_reason"),
+        matchedCategories=result_state.get("matched_categories", []),
+        workflowAction=result_state.get("triage_action"),
+        normalWorkflowAllowed=result_state.get("normal_workflow_allowed", True),
     )
 
 
