@@ -1,0 +1,16 @@
+:host { display: block; height: 100%; }
+.emergency-card { min-height: 100%; box-sizing: border-box; padding: 28px; color: #4a1010; background: #fff5f5; border: 3px solid #c62828; border-radius: 16px; box-shadow: 0 8px 24px rgba(139, 19, 19, 0.2); }
+.emergency-banner { display: inline-block; padding: 7px 12px; color: #fff; font-size: .78rem; font-weight: 800; letter-spacing: .08em; background: #b71c1c; border-radius: 5px; }
+h2 { margin: 18px 0 10px; color: #9b1717; }
+h3 { margin: 0 0 12px; color: #741010; }
+.lead { font-size: 1.08rem; font-weight: 700; line-height: 1.5; }
+.disclaimer { font-size: .88rem; line-height: 1.4; }
+.contact-section, .department-section { margin-top: 22px; padding: 18px; background: #fff; border: 1px solid #efb2b2; border-radius: 10px; }
+.contact-button, .location-button, .map-link, .clear-button { display: flex; justify-content: space-between; width: 100%; box-sizing: border-box; padding: 12px 14px; color: #fff; font-weight: 700; text-decoration: none; background: #c62828; border: 0; border-radius: 7px; cursor: pointer; }
+.source-link { display: block; margin-top: 8px; font-size: .75rem; color: #7f1d1d; }
+.locality-row { display: flex; gap: 8px; margin-top: 12px; }
+.locality-row input { flex: 1; min-width: 0; padding: 11px; border: 1px solid #c99; border-radius: 6px; }
+.locality-row button { padding: 0 14px; color: #fff; background: #7f1d1d; border: 0; border-radius: 6px; }
+.map-link { display: block; margin-top: 12px; text-align: center; background: #7f1d1d; }
+.location-error { color: #9b1717; font-size: .88rem; }
+.clear-button { width: auto; margin-top: 22px; background: transparent; color: #7f1d1d; border: 1px solid #c62828; }

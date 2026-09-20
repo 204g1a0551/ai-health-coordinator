@@ -23,6 +23,7 @@ import { DocumentEvidenceComponent } from '../dynamic-cards/document-evidence/do
 import { LabReportComponent } from '../dynamic-cards/lab-report/lab-report.component';
 import { LabResultsComponent } from '../dynamic-cards/lab-results/lab-results.component';
 import { LabEvidenceComponent } from '../dynamic-cards/lab-evidence/lab-evidence.component';
+import { EmergencyAlertComponent } from '../emergency-alert/emergency-alert.component';
 
 @Component({
   selector: 'app-dashboard',
@@ -49,6 +50,7 @@ import { LabEvidenceComponent } from '../dynamic-cards/lab-evidence/lab-evidence
     LabReportComponent,
     LabResultsComponent,
     LabEvidenceComponent,
+    EmergencyAlertComponent,
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css',
