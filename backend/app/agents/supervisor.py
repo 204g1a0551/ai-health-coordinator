@@ -101,12 +101,22 @@ PHARMACY_PATTERNS = [
     r"\bmedicines?\s+(?:from\s+)?(?:the\s+)?prescription\b",
 ]
 
+INSURANCE_PATTERNS = [
+    r"\b(?:covered|coverage|reimburse|reimbursement|insurance\s+policy|company\s+policy|reimbursement\s+policy)\b",
+    r"\bwill\s+(?:this|my)\s+(?:medicine|bill|expenses?|claim)\s+be\s+covered\b",
+    r"\baccording\s+to\s+my\s+(?:company\s+)?policy\b",
+    r"\bdoes\s+my\s+(?:company\s+)?policy\s+mention\b",
+    r"\bwhat\s+does\s+(?:my\s+)?insurance\s+policy\s+say\b",
+    r"\bclaim\s+submission\s+deadline\b",
+]
+
 
 def supervisor_node(state: AgentState) -> AgentState:
     """
     Supervisor Agent:
     Evaluates LLM parsed intent & entities, dynamically routing to the appropriate agent:
     - 'final_response': for clarification requests or greetings
+    - 'insurance_agent': insurance & reimbursement policy coverage analysis
     - 'patient_info_agent': demographic/contact management
     - 'location_agent': location-aware / radius-based nearby doctor discovery
     - 'medicine_search_agent': medicine & nearby pharmacy store search
@@ -121,6 +131,8 @@ def supervisor_node(state: AgentState) -> AgentState:
 
     if intent == "CLARIFICATION" or parsed.get("needs_clarification"):
         route = "final_response"
+    elif intent in ["ANALYZE_INSURANCE", "CHECK_COVERAGE", "CHECK_REIMBURSEMENT"]:
+        route = "insurance_agent"
     elif intent in ["SEARCH_PHARMACY", "SEARCH_MEDICINE"]:
         route = "medicine_search_agent"
     elif intent == "UPDATE_PATIENT":
@@ -137,6 +149,7 @@ def supervisor_node(state: AgentState) -> AgentState:
         route = "symptom_agent"
     else:
         # Fallback to pattern matching
+        is_insurance_query = any(re.search(pat, user_msg) for pat in INSURANCE_PATTERNS)
         is_pharmacy_query = any(re.search(pat, user_msg) for pat in PHARMACY_PATTERNS)
         is_patient_info = any(re.search(pat, user_msg) for pat in PATIENT_INFO_PATTERNS)
         is_booking_action = any(re.search(pat, user_msg) for pat in BOOKING_ACTION_PATTERNS)
@@ -146,7 +159,9 @@ def supervisor_node(state: AgentState) -> AgentState:
         is_browsing_slots = any(re.search(kw, user_msg) for kw in SLOT_BROWSE_KEYWORDS)
         has_dept = any(re.search(kw, user_msg) for kw in DEPARTMENT_KEYWORDS)
 
-        if is_pharmacy_query:
+        if is_insurance_query:
+            route = "insurance_agent"
+        elif is_pharmacy_query:
             route = "medicine_search_agent"
         elif is_patient_info:
             route = "patient_info_agent"

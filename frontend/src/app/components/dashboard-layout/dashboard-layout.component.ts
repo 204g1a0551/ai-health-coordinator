@@ -5,12 +5,20 @@ import { filter } from 'rxjs/operators';
 import { DashboardComponent } from '../dashboard/dashboard.component';
 import { ChatComponent } from '../chat/chat.component';
 import { MedicalDocumentsComponent } from '../medical-documents/medical-documents.component';
+import { InsuranceReimbursementComponent } from '../insurance-reimbursement/insurance-reimbursement.component';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-dashboard-layout',
   standalone: true,
-  imports: [CommonModule, RouterModule, DashboardComponent, ChatComponent, MedicalDocumentsComponent],
+  imports: [
+    CommonModule,
+    RouterModule,
+    DashboardComponent,
+    ChatComponent,
+    MedicalDocumentsComponent,
+    InsuranceReimbursementComponent,
+  ],
   templateUrl: './dashboard-layout.component.html',
   styleUrl: './dashboard-layout.component.css',
 })
@@ -19,6 +27,7 @@ export class DashboardLayoutComponent {
   private router = inject(Router);
 
   isDocumentsPage = false;
+  isInsurancePage = false;
 
   constructor() {
     this.checkRoute(this.router.url);
@@ -31,6 +40,7 @@ export class DashboardLayoutComponent {
 
   private checkRoute(url: string): void {
     this.isDocumentsPage = url.includes('/documents');
+    this.isInsurancePage = url.includes('/insurance');
   }
 
   onLogout(): void {

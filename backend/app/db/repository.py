@@ -342,6 +342,75 @@ def seed_data(cursor: sqlite3.Cursor):
         slots
     )
 
+    # Seed sample medical documents & insurance policies if table is empty
+    cursor.execute("SELECT COUNT(*) FROM medical_documents")
+    count_docs = cursor.fetchone()[0]
+    if count_docs == 0:
+        storage_base = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "storage", "documents"))
+        sample_docs = [
+            (
+                "doc-fc6d33ca06fc",
+                "user_default",
+                "corporate_reimbursement_policy.pdf",
+                1799,
+                os.path.join(storage_base, "doc-fc6d33ca06fc_corporate_reimbursement_policy.pdf"),
+                "application/pdf",
+                "INSURANCE_POLICY",
+                "COMPLETED",
+                '{"policy_category":"COMPANY_HEALTH_INSURANCE","coverage_amount":"₹5,00,000","claim_limit":"₹15,000 OPD","summary":"Comprehensive corporate group mediclaim policy covering inpatient hospitalization and outpatient pharmacy expenses."}'
+            ),
+            (
+                "doc-b5529e2268f0",
+                "user_default",
+                "company_reimbursement_policy.pdf",
+                1875,
+                os.path.join(storage_base, "doc-b5529e2268f0_company_reimbursement_policy.pdf"),
+                "application/pdf",
+                "REIMBURSEMENT_POLICY",
+                "COMPLETED",
+                '{"policy_category":"EMPLOYEE_REIMBURSEMENT","coverage_amount":"₹50,000","claim_limit":"₹5,000 per month","summary":"Employee medical expense reimbursement guidelines with 30-day submission deadline."}'
+            ),
+            (
+                "doc-24cda217a762",
+                "user_default",
+                "pharmacy_medicine_bill.pdf",
+                1601,
+                os.path.join(storage_base, "doc-24cda217a762_pharmacy_medicine_bill.pdf"),
+                "application/pdf",
+                "MEDICINE_BILL",
+                "COMPLETED",
+                '{"patient_name":"Sarah Connor","doctor_hospital":{"doctor_name":"Dr. Ravi Kumar","hospital_name":"Apollo Pharmacy Indiranagar"},"medicines":[{"name":"Augmentin 625 Duo","dosage":"625mg","frequency":"1-0-1","duration":"5 days"},{"name":"Dolo 650","dosage":"650mg","frequency":"1-0-1","duration":"3 days"}],"total_amount":"₹742.50","dates":{"document_date":"2026-09-18"}}'
+            ),
+            (
+                "doc-f133b396fca5",
+                "user_default",
+                "dr_ravi_prescription.pdf",
+                1737,
+                os.path.join(storage_base, "doc-f133b396fca5_dr_ravi_prescription.pdf"),
+                "application/pdf",
+                "PRESCRIPTION",
+                "COMPLETED",
+                '{"patient_name":"Sarah Connor","doctor_hospital":{"doctor_name":"Dr. Ravi Kumar","hospital_name":"Manipal Hospital"},"medicines":[{"name":"Amoxicillin","dosage":"500mg"},{"name":"Paracetamol","dosage":"650mg"}],"dates":{"consultation_date":"2026-09-17"}}'
+            ),
+            (
+                "doc-ad301582d5c5",
+                "user_default",
+                "cbc_lab_report.pdf",
+                1653,
+                os.path.join(storage_base, "doc-ad301582d5c5_cbc_lab_report.pdf"),
+                "application/pdf",
+                "MEDICAL_REPORT",
+                "COMPLETED",
+                '{"patient_name":"Sarah Connor","diagnosis_findings":["Platelet count: 180,000 /uL (Normal)","Hemoglobin: 13.8 g/dL"],"dates":{"document_date":"2026-09-15"}}'
+            ),
+        ]
+        cursor.executemany(
+            """INSERT OR IGNORE INTO medical_documents
+               (id, user_id, file_name, file_size, file_path, mime_type, document_type, processing_status, extracted_data)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            sample_docs
+        )
+
 
 def query_doctors_and_slots(
     department: str,

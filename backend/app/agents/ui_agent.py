@@ -15,6 +15,7 @@ ALLOWED_ACTIONS = {
     "SHOW_SLOTS",
     "SHOW_NEARBY_DOCTORS",
     "SHOW_PHARMACIES",
+    "SHOW_INSURANCE_COVERAGE",
     "SHOW_APPOINTMENT",
     "HIDE_COMPONENT",
     "CLEAR_DASHBOARD",
@@ -117,6 +118,23 @@ def ui_action_node(state: AgentState) -> AgentState:
             primary_data = pharm_act.get("payload") or pharm_act.get("data") or {}
         else:
             primary_data = state.get("pharmacy_results") or {}
+
+    # --------------------------------------------------------------------------
+    # 1.8. Insurance & Reimbursement Policy Coverage
+    # --------------------------------------------------------------------------
+    elif (
+        any(a.get("action") == "SHOW_INSURANCE_COVERAGE" or a.get("type") == "SHOW_INSURANCE_COVERAGE" for a in raw_actions)
+        or intent == "ANALYZE_INSURANCE"
+    ):
+        primary_action = "SHOW_INSURANCE_COVERAGE"
+        ins_act = next(
+            (a for a in raw_actions if a.get("action") == "SHOW_INSURANCE_COVERAGE" or a.get("type") == "SHOW_INSURANCE_COVERAGE"),
+            None
+        )
+        if ins_act:
+            primary_data = ins_act.get("payload") or ins_act.get("data") or {}
+        else:
+            primary_data = {}
 
     # --------------------------------------------------------------------------
     # 2. Appointment Booking / Confirmation

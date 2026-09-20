@@ -1,0 +1,454 @@
+<div class="insurance-container">
+  <!-- Top Banner & Navigation Breadcrumbs -->
+  <div class="page-header">
+    <div class="header-titles">
+      <div class="badge-title">
+        <span class="shield-icon">🛡️</span>
+        <h2>Insurance &amp; Reimbursement</h2>
+      </div>
+      <p class="subtitle">
+        Upload corporate policies, extract 8-dimension reimbursement rules, and compare medical bills &amp; prescriptions with grounded RAG evidence.
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <a routerLink="/documents" class="secondary-btn">
+        <span>📑</span> View Medical Documents
+      </a>
+      <a routerLink="/dashboard" class="secondary-btn">
+        <span>🩺</span> Coordinator Chat
+      </a>
+    </div>
+  </div>
+
+  <!-- Mandatory Compliance Banner -->
+  <div class="regulatory-disclaimer-banner">
+    <span class="warning-icon">⚖️</span>
+    <div class="disclaimer-text">
+      <strong>Important Claim Adjudication Notice:</strong>
+      This system analyzes policy clauses to estimate eligibility. It does not guarantee claim approval or denial.
+      Phrasing reflects <em>"The uploaded policy states..."</em> and <em>"This may be eligible subject to..."</em>.
+      The final adjudication decision belongs exclusively to your insurer, employer, or claims administrator (TPA).
+    </div>
+  </div>
+
+  <!-- Grid: Policy Upload & Category Selector -->
+  <div class="policy-upload-grid">
+    <!-- Category Cards -->
+    <div class="category-selection-card">
+      <h3 class="section-title">1. Select Policy Category to Upload</h3>
+      <div class="category-list">
+        @for (cat of supportedCategories; track cat.id) {
+          <div
+            class="category-item"
+            [class.active]="selectedCategory() === cat.id"
+            (click)="onCategorySelect(cat.id)"
+          >
+            <span class="cat-icon">{{ cat.icon }}</span>
+            <div class="cat-meta">
+              <span class="cat-title">{{ cat.title }}</span>
+              <span class="cat-desc">{{ cat.desc }}</span>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Drag & Drop Upload Zone -->
+    <div class="upload-zone-card">
+      <h3 class="section-title">2. Drag &amp; Drop Policy PDF</h3>
+      <div
+        class="drag-drop-area"
+        [class.drag-over]="isDragOver()"
+        (dragover)="onDragOver($event)"
+        (dragleave)="onDragLeave($event)"
+        (drop)="onDrop($event)"
+      >
+        <div class="drop-illustration">
+          <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.75">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="12" y1="18" x2="12" y2="12"></line>
+            <polyline points="9 15 12 12 15 15"></polyline>
+          </svg>
+        </div>
+
+        <p class="drop-text">Drag &amp; Drop Policy PDF Here</p>
+        <span class="drop-or">or</span>
+
+        <label class="choose-file-btn">
+          <span>Choose PDF</span>
+          <input type="file" accept="application/pdf" (change)="onFileSelected($event)" hidden />
+        </label>
+
+        <span class="supported-tag">Supported: PDF (Max 15MB)</span>
+      </div>
+
+      @if (uploadError()) {
+        <div class="error-banner">
+          <span>⚠️ {{ uploadError() }}</span>
+        </div>
+      }
+
+      @if (insuranceService.isUploading()) {
+        <div class="uploading-state">
+          <div class="spinner"></div>
+          <span>Indexing policy text, clauses, and vector embeddings...</span>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Document Comparison & Coverage Analysis Section -->
+  <div class="comparison-section">
+    <div class="section-header">
+      <h3>Compare Medical Document against Insurance Policy</h3>
+      <p>Pair an uploaded bill or prescription with your policy to run an automated, evidence-backed coverage analysis.</p>
+    </div>
+
+    <div class="comparison-controls-card">
+      <div class="control-pair">
+        <!-- Policy Selector -->
+        <div class="control-group">
+          <label class="control-label">Select Insurance / Reimbursement Policy:</label>
+          <select
+            class="control-select"
+            [ngModel]="selectedPolicyId()"
+            (ngModelChange)="selectedPolicyId.set($event)"
+          >
+            @for (pol of insuranceService.policies(); track pol.id) {
+              <option [value]="pol.id">{{ pol.file_name }} ({{ pol.document_type }})</option>
+            }
+          </select>
+        </div>
+
+        <!-- Medical Document Selector -->
+        <div class="control-group">
+          <label class="control-label">Select Uploaded Medical Bill or Prescription:</label>
+          <select
+            class="control-select"
+            [ngModel]="selectedMedicalDocId()"
+            (ngModelChange)="selectedMedicalDocId.set($event)"
+          >
+            <option value="">-- Auto-detect from uploaded documents --</option>
+            @for (doc of documentService.documents(); track doc.id) {
+              <option [value]="doc.id">{{ doc.file_name }} ({{ doc.document_type }})</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="query-prompt-input">
+        <label class="control-label">Specific Inquiry (Optional):</label>
+        <div class="input-with-button">
+          <input
+            type="text"
+            class="query-text-input"
+            placeholder="e.g. Will this medicine bill be covered according to my company policy?"
+            [ngModel]="userQueryInput()"
+            (ngModelChange)="userQueryInput.set($event)"
+          />
+          <button
+            type="button"
+            class="analyze-btn"
+            (click)="onRunComparison()"
+            [disabled]="insuranceService.isAnalyzing()"
+          >
+            @if (insuranceService.isAnalyzing()) {
+              <span class="spinner-sm"></span> Analyzing...
+            } @else {
+              <span>⚡ Analyze Coverage &amp; Reimbursement</span>
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Structured Coverage Assessment Results -->
+    @if (insuranceService.coverageComparison(); as comp) {
+      <div class="assessment-card">
+        <div class="assessment-header">
+          <div class="assessment-status-badge" [class.covered]="comp.coverage_assessment.includes('Potentially')">
+            <span class="badge-icon">✓</span>
+            <span class="badge-label">{{ comp.coverage_assessment }}</span>
+          </div>
+
+          <div class="confidence-badge">
+            <span>Confidence: <strong>{{ comp.confidence }}</strong></span>
+          </div>
+        </div>
+
+        <!-- Grounded Reason -->
+        <div class="reason-block">
+          <h4>Coverage Assessment Reason:</h4>
+          <p>{{ comp.reason }}</p>
+        </div>
+
+        <!-- Evidence Citations -->
+        <div class="evidence-block">
+          <h4>Policy Evidence &amp; Relevant Clauses:</h4>
+          <div class="evidence-grid">
+            @for (ev of comp.evidence; track ev.quote) {
+              <div class="evidence-item">
+                <div class="ev-header">
+                  <span class="ev-pdf">📄 {{ ev.policy_name }}</span>
+                  <span class="ev-page">Page {{ ev.page_number }}</span>
+                </div>
+                @if (ev.clause_title) {
+                  <span class="ev-clause">{{ ev.clause_title }}</span>
+                }
+                <blockquote class="ev-quote">"{{ ev.quote }}"</blockquote>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Conditions Checklist -->
+        <div class="conditions-block">
+          <h4>Mandatory Reimbursement Conditions:</h4>
+          <ul class="conditions-list">
+            @for (cond of comp.conditions; track cond) {
+              <li>
+                <span class="check-icon">✓</span>
+                <span>{{ cond }}</span>
+              </li>
+            }
+          </ul>
+        </div>
+
+        <!-- Applicable Limits & Deadlines -->
+        <div class="limits-deadlines-row">
+          @if (comp.applicable_limit) {
+            <div class="meta-pill">
+              <span class="meta-icon">💰</span>
+              <div>
+                <span class="pill-label">Applicable Limit</span>
+                <span class="pill-val">{{ comp.applicable_limit }}</span>
+              </div>
+            </div>
+          }
+
+          @if (comp.deadline) {
+            <div class="meta-pill">
+              <span class="meta-icon">⏱️</span>
+              <div>
+                <span class="pill-label">Claim Submission Deadline</span>
+                <span class="pill-val">{{ comp.deadline }}</span>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Disclaimer Footer -->
+        <div class="assessment-footer">
+          <span class="footer-note">ℹ️ {{ comp.disclaimer }}</span>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- 8-Dimension Rule Breakdown for Active Policy -->
+  @if (insuranceService.activePolicyRules(); as rules) {
+    <div class="rules-dashboard-section">
+      <div class="section-header">
+        <h3>Extracted Policy Rules &amp; Limits: {{ rules.policy_name }}</h3>
+        <p>{{ rules.summary }}</p>
+      </div>
+
+      <div class="rules-grid">
+        <!-- 1. Coverage Categories -->
+        <div class="rule-card">
+          <div class="rule-card-header">
+            <span class="r-icon">🛡️</span>
+            <h4>Coverage Categories</h4>
+          </div>
+          <div class="rule-card-body">
+            @for (c of rules.coverage_categories; track c.category) {
+              <div class="sub-rule-item">
+                <div class="item-top">
+                  <span class="item-name">{{ c.category }}</span>
+                  <span class="status-pill">{{ c.status }}</span>
+                </div>
+                <p class="item-details">{{ c.details }}</p>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- 2. Exclusions -->
+        <div class="rule-card">
+          <div class="rule-card-header">
+            <span class="r-icon">🚫</span>
+            <h4>Exclusions &amp; Non-Payables</h4>
+          </div>
+          <div class="rule-card-body">
+            @for (ex of rules.exclusions; track ex.category) {
+              <div class="sub-rule-item">
+                <div class="item-top">
+                  <span class="item-name">{{ ex.category }}</span>
+                  @if (ex.clause_reference) {
+                    <span class="clause-tag">{{ ex.clause_reference }}</span>
+                  }
+                </div>
+                <p class="item-details">{{ ex.description }}</p>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- 3. Reimbursement Limits -->
+        <div class="rule-card">
+          <div class="rule-card-header">
+            <span class="r-icon">💰</span>
+            <h4>Reimbursement Limits &amp; Caps</h4>
+          </div>
+          <div class="rule-card-body">
+            @for (lim of rules.reimbursement_limits; track lim.scope) {
+              <div class="sub-rule-item">
+                <div class="item-top">
+                  <span class="item-name">{{ lim.scope }}</span>
+                  <span class="amount-tag">{{ lim.amount }}</span>
+                </div>
+                @if (lim.notes) {
+                  <p class="item-details">{{ lim.notes }}</p>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- 4. Pharmacy & Medicine Rules -->
+        <div class="rule-card">
+          <div class="rule-card-header">
+            <span class="r-icon">💊</span>
+            <h4>Pharmacy &amp; Medicine Rules</h4>
+          </div>
+          <div class="rule-card-body">
+            @for (pr of rules.pharmacy_medicine_rules; track pr.rule) {
+              <div class="sub-rule-item">
+                <span class="item-name">{{ pr.rule }}</span>
+                <p class="item-details">{{ pr.details }}</p>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- 5. Outpatient vs Inpatient -->
+        <div class="rule-card">
+          <div class="rule-card-header">
+            <span class="r-icon">🏥</span>
+            <h4>Outpatient vs Inpatient Rules</h4>
+          </div>
+          <div class="rule-card-body">
+            @for (op of rules.outpatient_inpatient_rules; track op.setting) {
+              <div class="sub-rule-item">
+                <div class="item-top">
+                  <span class="item-name">{{ op.setting }}</span>
+                  @if (op.minimum_hospitalization_hours) {
+                    <span class="clause-tag">{{ op.minimum_hospitalization_hours }}</span>
+                  }
+                </div>
+                <p class="item-details">{{ op.eligibility_summary }}</p>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- 6. Required Documents & Deadlines -->
+        <div class="rule-card">
+          <div class="rule-card-header">
+            <span class="r-icon">📑</span>
+            <h4>Required Documents &amp; Deadlines</h4>
+          </div>
+          <div class="rule-card-body">
+            <div class="sub-rule-item">
+              <span class="sub-heading">Required Documents:</span>
+              <ul class="mini-doc-list">
+                @for (rd of rules.required_documents; track rd.document_name) {
+                  <li>• {{ rd.document_name }}</li>
+                }
+              </ul>
+            </div>
+
+            <div class="sub-rule-item">
+              <span class="sub-heading">Claim Deadline:</span>
+              @for (dl of rules.claim_submission_deadlines; track dl.timeframe) {
+                <p class="deadline-highlight">⏱️ {{ dl.timeframe }}</p>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Interactive Policy Q&A / RAG Query Box -->
+  <div class="qa-section">
+    <div class="section-header">
+      <h3>Policy Intelligence &amp; Interactive Q&amp;A</h3>
+      <p>Ask questions directly about your insurance coverage, reimbursement caps, and claim requirements.</p>
+    </div>
+
+    <!-- Suggested Question Chips -->
+    <div class="chips-row">
+      @for (q of suggestedQuestions; track q) {
+        <button type="button" class="question-chip" (click)="onAskQuestion(q)">
+          {{ q }}
+        </button>
+      }
+    </div>
+
+    <!-- Ask Box -->
+    <div class="ask-box">
+      <input
+        type="text"
+        class="ask-input"
+        placeholder="Type a policy question (e.g. Does my company policy mention pharmacy reimbursement?)..."
+        [ngModel]="qaQuestionInput()"
+        (ngModelChange)="qaQuestionInput.set($event)"
+        (keyup.enter)="onAskQuestion()"
+      />
+      <button
+        type="button"
+        class="ask-btn"
+        (click)="onAskQuestion()"
+        [disabled]="insuranceService.isQuerying()"
+      >
+        @if (insuranceService.isQuerying()) {
+          <span class="spinner-sm"></span> Searching Policy...
+        } @else {
+          <span>Ask Policy Agent</span>
+        }
+      </button>
+    </div>
+
+    <!-- Policy Q&A Answer Display -->
+    @if (insuranceService.policyAnswer(); as ans) {
+      <div class="answer-card">
+        <div class="answer-header">
+          <span class="bot-badge">🤖 Policy Agent</span>
+          <span class="conf-tag">{{ ans.confidence }}</span>
+        </div>
+        <div class="answer-body">
+          <p>{{ ans.answer }}</p>
+        </div>
+
+        @if (ans.evidence.length > 0) {
+          <div class="answer-evidence">
+            <span class="ev-label">Policy Evidence:</span>
+            @for (ev of ans.evidence; track ev.quote) {
+              <div class="mini-citation">
+                <span>📄 {{ ev.policy_name }} (Page {{ ev.page_number }}):</span>
+                <em>"{{ ev.quote }}"</em>
+              </div>
+            }
+          </div>
+        }
+
+        <div class="answer-disclaimer">
+          <small>⚖️ {{ ans.disclaimer }}</small>
+        </div>
+      </div>
+    }
+  </div>
+</div>

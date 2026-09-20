@@ -15,6 +15,7 @@ from app.agents.appointment_agent import appointment_node
 from app.agents.patient_info_agent import patient_info_node
 from app.agents.location_agent import location_node
 from app.agents.medicine_search_agent import medicine_search_node
+from app.agents.insurance_agent import insurance_agent_node
 from app.agents.llm_agent import llm_node
 from app.agents.ui_agent import ui_action_node
 
@@ -32,6 +33,7 @@ def build_health_coordinator_graph():
     builder.add_node("patient_info_agent", patient_info_node)
     builder.add_node("location_agent", location_node)
     builder.add_node("medicine_search_agent", medicine_search_node)
+    builder.add_node("insurance_agent", insurance_agent_node)
     builder.add_node("symptom_agent", symptom_node)
     builder.add_node("department_agent", department_node)
     builder.add_node("doctor_slot_agent", doctor_slot_node)
@@ -51,6 +53,7 @@ def build_health_coordinator_graph():
             "patient_info_agent": "patient_info_agent",
             "location_agent": "location_agent",
             "medicine_search_agent": "medicine_search_agent",
+            "insurance_agent": "insurance_agent",
             "appointment_agent": "appointment_agent",
             "symptom_agent": "symptom_agent",
             "department_agent": "department_agent",
@@ -93,6 +96,7 @@ def build_health_coordinator_graph():
     builder.add_edge("patient_info_agent", "ui_agent")
     builder.add_edge("location_agent", "ui_agent")
     builder.add_edge("medicine_search_agent", "ui_agent")
+    builder.add_edge("insurance_agent", "ui_agent")
     builder.add_edge("appointment_agent", "ui_agent")
 
     # UI Action Layer routes to Final Response synthesis
