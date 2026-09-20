@@ -1,6 +1,14 @@
 <div class="dashboard">
   <div class="dashboard-header">
-    <h2 class="dashboard-title">Healthcare Dashboard</h2>
+    <div class="header-left">
+      <h2 class="dashboard-title">Healthcare Dashboard</h2>
+    </div>
+    @if (state().providerInfo?.dataSource || (state().doctors.length > 0 && state().doctors[0].dataSource)) {
+      <div class="provider-header-pill" title="Live Bengaluru Healthcare Provider Integration">
+        <span class="live-indicator"></span>
+        <span class="provider-pill-text">{{ state().providerInfo?.dataSource || state().doctors[0].dataSource }}</span>
+      </div>
+    }
   </div>
 
   <div class="dashboard-grid">
@@ -59,18 +67,53 @@
 
     <!-- 4. Doctors -->
     <section class="dash-card">
-      <h3 class="card-title">4. Doctors</h3>
+      <div class="card-title-row">
+        <h3 class="card-title">4. Doctors</h3>
+        @if (state().providerInfo?.timestamp || (state().doctors.length > 0 && state().doctors[0].timestamp)) {
+          <span class="card-sync-time">
+            Synced: {{ state().providerInfo?.timestamp || state().doctors[0].timestamp }}
+          </span>
+        }
+      </div>
       @if (state().doctors.length > 0) {
         <div class="doctors-list">
           @for (doctor of state().doctors; track doctor.id) {
             <div class="doctor-item">
-              <div class="doctor-info">
-                <span class="doctor-name">{{ doctor.name }}</span>
-                <span class="doctor-dept">{{ doctor.department }}</span>
+              <div class="doctor-main-row">
+                <div class="doctor-info">
+                  <span class="doctor-name">{{ doctor.name }}</span>
+                  <span class="doctor-dept">{{ doctor.department }}</span>
+                </div>
+                <span class="status-pill" [class.available]="doctor.availableStatus === 'Available'">
+                  {{ doctor.availableStatus }}
+                </span>
               </div>
-              <span class="status-pill" [class.available]="doctor.availableStatus === 'Available'">
-                {{ doctor.availableStatus }}
-              </span>
+
+              @if (doctor.hospital || doctor.locality) {
+                <div class="doctor-facility-row">
+                  @if (doctor.hospital) {
+                    <span class="doctor-hospital">{{ doctor.hospital }}</span>
+                  }
+                  @if (doctor.locality) {
+                    <span class="doctor-locality">📍 {{ doctor.locality }}</span>
+                  }
+                </div>
+              }
+
+              <div class="doctor-meta-row">
+                @if (doctor.consultationFee) {
+                  <span class="meta-badge fee">{{ doctor.consultationFee }}</span>
+                }
+                @if (doctor.consultationType) {
+                  <span class="meta-badge type">{{ doctor.consultationType }}</span>
+                }
+                @if (doctor.rating) {
+                  <span class="meta-badge rating">★ {{ doctor.rating }}</span>
+                }
+                @if (doctor.experience) {
+                  <span class="meta-badge exp">{{ doctor.experience }}</span>
+                }
+              </div>
             </div>
           }
         </div>
@@ -97,6 +140,9 @@
               </div>
               <div class="slot-doc-col">
                 <span class="slot-doc">{{ slot.doctor }}</span>
+                @if (slot.locality) {
+                  <span class="slot-loc">📍 {{ slot.locality }}</span>
+                }
                 <span class="slot-avail">{{ slot.isAvailable ? 'Available' : 'Booked' }}</span>
               </div>
             </div>

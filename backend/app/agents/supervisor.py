@@ -33,7 +33,10 @@ SYMPTOM_KEYWORDS = [
 
 SLOT_BROWSE_KEYWORDS = [
     r"\bphysician\b", r"\bslot(s)?\b", r"\bavailable\s+doctor(s)?\b",
-    r"\bfind\s+doctor\b", r"\bevening\b", r"\bmorning\b", r"\bafternoon\b"
+    r"\bfind\s+doctor\b", r"\bevening\b", r"\bmorning\b", r"\bafternoon\b",
+    r"\bindiranagar\b", r"\bjayanagar\b", r"\bwhitefield\b", r"\bhsr\b",
+    r"\bkoramangala\b", r"\bhebbal\b", r"\bbellandur\b", r"\bbengaluru\b",
+    r"\bhospital(s)?\b", r"\bclinic(s)?\b",
 ]
 
 DEPARTMENT_KEYWORDS = [

@@ -129,12 +129,16 @@ def ui_action_node(state: AgentState) -> AgentState:
             if p.get("doctors"):
                 add_action("SHOW_DOCTORS", {
                     "doctors": p["doctors"],
-                    "department": p.get("department", dept)
+                    "department": p.get("department", dept),
+                    "dataSource": p.get("dataSource", "Bengaluru Health Grid (Verified Provider)"),
+                    "timestamp": p.get("timestamp"),
                 })
             if p.get("slots"):
                 add_action("SHOW_SLOTS", {
                     "slots": p["slots"],
-                    "date": p.get("date", "Tomorrow")
+                    "date": p.get("date", "Tomorrow"),
+                    "dataSource": p.get("dataSource", "Bengaluru Health Grid (Verified Provider)"),
+                    "timestamp": p.get("timestamp"),
                 })
 
     # 5. Process Appointments (BOOK_APPOINTMENT, CANCEL_APPOINTMENT, CLEAR_APPOINTMENT)

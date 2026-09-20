@@ -19,6 +19,16 @@ export interface Doctor {
   name: string;
   department: string;
   availableStatus: 'Available' | 'Unavailable' | 'In Consultation';
+  hospital?: string;
+  clinic?: string;
+  locality?: string;
+  address?: string;
+  consultationFee?: string;
+  consultationType?: string;
+  experience?: string;
+  rating?: number;
+  dataSource?: string;
+  timestamp?: string;
 }
 
 export interface TimeSlot {
@@ -27,6 +37,17 @@ export interface TimeSlot {
   time: string;
   doctor: string;
   isAvailable: boolean;
+  hospital?: string;
+  locality?: string;
+  consultationType?: string;
+  dataSource?: string;
+  timestamp?: string;
+}
+
+export interface ProviderInfo {
+  dataSource?: string;
+  timestamp?: string;
+  locality?: string;
 }
 
 export interface AppointmentSummary {
@@ -35,6 +56,8 @@ export interface AppointmentSummary {
   date: string;
   time: string;
   status: string;
+  hospital?: string;
+  locality?: string;
 }
 
 export interface DashboardState {
@@ -44,6 +67,7 @@ export interface DashboardState {
   doctors: Doctor[];
   availableSlots: TimeSlot[];
   appointmentSummary: AppointmentSummary;
+  providerInfo?: ProviderInfo;
 }
 
 export interface UIAction {
@@ -51,3 +75,4 @@ export interface UIAction {
   payload: any;
   type?: string;
 }
+

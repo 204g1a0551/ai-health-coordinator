@@ -65,7 +65,11 @@ export class DashboardService {
     date?: string;
     doctors: Doctor[];
     slots: TimeSlot[];
+    dataSource?: string;
+    timestamp?: string;
   }): void {
+    const ds = payload.dataSource || (payload.doctors.length > 0 ? payload.doctors[0].dataSource : undefined);
+    const ts = payload.timestamp || (payload.doctors.length > 0 ? payload.doctors[0].timestamp : undefined);
     this.state.update((s) => ({
       ...s,
       suggestedDepartment: {
@@ -73,6 +77,7 @@ export class DashboardService {
       },
       doctors: payload.doctors,
       availableSlots: payload.slots,
+      providerInfo: ds ? { dataSource: ds, timestamp: ts } : s.providerInfo,
       appointmentSummary: {
         ...s.appointmentSummary,
         department: payload.department || s.appointmentSummary.department,
@@ -129,23 +134,29 @@ export class DashboardService {
   /**
    * Dynamically display doctors returned by SHOW_DOCTORS action
    */
-  showDoctors(doctors: Doctor[], department?: string): void {
+  showDoctors(doctors: Doctor[], department?: string, dataSource?: string, timestamp?: string): void {
+    const ds = dataSource || (doctors.length > 0 ? doctors[0].dataSource : undefined);
+    const ts = timestamp || (doctors.length > 0 ? doctors[0].timestamp : undefined);
     this.state.update((s) => ({
       ...s,
       doctors,
       suggestedDepartment: {
         name: department || s.suggestedDepartment.name,
       },
+      providerInfo: ds ? { dataSource: ds, timestamp: ts } : s.providerInfo,
     }));
   }
 
   /**
    * Dynamically display available time slots returned by SHOW_SLOTS action
    */
-  showSlots(slots: TimeSlot[], date?: string): void {
+  showSlots(slots: TimeSlot[], date?: string, dataSource?: string, timestamp?: string): void {
+    const ds = dataSource || (slots.length > 0 ? slots[0].dataSource : undefined);
+    const ts = timestamp || (slots.length > 0 ? slots[0].timestamp : undefined);
     this.state.update((s) => ({
       ...s,
       availableSlots: slots,
+      providerInfo: ds ? { dataSource: ds, timestamp: ts } : s.providerInfo,
       appointmentSummary: {
         ...s.appointmentSummary,
         date: date || s.appointmentSummary.date,
@@ -212,13 +223,13 @@ export class DashboardService {
 
         case 'SHOW_DOCTORS':
           if (payload.doctors) {
-            this.showDoctors(payload.doctors, payload.department);
+            this.showDoctors(payload.doctors, payload.department, payload.dataSource, payload.timestamp);
           }
           break;
 
         case 'SHOW_SLOTS':
           if (payload.slots) {
-            this.showSlots(payload.slots, payload.date);
+            this.showSlots(payload.slots, payload.date, payload.dataSource, payload.timestamp);
           }
           break;
 

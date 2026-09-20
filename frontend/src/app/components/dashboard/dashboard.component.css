@@ -7,6 +7,11 @@
 .dashboard-header {
   border-bottom: 1px solid #e2e8f0;
   padding-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .dashboard-title {
@@ -14,6 +19,27 @@
   font-size: 1.15rem;
   font-weight: 600;
   color: #0f172a;
+}
+
+.provider-header-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 9999px;
+}
+
+.live-indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #10b981;
+  display: inline-block;
 }
 
 .dashboard-grid {
@@ -125,21 +151,48 @@
   color: #0f172a;
 }
 
+.card-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #f1f5f9;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+}
+
+.card-title-row .card-title {
+  margin: 0;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.card-sync-time {
+  font-size: 0.68rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
 /* Doctors list */
 .doctors-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .doctor-item {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 5px;
   background-color: #f8fafc;
   border: 1px solid #e2e8f0;
-  padding: 8px 10px;
+  padding: 9px 11px;
   border-radius: 6px;
+}
+
+.doctor-main-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
 }
 
 .doctor-info {
@@ -156,6 +209,66 @@
 
 .doctor-dept {
   font-size: 0.75rem;
+  color: #64748b;
+}
+
+.doctor-facility-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 0.725rem;
+  color: #475569;
+}
+
+.doctor-hospital {
+  font-weight: 500;
+  color: #334155;
+}
+
+.doctor-locality {
+  font-weight: 600;
+  color: #1d4ed8;
+  background: #eff6ff;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.doctor-meta-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 1px;
+}
+
+.meta-badge {
+  font-size: 0.675rem;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.meta-badge.fee {
+  background-color: #ecfdf5;
+  color: #065f46;
+  font-weight: 600;
+}
+
+.meta-badge.type {
+  background-color: #f1f5f9;
+  color: #475569;
+}
+
+.meta-badge.rating {
+  background-color: #fef9c3;
+  color: #854d0e;
+  font-weight: 600;
+}
+
+.meta-badge.exp {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
   color: #64748b;
 }
 
@@ -237,6 +350,12 @@
   font-size: 0.775rem;
   font-weight: 500;
   color: #334155;
+}
+
+.slot-loc {
+  font-size: 0.675rem;
+  color: #1d4ed8;
+  font-weight: 500;
 }
 
 .slot-avail {

@@ -202,7 +202,7 @@ def find_doctor_by_name(doctor_query: str) -> Optional[Dict[str, Any]]:
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    cleaned = re.sub(r"^(dr\.?|doctor)\s*", "", doctor_query.strip(), flags=re.IGNORECASE)
+    cleaned = re.sub(r"^(dr\.?|doctor)\s*", "", doctor_query.strip(), flags=re.IGNORECASE).strip()
     cursor.execute(
         "SELECT id, name, department, available_status FROM doctors WHERE LOWER(name) LIKE LOWER(?)",
         (f"%{cleaned}%",)
@@ -211,6 +211,40 @@ def find_doctor_by_name(doctor_query: str) -> Optional[Dict[str, Any]]:
     conn.close()
     if row:
         return dict(row)
+
+    # Fallback to provider service
+    try:
+        from app.services.provider_service import provider_service
+        provider_docs = provider_service.search_doctors(query=cleaned)
+        if provider_docs:
+            p_doc = provider_docs[0]
+            # Ensure inserted into local sqlite table if missing
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT OR IGNORE INTO doctors (id, name, department, available_status) VALUES (?, ?, ?, ?)",
+                (p_doc["id"], p_doc["name"], p_doc["department"], p_doc.get("availableStatus", "Available"))
+            )
+            # Also insert slots
+            p_slots = provider_service.get_available_slots(p_doc["id"])
+            for s in p_slots:
+                cursor.execute(
+                    """INSERT OR IGNORE INTO appointment_slots
+                       (id, doctor_id, doctor_name, department, date, time, period, is_available)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                    (s["id"], p_doc["id"], p_doc["name"], p_doc["department"], s.get("date", "Tomorrow, Oct 24"), s["time"], s.get("period", "evening"), 1 if s.get("isAvailable", True) else 0)
+                )
+            conn.commit()
+            conn.close()
+            return {
+                "id": p_doc["id"],
+                "name": p_doc["name"],
+                "department": p_doc["department"],
+                "available_status": p_doc.get("availableStatus", "Available"),
+            }
+    except Exception:
+        pass
+
     return None
 
 
@@ -256,10 +290,13 @@ def book_appointment(
         display_date = "20 Sep 2026"
 
     # 2 & 3. Check Slot Availability
+    stripped_time = re.sub(r"^0", "", normalized_time)
+    padded_time = f"0{stripped_time}" if len(stripped_time) < 8 else stripped_time
+
     cursor.execute(
-        """SELECT id, is_available FROM appointment_slots
-           WHERE doctor_id = ? AND time = ?""",
-        (doctor["id"], normalized_time)
+        """SELECT id, time, is_available FROM appointment_slots
+           WHERE doctor_id = ? AND (time = ? OR time = ? OR time = ?)""",
+        (doctor["id"], normalized_time, stripped_time, padded_time)
     )
     slot_row = cursor.fetchone()
 

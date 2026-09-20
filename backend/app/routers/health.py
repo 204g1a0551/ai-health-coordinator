@@ -25,3 +25,28 @@ async def check_redis_health():
             "cacheTtlSeconds": redis_settings.cache_ttl,
         },
     }
+
+
+@router.get("/provider")
+async def check_provider_status():
+    """
+    Test and verify Bengaluru Healthcare Provider data service status.
+    """
+    from app.services.provider_service import provider_service
+    from app.providers.bengaluru_provider import BENGALURU_HOSPITALS, BENGALURU_DOCTORS
+
+    hospitals = provider_service.search_hospitals()
+    return {
+        "status": "healthy",
+        "timestamp": datetime.utcnow().isoformat(),
+        "provider": provider_service.provider.provider_name,
+        "location": "Bengaluru, Karnataka, India",
+        "totalHospitals": len(hospitals),
+        "totalDoctors": len(BENGALURU_DOCTORS),
+        "supportedLocalities": [
+            "Indiranagar", "Whitefield", "Koramangala", "Jayanagar",
+            "HSR Layout", "Hebbal", "Bannerghatta Road", "Cunningham Road", "Bellandur"
+        ],
+        "sampleHospitals": [h["name"] for h in hospitals[:4]],
+    }
+

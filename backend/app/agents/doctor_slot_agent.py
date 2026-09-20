@@ -1,7 +1,8 @@
 import re
+from datetime import datetime
 from typing import Dict, Any, List, Optional
 from app.agents.state import AgentState
-from app.db.repository import query_doctors_and_slots
+from app.services.provider_service import provider_service
 from app.services.redis_service import redis_service
 
 # Patterns to identify time-of-day preference
@@ -20,6 +21,20 @@ DEPT_ALIASES = [
     (r"\bpediatric(s|ian)?\b|\bchild\s+doctor\b", "Pediatrics"),
     (r"\bophthalmolog(y|ist)\b|\beye\s+doctor\b", "Ophthalmology"),
     (r"\bdental\b|\bdentist\b", "Dental"),
+]
+
+# Bengaluru localities and neighborhood patterns
+LOCALITY_PATTERNS = [
+    (r"\bindiranagar\b", "Indiranagar"),
+    (r"\bjayanagar\b", "Jayanagar"),
+    (r"\bwhitefield\b", "Whitefield"),
+    (r"\bhsr(\s+layout)?\b", "HSR Layout"),
+    (r"\bkoramangala\b", "Koramangala"),
+    (r"\bhebbal\b", "Hebbal"),
+    (r"\bbellandur\b|\bouter\s+ring\s+road\b", "Bellandur"),
+    (r"\bcunningham(\s+road)?\b|\bvasanth\s+nagar\b", "Cunningham Road"),
+    (r"\bbannerghatta(\s+road)?\b", "Bannerghatta Road"),
+    (r"\bold\s+airport\s+road\b|\bhal\b", "Old Airport Road"),
 ]
 
 
@@ -42,6 +57,15 @@ def extract_date_preference(text: str) -> str:
     return "Tomorrow, Oct 24"
 
 
+def extract_locality_preference(text: str) -> Optional[str]:
+    """Extract Bengaluru locality/area from user query."""
+    lower_text = text.lower()
+    for pattern, locality in LOCALITY_PATTERNS:
+        if re.search(pattern, lower_text):
+            return locality
+    return None
+
+
 def resolve_department_for_booking(state: AgentState) -> str:
     """Determine department for doctor search from state or user message."""
     dept = state.get("suggested_department")
@@ -53,60 +77,102 @@ def resolve_department_for_booking(state: AgentState) -> str:
         if re.search(pattern, user_msg):
             return dept_name
 
+    # Check if doctor name mentioned directly
+    doc_match = re.search(r"\b(?:dr\.?|doctor)\s+([a-zA-Z]+)", user_msg)
+    if doc_match:
+        doc_details = provider_service.get_doctor_details(doc_match.group(1))
+        if doc_details and doc_details.get("department"):
+            return doc_details["department"]
+
     return "General Medicine"
 
 
 def doctor_slot_node(state: AgentState) -> AgentState:
     """
     LangGraph node: Doctor/Slot Agent
-    Searches available doctors and slots based on department and time preference,
-    returning structured data and UI update actions.
+    Calls controlled backend tools from HealthcareProviderService (cached via Redis).
+    Does NOT allow the LLM to directly communicate with external APIs.
     """
     user_msg = state.get("user_message", "")
     target_dept = resolve_department_for_booking(state)
     period_pref = extract_period_preference(user_msg)
     date_pref = extract_date_preference(user_msg)
+    locality_pref = extract_locality_preference(user_msg)
 
-    cache_key = f"{target_dept}:{period_pref or 'all'}"
-    doctors_found = redis_service.get_hospital_doctors(hospital_id=cache_key)
+    # 1. Controlled Backend Tool Call: search_doctors via provider_service
+    doctors_found = []
+    if locality_pref:
+        doctors_found = provider_service.search_by_location(locality=locality_pref, department=target_dept)
+
     if not doctors_found:
-        doctors_found = query_doctors_and_slots(target_dept, period_pref)
-        redis_service.set_hospital_doctors(hospital_id=cache_key, doctors=doctors_found)
+        doctors_found = provider_service.search_by_department(department=target_dept)
 
-    # Cache individual doctor availability in Redis
-    for d in doctors_found:
-        redis_service.set_doctor_availability(
-            doctor_id=d["id"],
-            availability_data={
-                "name": d["name"],
-                "department": d["department"],
-                "status": d["availableStatus"],
-                "slots": d["slots"],
-            },
-        )
+    # Fallback to general search if department had zero doctors
+    if not doctors_found:
+        doctors_found = provider_service.search_doctors(query=None)
 
-    # Format structured results matching the specification
+    current_timestamp = datetime.utcnow().strftime("%d %b %Y, %I:%M %p")
+    provider_name = provider_service.provider.provider_name
+
     structured_doctors = []
     flat_slots = []
     flat_doctor_cards = []
 
     for d in doctors_found:
+        # 2. Controlled Backend Tool Call: get_available_slots via provider_service
+        slots = provider_service.get_available_slots(
+            doctor_id=d["id"],
+            date=date_pref,
+            period=period_pref,
+        )
+
+        slot_times = [s["time"] for s in slots if s.get("isAvailable", True)]
+
         structured_doctors.append({
             "name": d["name"],
-            "slots": d["slots"],
+            "department": d["department"],
+            "hospital": d.get("hospital", "Bengaluru Healthcare Center"),
+            "locality": d.get("locality", "Bengaluru"),
+            "slots": slot_times,
         })
+
         flat_doctor_cards.append({
             "id": d["id"],
             "name": d["name"],
             "department": d["department"],
-            "availableStatus": d["availableStatus"],
+            "availableStatus": d.get("availableStatus", "Available"),
+            "hospital": d.get("hospital", "Bengaluru Hospital"),
+            "clinic": d.get("clinic", "Specialty Clinic"),
+            "locality": d.get("locality", "Bengaluru"),
+            "address": d.get("address", "Bengaluru, Karnataka"),
+            "consultationFee": d.get("consultationFee", "₹600"),
+            "consultationType": d.get("consultationType", "In-Person"),
+            "experience": d.get("experience", "10+ yrs exp"),
+            "rating": d.get("rating", 4.8),
+            "dataSource": provider_name,
+            "timestamp": current_timestamp,
         })
-        for s in d["slotsDetails"]:
-            flat_slots.append(s)
+
+        for s in slots:
+            flat_slots.append({
+                "id": s["id"],
+                "doctor": d["name"],
+                "department": d["department"],
+                "hospital": d.get("hospital", "Hospital"),
+                "locality": d.get("locality", "Bengaluru"),
+                "date": s.get("date", date_pref),
+                "time": s["time"],
+                "isAvailable": bool(s.get("isAvailable", True)),
+                "dataSource": provider_name,
+                "timestamp": current_timestamp,
+            })
 
     structured_result = {
         "department": target_dept,
+        "locality": locality_pref,
         "doctors": structured_doctors,
+        "dataSource": provider_name,
+        "timestamp": current_timestamp,
     }
 
     actions = list(state.get("actions", []))
@@ -117,7 +183,7 @@ def doctor_slot_node(state: AgentState) -> AgentState:
             "type": "UPDATE_DEPARTMENT",
             "payload": {
                 "department": target_dept,
-                "reason": f"Directly matched from appointment request for {target_dept}."
+                "reason": f"Consultation search for {target_dept}" + (f" in {locality_pref}." if locality_pref else "."),
             }
         })
 
@@ -127,9 +193,12 @@ def doctor_slot_node(state: AgentState) -> AgentState:
             "type": "UPDATE_DOCTORS_AND_SLOTS",
             "payload": {
                 "department": target_dept,
+                "locality": locality_pref,
                 "date": date_pref,
                 "doctors": flat_doctor_cards,
                 "slots": flat_slots,
+                "dataSource": provider_name,
+                "timestamp": current_timestamp,
             }
         })
 
