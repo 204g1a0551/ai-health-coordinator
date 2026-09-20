@@ -126,6 +126,37 @@ class PostgresService:
             );
         """)
 
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS medical_timeline_events (
+                event_id VARCHAR(100) PRIMARY KEY,
+                session_id VARCHAR(100) NOT NULL,
+                event_type VARCHAR(40) NOT NULL,
+                date VARCHAR(50),
+                doctor VARCHAR(150),
+                hospital VARCHAR(200),
+                medicines TEXT NOT NULL DEFAULT '[]',
+                bill_amount DOUBLE PRECISION,
+                consultation_amount DOUBLE PRECISION,
+                diagnostic_amount DOUBLE PRECISION,
+                doc_id VARCHAR(100) NOT NULL,
+                doc_type VARCHAR(60) NOT NULL,
+                summary TEXT NOT NULL DEFAULT '',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS medical_expenses (
+                expense_id VARCHAR(100) PRIMARY KEY,
+                session_id VARCHAR(100) NOT NULL,
+                category VARCHAR(40) NOT NULL,
+                amount DOUBLE PRECISION NOT NULL,
+                date VARCHAR(50),
+                provider VARCHAR(200),
+                doc_id VARCHAR(100) NOT NULL
+            );
+        """)
+
     def is_connected(self) -> bool:
         """Returns whether live PostgreSQL connection is active."""
         if not self._connected:

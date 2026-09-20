@@ -99,6 +99,37 @@ def init_db():
         )
     """)
 
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS medical_timeline_events (
+            event_id TEXT PRIMARY KEY,
+            session_id TEXT NOT NULL,
+            event_type TEXT NOT NULL,
+            date TEXT,
+            doctor TEXT,
+            hospital TEXT,
+            medicines TEXT NOT NULL DEFAULT '[]',
+            bill_amount REAL,
+            consultation_amount REAL,
+            diagnostic_amount REAL,
+            doc_id TEXT NOT NULL,
+            doc_type TEXT NOT NULL,
+            summary TEXT NOT NULL DEFAULT '',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS medical_expenses (
+            expense_id TEXT PRIMARY KEY,
+            session_id TEXT NOT NULL,
+            category TEXT NOT NULL,
+            amount REAL NOT NULL,
+            date TEXT,
+            provider TEXT,
+            doc_id TEXT NOT NULL
+        )
+    """)
+
     # Seed or sync doctors and slots
     seed_data(cursor)
 
@@ -1016,5 +1047,4 @@ def delete_medical_document(doc_id: str) -> bool:
     conn.commit()
     conn.close()
     return affected > 0
-
 

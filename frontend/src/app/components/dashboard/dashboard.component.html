@@ -113,6 +113,18 @@
       />
     }
 
+    @case ('SHOW_MEDICAL_TIMELINE') {
+      <app-medical-timeline-card [data]="uiState.state().currentData" />
+    }
+
+    @case ('SHOW_MEDICAL_EXPENSES') {
+      <app-medical-expenses-card [data]="uiState.state().currentData" />
+    }
+
+    @case ('SHOW_DOCUMENT_HISTORY') {
+      <app-document-history-card [data]="uiState.state().currentData" />
+    }
+
     @case ('SHOW_APPOINTMENT') {
       <app-appointment [data]="uiState.state().currentData" />
     }

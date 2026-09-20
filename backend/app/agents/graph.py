@@ -17,6 +17,7 @@ from app.agents.location_agent import location_node
 from app.agents.medicine_search_agent import medicine_search_node
 from app.agents.insurance_agent import insurance_agent_node
 from app.agents.document_agent import document_agent_node
+from app.agents.timeline_agent import timeline_agent_node
 from app.agents.llm_agent import llm_node
 from app.agents.ui_agent import ui_action_node
 
@@ -32,6 +33,7 @@ def build_health_coordinator_graph():
     builder.add_node("llm_node", llm_node)
     builder.add_node("supervisor", supervisor_node)
     builder.add_node("document_agent", document_agent_node)
+    builder.add_node("timeline_agent", timeline_agent_node)
     builder.add_node("patient_info_agent", patient_info_node)
     builder.add_node("location_agent", location_node)
     builder.add_node("medicine_search_agent", medicine_search_node)
@@ -53,6 +55,7 @@ def build_health_coordinator_graph():
         should_route_from_supervisor,
         {
             "document_agent": "document_agent",
+            "timeline_agent": "timeline_agent",
             "patient_info_agent": "patient_info_agent",
             "location_agent": "location_agent",
             "medicine_search_agent": "medicine_search_agent",
@@ -97,6 +100,7 @@ def build_health_coordinator_graph():
 
     # Routing from Domain Agents to UI Agent
     builder.add_edge("document_agent", "ui_agent")
+    builder.add_edge("timeline_agent", "ui_agent")
     builder.add_edge("patient_info_agent", "ui_agent")
     builder.add_edge("location_agent", "ui_agent")
     builder.add_edge("medicine_search_agent", "ui_agent")

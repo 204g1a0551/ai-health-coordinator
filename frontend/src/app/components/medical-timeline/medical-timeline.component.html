@@ -1,0 +1,44 @@
+<section class="timeline-page">
+  <header>
+    <div>
+      <p class="eyebrow">YOUR HEALTH RECORD</p>
+      <h2>Medical Timeline &amp; Expenses</h2>
+      <p class="muted">A chronological view of metadata extracted from your uploaded documents.</p>
+    </div>
+    <button type="button" (click)="refresh()">Refresh</button>
+  </header>
+
+  <div class="layout">
+    <main class="timeline-card">
+      <h3>Medical timeline</h3>
+      @if (events().length === 0) {
+        <p class="muted">No timeline events are available yet. Upload a prescription, report, bill, or policy.</p>
+      }
+      @for (event of events(); track event.event_id) {
+        <article class="event">
+          <span class="event-icon">{{ icon(event.event_type) }}</span>
+          <div>
+            <strong>{{ event.event_type.replace('_', ' ') }}</strong>
+            <time>{{ event.date || 'Date not recorded' }}</time>
+            @if (event.doctor || event.hospital) { <p>{{ event.doctor || '' }} {{ event.hospital ? '· ' + event.hospital : '' }}</p> }
+            @if (event.medicines.length) { <p>{{ event.medicines.join(', ') }}</p> }
+            @if (event.bill_amount || event.consultation_amount || event.diagnostic_amount) {
+              <b>₹{{ event.bill_amount || event.consultation_amount || event.diagnostic_amount }}</b>
+            }
+          </div>
+        </article>
+      }
+    </main>
+    <aside class="expense-card">
+      <h3>Expense summary</h3>
+      <div class="total">₹{{ expenses()?.total || 0 }}</div>
+      @for (item of (expenses()?.category_totals | keyvalue); track item.key) {
+        <div class="bar-row"><span>{{ item.key }}</span><b>₹{{ item.value }}</b></div>
+      }
+      <h3>Ask about your records</h3>
+      <textarea [ngModel]="question()" (ngModelChange)="question.set($event)" placeholder="What happened during my last consultation?"></textarea>
+      <button type="button" (click)="ask()">Ask</button>
+      @if (answer()) { <p class="answer">{{ answer() }}</p> }
+    </aside>
+  </div>
+</section>

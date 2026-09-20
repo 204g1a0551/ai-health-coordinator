@@ -580,6 +580,7 @@ def document_agent_node(state: AgentState) -> AgentState:
     from app.agents.pharmacy_agent import pharmacy_agent
     from app.agents.insurance_agent import insurance_agent
     from app.agents.lab_agent import lab_agent, lab_agent_node
+    from app.agents.timeline_agent import timeline_agent_node
     from app.services.document_rag_service import document_rag_service
     from app.models.document_rag import DocumentQuestionRequest
 
@@ -595,6 +596,8 @@ def document_agent_node(state: AgentState) -> AgentState:
     # - "Show my latest lab report."
     # --------------------------------------------------------------------------
     parsed_intent = (state.get("parsed_intent") or {}).get("intent", "")
+    if parsed_intent in ["MEDICAL_TIMELINE", "MEDICAL_EXPENSES", "DOCUMENT_HISTORY"]:
+        return timeline_agent_node(state)
     is_lab_query = (
         parsed_intent in ["LAB_REPORT", "LAB_RESULTS", "LAB_EVIDENCE"]
         or "lab report" in user_lower
@@ -781,4 +784,3 @@ def document_agent_node(state: AgentState) -> AgentState:
         "primary_ui_data": primary_data,
         "final_response": reply,
     }
-

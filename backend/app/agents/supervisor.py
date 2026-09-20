@@ -120,6 +120,12 @@ LAB_PATTERNS = [
     r"\bpage\s+3\b",
 ]
 
+TIMELINE_PATTERNS = [
+    r"\bmedical timeline\b", r"\bmedical history\b", r"\bwhat happened during my last consultation\b",
+    r"\bmedical expenses?\b", r"\bhealthcare spending\b", r"\bexpense summary\b",
+    r"\bdocument history\b", r"\buploaded documents?\b",
+]
+
 
 DOCUMENT_PATTERNS = [
     r"\bupload\s+(?:this\s+)?(?:prescription|document|medical\s+report|bill|pdf)\b",
@@ -163,8 +169,9 @@ def supervisor_node(state: AgentState) -> AgentState:
         "UPLOAD_DOCUMENT", "ANALYZE_INSURANCE", "CHECK_COVERAGE", "CHECK_REIMBURSEMENT",
         "SEARCH_PHARMACY", "SEARCH_MEDICINE", "DOCUMENT_SUMMARY", "GET_MEDICINES", "GET_MEDICINE_INFO",
         "LAB_REPORT", "LAB_RESULTS", "LAB_EVIDENCE",
+        "MEDICAL_TIMELINE", "MEDICAL_EXPENSES", "DOCUMENT_HISTORY",
     ]:
-        route = "document_agent"
+        route = "timeline_agent" if intent in ["MEDICAL_TIMELINE", "MEDICAL_EXPENSES", "DOCUMENT_HISTORY"] else "document_agent"
     elif intent == "UPDATE_PATIENT":
         route = "patient_info_agent"
     elif intent == "BOOK_APPOINTMENT":
@@ -180,6 +187,7 @@ def supervisor_node(state: AgentState) -> AgentState:
     else:
         # Fallback to pattern matching
         is_lab_query = any(re.search(pat, user_msg) for pat in LAB_PATTERNS)
+        is_timeline_query = any(re.search(pat, user_msg) for pat in TIMELINE_PATTERNS)
         is_document_query = any(re.search(pat, user_msg) for pat in DOCUMENT_PATTERNS)
         is_insurance_query = any(re.search(pat, user_msg) for pat in INSURANCE_PATTERNS)
         is_pharmacy_query = any(re.search(pat, user_msg) for pat in PHARMACY_PATTERNS)
@@ -191,7 +199,16 @@ def supervisor_node(state: AgentState) -> AgentState:
         is_browsing_slots = any(re.search(kw, user_msg) for kw in SLOT_BROWSE_KEYWORDS)
         has_dept = any(re.search(kw, user_msg) for kw in DEPARTMENT_KEYWORDS)
 
-        if is_lab_query or is_document_query or is_insurance_query or is_pharmacy_query:
+        if is_timeline_query:
+            if re.search(r"\b(expense|spending|cost|bill total)\b", user_msg):
+                parsed["intent"] = "MEDICAL_EXPENSES"
+            elif re.search(r"\b(history|uploaded documents?)\b", user_msg):
+                parsed["intent"] = "DOCUMENT_HISTORY"
+            else:
+                parsed["intent"] = "MEDICAL_TIMELINE"
+            state = {**state, "parsed_intent": parsed}
+            route = "timeline_agent"
+        elif is_lab_query or is_document_query or is_insurance_query or is_pharmacy_query:
             route = "document_agent"
         elif is_patient_info:
             route = "patient_info_agent"

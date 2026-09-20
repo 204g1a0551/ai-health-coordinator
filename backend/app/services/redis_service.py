@@ -114,6 +114,22 @@ class RedisService:
         """Clears chat history for session."""
         self._client.delete(f"chat:{session_id}")
 
+    def get_timeline_cache(self, session_id: str) -> Optional[List[Dict[str, Any]]]:
+        raw = self._client.get(f"timeline:{session_id}")
+        if not raw:
+            return None
+        try:
+            return json.loads(raw)
+        except json.JSONDecodeError:
+            self._client.delete(f"timeline:{session_id}")
+            return None
+
+    def set_timeline_cache(self, session_id: str, events: List[Dict[str, Any]], ttl: int = 300) -> None:
+        self._client.set(f"timeline:{session_id}", json.dumps(events), ex=ttl)
+
+    def delete_timeline_cache(self, session_id: str) -> None:
+        self._client.delete(f"timeline:{session_id}")
+
     # ----------------------------------------------------------------------
     # 3. LangGraph Temporary Agent State (state:{session_id})
     # ----------------------------------------------------------------------
@@ -392,5 +408,4 @@ class RedisService:
 
 # Global singleton instance
 redis_service = RedisService()
-
 

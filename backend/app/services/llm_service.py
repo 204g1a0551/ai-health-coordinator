@@ -390,6 +390,13 @@ class LLMService:
         # ------------------------------------------------------------------
         # 8.5 Document AI, Medicine & Insurance Workspace Intents
         # ------------------------------------------------------------------
+        if re.search(r"\bmedical\s+timeline\b|\bwhat happened during my last consultation\b", lower):
+            return ParsedUserIntent(intent="MEDICAL_TIMELINE")
+        if re.search(r"\bmedical\s+expenses?\b|\bexpense summary\b|\bhealthcare spending\b", lower):
+            return ParsedUserIntent(intent="MEDICAL_EXPENSES")
+        if re.search(r"\bdocument history\b|\buploaded documents?\b", lower):
+            return ParsedUserIntent(intent="DOCUMENT_HISTORY")
+
         if re.search(r"\bupload\s+(?:this\s+)?(?:prescription|document|report|bill|pdf)\b", lower):
             return ParsedUserIntent(intent="UPLOAD_DOCUMENT")
 

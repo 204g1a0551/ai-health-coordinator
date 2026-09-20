@@ -23,6 +23,9 @@ import { DocumentEvidenceComponent } from '../dynamic-cards/document-evidence/do
 import { LabReportComponent } from '../dynamic-cards/lab-report/lab-report.component';
 import { LabResultsComponent } from '../dynamic-cards/lab-results/lab-results.component';
 import { LabEvidenceComponent } from '../dynamic-cards/lab-evidence/lab-evidence.component';
+import { MedicalTimelineCardComponent } from '../dynamic-cards/medical-timeline/medical-timeline.component';
+import { MedicalExpensesCardComponent } from '../dynamic-cards/medical-expenses/medical-expenses.component';
+import { DocumentHistoryCardComponent } from '../dynamic-cards/document-history/document-history.component';
 
 @Component({
   selector: 'app-dashboard',
@@ -49,6 +52,9 @@ import { LabEvidenceComponent } from '../dynamic-cards/lab-evidence/lab-evidence
     LabReportComponent,
     LabResultsComponent,
     LabEvidenceComponent,
+    MedicalTimelineCardComponent,
+    MedicalExpensesCardComponent,
+    DocumentHistoryCardComponent,
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css',

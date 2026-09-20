@@ -21,6 +21,9 @@ export type UIActionType =
   | 'SHOW_LAB_REPORT'
   | 'SHOW_LAB_RESULTS'
   | 'SHOW_LAB_EVIDENCE'
+  | 'SHOW_MEDICAL_TIMELINE'
+  | 'SHOW_MEDICAL_EXPENSES'
+  | 'SHOW_DOCUMENT_HISTORY'
   | 'HIDE_COMPONENT'
   | 'CLEAR_DASHBOARD';
 
@@ -131,6 +134,15 @@ export class UIStateService {
       case 'SHOW_LAB_EVIDENCE':
       case 'LAB_EVIDENCE':
         return 'SHOW_LAB_EVIDENCE';
+      case 'SHOW_MEDICAL_TIMELINE':
+      case 'MEDICAL_TIMELINE':
+        return 'SHOW_MEDICAL_TIMELINE';
+      case 'SHOW_MEDICAL_EXPENSES':
+      case 'MEDICAL_EXPENSES':
+        return 'SHOW_MEDICAL_EXPENSES';
+      case 'SHOW_DOCUMENT_HISTORY':
+      case 'DOCUMENT_HISTORY':
+        return 'SHOW_DOCUMENT_HISTORY';
       case 'CLEAR_DASHBOARD':
       case 'CLEAR_APPOINTMENT':
       case 'HIDE_COMPONENT':

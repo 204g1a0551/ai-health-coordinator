@@ -31,6 +31,9 @@ ALLOWED_ACTIONS = {
     "SHOW_LAB_REPORT",
     "SHOW_LAB_RESULTS",
     "SHOW_LAB_EVIDENCE",
+    "SHOW_MEDICAL_TIMELINE",
+    "SHOW_MEDICAL_EXPENSES",
+    "SHOW_DOCUMENT_HISTORY",
     # Legacy / alias compatibility
     "UPDATE_SYMPTOMS",
     "UPDATE_DEPARTMENT",
@@ -109,7 +112,10 @@ def ui_action_node(state: AgentState) -> AgentState:
     # --------------------------------------------------------------------------
     # 0. Direct Lab Action passthrough
     # --------------------------------------------------------------------------
-    if state.get("primary_ui_action") in ["SHOW_LAB_REPORT", "SHOW_LAB_RESULTS", "SHOW_LAB_EVIDENCE"]:
+    if state.get("primary_ui_action") in [
+        "SHOW_LAB_REPORT", "SHOW_LAB_RESULTS", "SHOW_LAB_EVIDENCE",
+        "SHOW_MEDICAL_TIMELINE", "SHOW_MEDICAL_EXPENSES", "SHOW_DOCUMENT_HISTORY",
+    ]:
         primary_action = state["primary_ui_action"]
         primary_data = state.get("primary_ui_data", {})
 

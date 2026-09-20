@@ -189,6 +189,8 @@ class DocumentService:
             "extracted_data": extracted_data.dict(),
         }
         create_medical_document(record)
+        from app.services.timeline_service import timeline_service
+        timeline_service.extract_and_save_event(doc_id, user_id or "default")
 
         return DocumentUploadResponse(
             id=doc_id,

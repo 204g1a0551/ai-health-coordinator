@@ -1,0 +1,14 @@
+.timeline-page { padding: 2rem; max-width: 1200px; margin: auto; color: #172033; }
+header, .layout { display: flex; gap: 1.5rem; justify-content: space-between; }
+.layout { align-items: flex-start; margin-top: 1.5rem; }
+.timeline-card, .expense-card { background: white; border: 1px solid #e2e8f0; border-radius: 14px; padding: 1.25rem; box-shadow: 0 4px 16px #0f172a0d; }
+.timeline-card { flex: 1; } .expense-card { width: 300px; }
+.event { display: flex; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid #eef2f7; }
+.event-icon { font-size: 1.5rem; } time, .muted { color: #64748b; display: block; }
+.event p { margin: .35rem 0; color: #475569; } .total { font-size: 2rem; font-weight: 700; margin: 1rem 0; }
+.bar-row { display: flex; justify-content: space-between; padding: .6rem 0; border-bottom: 1px solid #eef2f7; }
+textarea { width: 100%; min-height: 80px; margin: .5rem 0; box-sizing: border-box; }
+button { border: 0; border-radius: 8px; padding: .6rem 1rem; background: #0284c7; color: white; cursor: pointer; }
+.eyebrow { color: #0284c7; font-size: .75rem; font-weight: 700; letter-spacing: .08em; }
+.answer { background: #f0f9ff; padding: .75rem; border-radius: 8px; }
+@media (max-width: 800px) { .layout { flex-direction: column; } .expense-card { width: auto; } }
