@@ -1,15 +1,28 @@
 <div class="chat-container">
   <div class="chat-header">
     <div class="chat-header-info">
-      <h3>AI Health Assistant</h3>
-      <span class="status-indicator">Online</span>
+      <div class="header-title-row">
+        <h3>AI Health Assistant</h3>
+        <span class="status-indicator">Connected</span>
+      </div>
+      <div class="session-info">
+        <span class="session-label">Session:</span>
+        <span class="session-id">{{ sessionId }}</span>
+      </div>
     </div>
   </div>
 
   <div class="chat-messages" #messagesScroll>
-    @for (msg of messages(); track $index) {
-      <div class="message-wrapper" [class.user]="msg.sender === 'user'" [class.assistant]="msg.sender === 'assistant'">
-        <div class="message-bubble">
+    @for (msg of messages(); track msg.id) {
+      <div
+        class="message-wrapper"
+        [class.user]="msg.sender === 'user'"
+        [class.assistant]="msg.sender === 'assistant'"
+      >
+        <div class="message-bubble" [class.error-bubble]="msg.isError">
+          <div class="message-sender-label">
+            {{ msg.sender === 'user' ? 'You' : 'AI Assistant' }}
+          </div>
           <div class="message-text">{{ msg.text }}</div>
           <div class="message-time">{{ msg.timestamp }}</div>
         </div>
@@ -19,9 +32,10 @@
     @if (isSending()) {
       <div class="message-wrapper assistant">
         <div class="message-bubble typing-bubble">
-          <span class="typing-dot"></span>
-          <span class="typing-dot"></span>
-          <span class="typing-dot"></span>
+          <span class="typing-text">AI Assistant is thinking</span>
+          <span class="typing-dots">
+            <span>.</span><span>.</span><span>.</span>
+          </span>
         </div>
       </div>
     }
@@ -32,7 +46,7 @@
       <input
         type="text"
         class="chat-input"
-        placeholder="Type a message (e.g. 'I have a mild fever')..."
+        placeholder="Type a message (e.g. 'I have fever and headache')..."
         [(ngModel)]="userInput"
         (keydown)="onKeyDown($event)"
         [disabled]="isSending()"
