@@ -7,6 +7,7 @@ from app.db.repository import (
     get_active_appointment,
     find_doctor_by_name,
 )
+from app.services.redis_service import redis_service
 
 
 def extract_booking_entities(text: str):
@@ -68,6 +69,8 @@ def appointment_node(state: AgentState) -> AgentState:
     if any(k in lower_msg for k in ["cancel", "delete", "drop appointment"]):
         cancel_res = cancel_appointment(session_id)
         if cancel_res.get("success"):
+            redis_service.invalidate_doctor_availability("doc-ravi")
+            redis_service.invalidate_doctor_availability("doc-priya")
             actions.append({
                 "type": "CANCEL_APPOINTMENT",
                 "payload": {"status": "Cancelled"}
@@ -113,8 +116,22 @@ def appointment_node(state: AgentState) -> AgentState:
 
     # Case 3: Book / Reschedule Appointment
     doctor_query, date_query, time_query = extract_booking_entities(user_msg)
+    hold_id = f"{session_id}:{doctor_query}:{time_query}".replace(" ", "_")
+
+    # Temporarily hold appointment slot in Redis with configurable TTL
+    redis_service.hold_appointment_slot(
+        appointment_id=hold_id,
+        hold_data={"doctor": doctor_query, "time": time_query, "sessionId": session_id},
+    )
 
     booking_res = book_appointment(session_id, doctor_query, time_query, date_query)
+
+    # Release temporary hold once permanent database booking completes
+    redis_service.release_appointment_hold(hold_id)
+
+    if booking_res.get("success"):
+        redis_service.invalidate_doctor_availability("doc-ravi")
+        redis_service.invalidate_doctor_availability("doc-priya")
 
     if booking_res.get("success"):
         appt_data = booking_res["appointment"]

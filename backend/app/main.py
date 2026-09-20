@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.routers.chat import router as chat_router
 from app.routers.dashboard import router as dashboard_router
+from app.routers.health import router as health_router
 
 app = FastAPI(
     title="AI Health Checkup & Appointment Coordinator",
@@ -26,6 +27,7 @@ app.add_middleware(
 # Register endpoints
 app.include_router(chat_router)
 app.include_router(dashboard_router)
+app.include_router(health_router)
 
 
 @app.get("/", tags=["Health Check"])

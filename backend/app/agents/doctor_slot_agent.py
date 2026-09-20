@@ -2,6 +2,7 @@ import re
 from typing import Dict, Any, List, Optional
 from app.agents.state import AgentState
 from app.db.repository import query_doctors_and_slots
+from app.services.redis_service import redis_service
 
 # Patterns to identify time-of-day preference
 PERIOD_PATTERNS = [
@@ -66,7 +67,23 @@ def doctor_slot_node(state: AgentState) -> AgentState:
     period_pref = extract_period_preference(user_msg)
     date_pref = extract_date_preference(user_msg)
 
-    doctors_found = query_doctors_and_slots(target_dept, period_pref)
+    cache_key = f"{target_dept}:{period_pref or 'all'}"
+    doctors_found = redis_service.get_hospital_doctors(hospital_id=cache_key)
+    if not doctors_found:
+        doctors_found = query_doctors_and_slots(target_dept, period_pref)
+        redis_service.set_hospital_doctors(hospital_id=cache_key, doctors=doctors_found)
+
+    # Cache individual doctor availability in Redis
+    for d in doctors_found:
+        redis_service.set_doctor_availability(
+            doctor_id=d["id"],
+            availability_data={
+                "name": d["name"],
+                "department": d["department"],
+                "status": d["availableStatus"],
+                "slots": d["slots"],
+            },
+        )
 
     # Format structured results matching the specification
     structured_doctors = []
