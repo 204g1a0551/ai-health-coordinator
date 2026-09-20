@@ -2,20 +2,17 @@ services:
   - type: web
     name: ai-health-coordinator-backend
     runtime: python
-    rootDir: backend
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: GEMINI_API_KEY
-        sync: false          # Set manually in Render dashboard
+        sync: false
       - key: GOOGLE_API_KEY
         sync: false
       - key: GEMINI_MODEL
         value: gemini-2.0-flash
       - key: JWT_SECRET
-        generateValue: true  # Render auto-generates a secure value
-      - key: REDIS_URL
-        sync: false          # Leave empty — uses fakeredis fallback
+        generateValue: true
       - key: REDIS_HOST
         value: 127.0.0.1
       - key: REDIS_PORT
