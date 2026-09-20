@@ -1,0 +1,64 @@
+<div class="dynamic-card doctor-list-card">
+  <div class="card-header-row">
+    <div class="header-left">
+      <div class="card-top-badge">
+        <span class="badge-icon">👨‍⚕️</span>
+        <span>Bengaluru Specialists Directory</span>
+      </div>
+      <h2 class="card-title">{{ departmentName }} Doctors</h2>
+    </div>
+    <span class="total-count-pill">{{ doctors.length }} Specialists Available</span>
+  </div>
+
+  <div class="doctors-container">
+    @if (doctors.length > 0) {
+      <div class="doctors-grid">
+        @for (doc of doctors; track doc.id || doc.name) {
+          <div class="doc-card" (click)="onDoctorClick(doc.name)">
+            <div class="doc-header">
+              <div class="doc-avatar">
+                {{ (doc.name || 'Dr').replace('Dr.', '').trim().charAt(0) }}
+              </div>
+              <div class="doc-identity">
+                <h3 class="doc-name">{{ doc.name }}</h3>
+                <span class="doc-dept">{{ doc.department }}</span>
+              </div>
+              <span class="avail-badge" [class.available]="doc.availableStatus === 'Available'">
+                {{ doc.availableStatus || 'Available' }}
+              </span>
+            </div>
+
+            <div class="doc-facility">
+              @if (doc.hospital) {
+                <span class="facility-name">🏥 {{ doc.hospital }}</span>
+              }
+              @if (doc.locality) {
+                <span class="facility-loc">📍 {{ doc.locality }}</span>
+              }
+            </div>
+
+            <div class="doc-tags">
+              @if (doc.experience) {
+                <span class="doc-tag exp">{{ doc.experience }}</span>
+              }
+              @if (doc.consultationFee) {
+                <span class="doc-tag fee">{{ doc.consultationFee }}</span>
+              }
+              @if (doc.rating) {
+                <span class="doc-tag rating">★ {{ doc.rating }}</span>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    } @else {
+      <div class="empty-state">
+        <p>No specialists currently listed for this query. Please check with another department or locality.</p>
+      </div>
+    }
+  </div>
+
+  <div class="card-hint">
+    <span>💡 Ask <strong>"Show slots for [Doctor Name]"</strong> or <strong>"Show [Doctor Name]"</strong> to inspect details.</span>
+  </div>
+</div>

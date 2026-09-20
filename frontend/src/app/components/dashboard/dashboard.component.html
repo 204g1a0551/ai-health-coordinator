@@ -1,201 +1,54 @@
-<div class="dashboard">
-  <div class="dashboard-header">
-    <div class="header-left">
-      <h2 class="dashboard-title">Healthcare Dashboard</h2>
-    </div>
-    @if (state().providerInfo?.dataSource || (state().doctors.length > 0 && state().doctors[0].dataSource)) {
-      <div class="provider-header-pill" title="Live Bengaluru Healthcare Provider Integration">
-        <span class="live-indicator"></span>
-        <span class="provider-pill-text">{{ state().providerInfo?.dataSource || state().doctors[0].dataSource }}</span>
-      </div>
+<div class="dashboard-canvas">
+  @switch (uiState.state().currentComponent) {
+
+    @case ('SHOW_PATIENT_INFO') {
+      <app-patient-info [data]="uiState.state().currentData" />
     }
-  </div>
 
-  <div class="dashboard-grid">
-    <!-- 1. Patient Information -->
-    <section class="dash-card">
-      <h3 class="card-title">1. Patient Information</h3>
-      <div class="patient-grid">
-        <div class="field-item">
-          <span class="field-label">Patient Name</span>
-          <span class="field-value">{{ state().patient.name || 'Not provided' }}</span>
-        </div>
-        <div class="field-item">
-          <span class="field-label">Age</span>
-          <span class="field-value">{{ state().patient.age ? state().patient.age + ' yrs' : '--' }}</span>
-        </div>
-        <div class="field-item full-width">
-          <span class="field-label">Phone</span>
-          <span class="field-value">{{ state().patient.phone || '--' }}</span>
-        </div>
-        @if (state().patient.preferredDepartment) {
-          <div class="field-item full-width">
-            <span class="field-label">Preferred Department</span>
-            <span class="field-value">{{ state().patient.preferredDepartment }}</span>
-          </div>
-        }
-      </div>
-    </section>
+    @case ('SHOW_SYMPTOMS') {
+      <app-symptoms [data]="uiState.state().currentData" />
+    }
 
-    <!-- 2. Symptoms -->
-    <section class="dash-card">
-      <h3 class="card-title">2. Symptoms</h3>
-      @if (state().symptoms.length > 0) {
-        <div class="symptoms-list">
-          @for (symptom of state().symptoms; track symptom.name) {
-            <div class="symptom-tag">
-              <span class="symptom-name">{{ symptom.name }}</span>
-              @if (symptom.duration) {
-                <span class="symptom-dash">—</span>
-                <span class="symptom-duration">{{ symptom.duration }}</span>
-              }
-            </div>
-          }
-        </div>
-      } @else {
-        <p class="empty-state">No symptoms recorded yet</p>
-      }
-    </section>
+    @case ('SHOW_DEPARTMENT') {
+      <app-department [data]="uiState.state().currentData" />
+    }
 
-    <!-- 3. Suggested Department -->
-    <section class="dash-card">
-      <h3 class="card-title">3. Suggested Department</h3>
-      <div class="dept-box">
-        <span class="dept-name">{{ state().suggestedDepartment.name || 'Not assigned yet' }}</span>
-      </div>
-    </section>
+    @case ('SHOW_DOCTORS') {
+      <app-doctor-list
+        [data]="uiState.state().currentData"
+        (selectDoctor)="onSelectDoctor($event)"
+      />
+    }
 
-    <!-- 4. Doctors -->
-    <section class="dash-card">
-      <div class="card-title-row">
-        <div class="title-with-loc">
-          <h3 class="card-title">4. Doctors</h3>
-          @if (state().nearbyLocation) {
-            <span class="nearby-loc-badge">📍 Near {{ state().nearbyLocation }}</span>
-          }
-        </div>
-        @if (state().providerInfo?.timestamp || (state().doctors.length > 0 && state().doctors[0].timestamp)) {
-          <span class="card-sync-time">
-            Synced: {{ state().providerInfo?.timestamp || state().doctors[0].timestamp }}
-          </span>
-        }
-      </div>
-      @if (state().doctors.length > 0) {
-        <div class="doctors-list">
-          @for (doctor of state().doctors; track doctor.id) {
-            <div class="doctor-item">
-              <div class="doctor-main-row">
-                <div class="doctor-info">
-                  <span class="doctor-name">{{ doctor.name }}</span>
-                  <span class="doctor-dept">{{ doctor.department }}</span>
-                </div>
-                <span class="status-pill" [class.available]="doctor.availableStatus === 'Available'">
-                  {{ doctor.availableStatus }}
-                </span>
-              </div>
+    @case ('SHOW_DOCTOR_DETAILS') {
+      <app-doctor-details
+        [data]="uiState.state().currentData"
+        (viewSlots)="onViewSlots($event)"
+      />
+    }
 
-              @if (doctor.hospital || doctor.locality) {
-                <div class="doctor-facility-row">
-                  @if (doctor.hospital) {
-                    <span class="doctor-hospital">{{ doctor.hospital }}</span>
-                  }
-                  @if (doctor.locality) {
-                    <span class="doctor-locality">📍 {{ doctor.locality }}</span>
-                  }
-                </div>
-              }
+    @case ('SHOW_SLOTS') {
+      <app-slot
+        [data]="uiState.state().currentData"
+        (slotSelected)="onSlotSelected($event)"
+      />
+    }
 
-              <div class="doctor-meta-row">
-                @if (doctor.distance_km !== undefined) {
-                  <span class="meta-badge distance">🚗 {{ doctor.distance_km }} km</span>
-                }
-                @if (doctor.consultationFee) {
-                  <span class="meta-badge fee">{{ doctor.consultationFee }}</span>
-                }
-                @if (doctor.consultationType) {
-                  <span class="meta-badge type">{{ doctor.consultationType }}</span>
-                }
-                @if (doctor.rating) {
-                  <span class="meta-badge rating">★ {{ doctor.rating }}</span>
-                }
-                @if (doctor.experience) {
-                  <span class="meta-badge exp">{{ doctor.experience }}</span>
-                }
-              </div>
-            </div>
-          }
-        </div>
-      } @else {
-        <p class="empty-state">No doctors listed</p>
-      }
-    </section>
+    @case ('SHOW_NEARBY_DOCTORS') {
+      <app-nearby-doctors [data]="uiState.state().currentData" />
+    }
 
-    <!-- 5. Available Slots -->
-    <section class="dash-card">
-      <h3 class="card-title">5. Available Slots</h3>
-      @if (state().availableSlots.length > 0) {
-        <div class="slots-list">
-          @for (slot of state().availableSlots; track slot.id) {
-            <div
-              class="slot-item"
-              [class.unavailable]="!slot.isAvailable"
-              [class.selected]="state().appointmentSummary.time === slot.time && state().appointmentSummary.doctor === slot.doctor"
-              (click)="slot.isAvailable && onSelectSlot(slot.id)"
-            >
-              <div class="slot-time-col">
-                <span class="slot-time">{{ slot.time }}</span>
-                <span class="slot-date">{{ slot.date }}</span>
-              </div>
-              <div class="slot-doc-col">
-                <span class="slot-doc">{{ slot.doctor }}</span>
-                @if (slot.locality) {
-                  <span class="slot-loc">📍 {{ slot.locality }}</span>
-                }
-                <span class="slot-avail">{{ slot.isAvailable ? 'Available' : 'Booked' }}</span>
-              </div>
-            </div>
-          }
-        </div>
-      } @else {
-        <p class="empty-state">No available slots found</p>
-      }
-    </section>
+    @case ('SHOW_APPOINTMENT') {
+      <app-appointment [data]="uiState.state().currentData" />
+    }
 
-    <!-- 6. Appointment Summary -->
-    <section class="dash-card">
-      <h3 class="card-title">6. Appointment Summary</h3>
-      @if (state().appointmentSummary.status === 'Confirmed' || state().appointmentSummary.status === 'Booked') {
-        <div class="appointment-confirmed-container">
-          <div class="confirmed-badge">Appointment Confirmed</div>
-          <div class="confirmed-doctor-name">{{ state().appointmentSummary.doctor }}</div>
-          <div class="confirmed-department-name">{{ state().appointmentSummary.department }}</div>
-          <div class="confirmed-date-str">{{ state().appointmentSummary.date }}</div>
-          <div class="confirmed-time-str">{{ state().appointmentSummary.time }}</div>
-        </div>
-      } @else {
-        <div class="summary-grid">
-          <div class="summary-item">
-            <span class="field-label">Doctor</span>
-            <span class="field-value">{{ state().appointmentSummary.doctor || 'Not selected' }}</span>
-          </div>
-          <div class="summary-item">
-            <span class="field-label">Department</span>
-            <span class="field-value">{{ state().appointmentSummary.department || '--' }}</span>
-          </div>
-          <div class="summary-item">
-            <span class="field-label">Date</span>
-            <span class="field-value">{{ state().appointmentSummary.date || '--' }}</span>
-          </div>
-          <div class="summary-item">
-            <span class="field-label">Time</span>
-            <span class="field-value highlight">{{ state().appointmentSummary.time || '--' }}</span>
-          </div>
-          <div class="summary-item full-width status-row">
-            <span class="field-label">Status</span>
-            <span class="summary-status-pill">{{ state().appointmentSummary.status || 'Pending' }}</span>
-          </div>
-        </div>
-      }
-    </section>
-  </div>
+    @default {
+      <!-- SHOW_WELCOME and any unknown action -->
+      <app-welcome
+        [data]="uiState.state().currentData"
+        (promptSelected)="onPromptSelected($event)"
+      />
+    }
+
+  }
 </div>

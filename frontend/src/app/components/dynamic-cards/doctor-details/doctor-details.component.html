@@ -1,0 +1,62 @@
+<div class="dynamic-card doctor-details-card">
+  <div class="card-top-badge">
+    <span class="badge-icon">👨‍⚕️</span>
+    <span>Physician Profile</span>
+  </div>
+
+  <div class="doctor-hero">
+    <div class="doctor-avatar">
+      {{ (doctor.name || 'Dr').replace('Dr.', '').trim().charAt(0) }}
+    </div>
+    <div class="doctor-header-info">
+      <div class="name-status-row">
+        <h2 class="doctor-name">{{ doctor.name }}</h2>
+        <span class="status-pill available">Available</span>
+      </div>
+      <span class="doctor-department">{{ doctor.department }}</span>
+      <div class="rating-experience-row">
+        <span class="rating-pill">★ {{ doctor.rating || 4.8 }}</span>
+        <span class="meta-dot">•</span>
+        <span class="exp-text">{{ doctor.experience || '10+ yrs exp' }}</span>
+      </div>
+    </div>
+  </div>
+
+  @if (doctor.bio) {
+    <div class="bio-box">
+      <p class="bio-text">{{ doctor.bio }}</p>
+    </div>
+  }
+
+  <div class="details-grid">
+    <div class="detail-item">
+      <span class="detail-label">Hospital / Clinic</span>
+      <span class="detail-value">🏥 {{ doctor.hospital || 'Bengaluru Medical Center' }}</span>
+    </div>
+    <div class="detail-item">
+      <span class="detail-label">Locality</span>
+      <span class="detail-value">📍 {{ doctor.locality || 'Bengaluru' }}</span>
+    </div>
+    <div class="detail-item">
+      <span class="detail-label">Consultation Fee</span>
+      <span class="detail-value highlight">{{ doctor.consultationFee || '₹600' }}</span>
+    </div>
+    <div class="detail-item">
+      <span class="detail-label">Consultation Mode</span>
+      <span class="detail-value">{{ doctor.consultationType || 'In-Person & Teleconsultation' }}</span>
+    </div>
+    @if (doctor.address) {
+      <div class="detail-item full-width">
+        <span class="detail-label">Full Clinical Address</span>
+        <span class="detail-value">{{ doctor.address }}</span>
+      </div>
+    }
+  </div>
+
+  <div class="card-actions">
+    <button type="button" class="view-slots-action-btn" (click)="onViewSlots()">
+      <span>View Available Consultation Slots</span>
+      <span class="btn-arrow">→</span>
+    </button>
+  </div>
+</div>

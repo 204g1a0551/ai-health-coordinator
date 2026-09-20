@@ -1,0 +1,31 @@
+<div class="dynamic-card department-card">
+  <div class="card-top-badge">
+    <span class="badge-icon">🏛</span>
+    <span>Specialty Routing Recommendation</span>
+  </div>
+
+  <div class="dept-hero">
+    <div class="dept-icon-box">🏥</div>
+    <div class="dept-title-group">
+      <span class="dept-label">Suggested Medical Department</span>
+      <h2 class="dept-name">{{ departmentName }}</h2>
+    </div>
+  </div>
+
+  <div class="dept-reason-box">
+    <div class="reason-header">
+      <span class="reason-indicator"></span>
+      <strong>Clinical Routing Reason</strong>
+    </div>
+    <p class="reason-text">{{ departmentReason }}</p>
+  </div>
+
+  <div class="dept-next-steps">
+    <h3 class="next-title">Recommended Next Inquiries</h3>
+    <ul class="next-list">
+      <li>Say <strong>"Show doctors in {{ departmentName }}"</strong> to view verified physicians.</li>
+      <li>Say <strong>"Show doctors near Indiranagar"</strong> to find specialists in a specific locality.</li>
+      <li>Say <strong>"Show available slots tomorrow"</strong> to view immediate openings.</li>
+    </ul>
+  </div>
+</div>

@@ -1,0 +1,44 @@
+<div class="dynamic-card slot-card">
+  <div class="card-header-row">
+    <div class="card-top-badge">
+      <span class="badge-dot"></span>
+      <span>Live Consultation Availability</span>
+    </div>
+    <span class="sync-tag">Redis Concurrency Locked</span>
+  </div>
+
+  <div class="doctor-slot-hero">
+    <div class="doc-avatar">👨‍⚕️</div>
+    <div class="doc-text">
+      <span class="slot-for-label">Available Slots For</span>
+      <h2 class="slot-doc-name">{{ doctorName }}</h2>
+      <span class="slot-date-text">📅 {{ date }}</span>
+    </div>
+  </div>
+
+  <div class="slots-container">
+    <span class="slots-title">Select an open consultation window:</span>
+    @if (slots.length > 0) {
+      <div class="slots-grid">
+        @for (time of slots; track time) {
+          <button type="button" class="slot-pill" (click)="onSelectSlot(time)">
+            <span class="slot-time">{{ time }}</span>
+            <span class="slot-status">Available</span>
+          </button>
+        }
+      </div>
+    } @else {
+      <div class="empty-state">
+        <p>No available slots found for the requested time. Please ask for alternative times or dates.</p>
+      </div>
+    }
+  </div>
+
+  <div class="slot-booking-hint">
+    <div class="hint-icon">⚡</div>
+    <div class="hint-content">
+      <strong>Fast Booking</strong>
+      <span>Click any slot above or type <em>"Book {{ slots.length > 0 ? slots[0] : '6:30 PM' }}"</em> in the chat.</span>
+    </div>
+  </div>
+</div>

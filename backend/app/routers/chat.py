@@ -44,6 +44,13 @@ async def handle_chat_message(request: ChatRequest) -> ChatResponse:
         "I understand. I can help organize your symptoms and appointment request."
     )
     actions = result_state.get("actions", [])
+    primary_action = result_state.get("primary_ui_action")
+    primary_data = result_state.get("primary_ui_data")
+
+    if not primary_action and actions:
+        first_act = actions[0]
+        primary_action = first_act.get("action") or first_act.get("type")
+        primary_data = first_act.get("data") or first_act.get("payload")
 
     # Record assistant reply in Redis session history
     asst_msg_dict = {"sender": "assistant", "text": reply_text, "timestamp": now_time}
@@ -54,9 +61,12 @@ async def handle_chat_message(request: ChatRequest) -> ChatResponse:
 
     return ChatResponse(
         message=reply_text,
+        action=primary_action,
+        data=primary_data,
         actions=actions,
         sessionId=session_id,
     )
+
 
 
 @router.get("/history/{session_id}", response_model=List[SessionMessage])

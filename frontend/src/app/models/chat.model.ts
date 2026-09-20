@@ -15,5 +15,7 @@ export interface ChatRequest {
 export interface ChatResponse {
   message: string;
   actions: any[];
+  action?: string;
+  data?: any;
   sessionId?: string;
 }

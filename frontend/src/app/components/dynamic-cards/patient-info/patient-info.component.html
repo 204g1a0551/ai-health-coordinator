@@ -1,0 +1,68 @@
+<div class="dynamic-card patient-info-card">
+
+  <!-- Header -->
+  <div class="card-header-row">
+    <div class="card-top-badge">
+      <span>👤</span>
+      <span>Patient Profile</span>
+    </div>
+  </div>
+
+  <!-- Avatar + Name -->
+  <div class="patient-hero">
+    <div class="patient-avatar">{{ initials }}</div>
+    <div class="patient-main">
+      <h2 class="patient-name">{{ name }}</h2>
+      <span class="patient-sub">Verified Patient</span>
+    </div>
+  </div>
+
+  <!-- Info grid -->
+  <div class="info-grid">
+    <div class="info-item">
+      <span class="info-label">Age</span>
+      <span class="info-value">{{ age }}</span>
+    </div>
+    <div class="info-item">
+      <span class="info-label">Gender</span>
+      <span class="info-value">{{ gender }}</span>
+    </div>
+    <div class="info-item">
+      <span class="info-label">Blood Group</span>
+      <span class="info-value blood">{{ bloodGroup }}</span>
+    </div>
+    <div class="info-item">
+      <span class="info-label">Phone</span>
+      <span class="info-value">{{ phone }}</span>
+    </div>
+    <div class="info-item full-width">
+      <span class="info-label">Email</span>
+      <span class="info-value">{{ email }}</span>
+    </div>
+  </div>
+
+  <!-- Allergies -->
+  @if (allergies.length > 0) {
+    <div class="tag-section">
+      <span class="tag-section-label">⚠️ Allergies</span>
+      <div class="tag-list">
+        @for (allergy of allergies; track allergy) {
+          <span class="tag tag-warning">{{ allergy }}</span>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Medical history -->
+  @if (medicalHistory.length > 0) {
+    <div class="tag-section">
+      <span class="tag-section-label">📋 Medical History</span>
+      <div class="tag-list">
+        @for (item of medicalHistory; track item) {
+          <span class="tag tag-info">{{ item }}</span>
+        }
+      </div>
+    </div>
+  }
+
+</div>

@@ -13,11 +13,14 @@ class ChatRequest(BaseModel):
 
 class ChatResponse(BaseModel):
     message: str = Field(..., description="Reply text from the assistant")
-    actions: List[Any] = Field(default_factory=list, description="Structured actions for future UI updates")
+    action: Optional[str] = Field(default=None, description="Primary controlled UI action (e.g. SHOW_SYMPTOMS, SHOW_SLOTS)")
+    data: Optional[Dict[str, Any]] = Field(default=None, description="Structured payload for the primary UI action")
+    actions: List[Any] = Field(default_factory=list, description="Structured actions for UI updates")
     session_id: Optional[str] = Field(default=None, alias="sessionId", description="Session ID")
 
     class Config:
         populate_by_name = True
+
 
 
 class SessionMessage(BaseModel):

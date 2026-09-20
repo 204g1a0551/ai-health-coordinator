@@ -1,0 +1,77 @@
+<div class="dynamic-card appointment-card">
+
+  <!-- Header -->
+  <div class="card-header-row">
+    <div class="card-top-badge">
+      <span class="badge-icon">✅</span>
+      <span>Appointment Booked</span>
+    </div>
+    <span class="apt-id-tag"># {{ appointmentId }}</span>
+  </div>
+
+  <!-- Status Banner -->
+  <div class="status-banner" [ngClass]="statusClass">
+    <span class="status-icon">
+      @if (status === 'confirmed') { 🎉 }
+      @else if (status === 'pending') { ⏳ }
+      @else { ❌ }
+    </span>
+    <div class="status-text">
+      <strong>{{ statusLabel }}</strong>
+      <span>Your appointment has been {{ status === 'confirmed' ? 'confirmed and saved' : status }}.</span>
+    </div>
+  </div>
+
+  <!-- Detail Cards -->
+  <div class="detail-grid">
+    <div class="detail-item">
+      <span class="detail-icon">👨‍⚕️</span>
+      <div class="detail-content">
+        <span class="detail-label">Doctor</span>
+        <span class="detail-value">{{ doctorName }}</span>
+      </div>
+    </div>
+    <div class="detail-item">
+      <span class="detail-icon">🏥</span>
+      <div class="detail-content">
+        <span class="detail-label">Department</span>
+        <span class="detail-value">{{ department }}</span>
+      </div>
+    </div>
+    <div class="detail-item">
+      <span class="detail-icon">📅</span>
+      <div class="detail-content">
+        <span class="detail-label">Date</span>
+        <span class="detail-value">{{ date }}</span>
+      </div>
+    </div>
+    <div class="detail-item">
+      <span class="detail-icon">🕐</span>
+      <div class="detail-content">
+        <span class="detail-label">Time</span>
+        <span class="detail-value">{{ time }}</span>
+      </div>
+    </div>
+    <div class="detail-item full-width">
+      <span class="detail-icon">📍</span>
+      <div class="detail-content">
+        <span class="detail-label">Location</span>
+        <span class="detail-value">{{ hospital }}</span>
+      </div>
+    </div>
+    <div class="detail-item full-width">
+      <span class="detail-icon">👤</span>
+      <div class="detail-content">
+        <span class="detail-label">Patient</span>
+        <span class="detail-value">{{ patientName }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer note -->
+  <div class="apt-footer">
+    <span class="footer-dot">💡</span>
+    <span>You can say <em>"Cancel this appointment"</em> or <em>"Reschedule to Monday"</em> in the chat.</span>
+  </div>
+
+</div>

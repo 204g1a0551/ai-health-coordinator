@@ -1,0 +1,50 @@
+<div class="welcome-card">
+  <div class="welcome-badge">
+    <span class="badge-icon">✦</span>
+    <span>Context-Aware Dynamic Health Canvas</span>
+  </div>
+
+  <div class="welcome-hero">
+    <div class="welcome-icon-circle">✚</div>
+    <h2 class="welcome-title">AI Health Checkup &amp; Appointment Coordinator</h2>
+    <p class="welcome-subtext">
+      {{ data?.welcomeMessage || 'Your clinical assistant is ready. Describe your symptoms, explore departments, find nearby Bengaluru specialists, or coordinate an appointment.' }}
+    </p>
+  </div>
+
+  <div class="welcome-instructions">
+    <div class="instruction-step">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <strong>Chat on the Right</strong>
+        <span>Ask questions, report symptoms, or request specialist slots naturally.</span>
+      </div>
+    </div>
+    <div class="instruction-step">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <strong>Dynamic Focus on the Left</strong>
+        <span>This canvas only shows the single most relevant card matching your conversation context.</span>
+      </div>
+    </div>
+    <div class="instruction-step">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <strong>Instant Slot Lock</strong>
+        <span>Selected consultation slots are temporarily locked in real-time to prevent double-booking.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="starters-section">
+    <h3 class="starters-title">Suggested Inquiries</h3>
+    <div class="starters-chips">
+      @for (prompt of starterPrompts; track prompt) {
+        <button type="button" class="starter-chip" (click)="selectPrompt(prompt)">
+          <span class="chip-arrow">→</span>
+          <span>{{ prompt }}</span>
+        </button>
+      }
+    </div>
+  </div>
+</div>

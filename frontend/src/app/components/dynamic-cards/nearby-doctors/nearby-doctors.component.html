@@ -1,0 +1,66 @@
+<div class="dynamic-card nearby-card">
+
+  <!-- Header -->
+  <div class="card-header-row">
+    <div class="card-top-badge">
+      <span class="location-dot">📍</span>
+      <span>Nearby Doctors</span>
+    </div>
+    <span class="location-tag">{{ location }}</span>
+  </div>
+
+  <!-- Map placeholder -->
+  <div class="map-strip">
+    <div class="map-bg">
+      <span class="map-pin">📍</span>
+      <span class="map-label">{{ location }}</span>
+    </div>
+  </div>
+
+  <!-- Doctor cards -->
+  <div class="nearby-list">
+    @for (doc of doctors; track doc.name) {
+      <div class="nearby-item" [class.unavailable]="doc.available === false">
+        <div class="doc-avatar">
+          {{ doc.available !== false ? '👨‍⚕️' : '🚫' }}
+        </div>
+        <div class="doc-info">
+          <div class="doc-name-row">
+            <span class="doc-name">{{ doc.name }}</span>
+            @if (doc.available !== false) {
+              <span class="avail-badge">Available</span>
+            } @else {
+              <span class="unavail-badge">Unavailable</span>
+            }
+          </div>
+          <span class="doc-dept">{{ doc.department }}</span>
+          @if (doc.hospital) {
+            <span class="doc-hospital">🏥 {{ doc.hospital }}</span>
+          }
+          @if (doc.rating) {
+            <div class="star-row">
+              @for (s of stars(doc.rating); track $index) {
+                <span class="star" [class.filled]="s === '★'">{{ s }}</span>
+              }
+              <span class="rating-val">{{ doc.rating }}</span>
+            </div>
+          }
+        </div>
+        <div class="distance-badge" [ngClass]="distanceClass(doc.distance_km)">
+          {{ distanceLabel(doc.distance_km) }}
+        </div>
+      </div>
+    } @empty {
+      <div class="empty-state">
+        <span>No doctors found near <strong>{{ location }}</strong>. Try a different locality.</span>
+      </div>
+    }
+  </div>
+
+  <!-- Footer hint -->
+  <div class="nearby-footer">
+    <span>💬</span>
+    <span>Say <em>"Book Dr. Ravi at 6 PM"</em> to continue scheduling.</span>
+  </div>
+
+</div>

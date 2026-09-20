@@ -1,0 +1,48 @@
+<div class="dynamic-card symptoms-card">
+  <div class="card-top-badge">
+    <span class="badge-dot"></span>
+    <span>Clinical Triage In Progress</span>
+  </div>
+
+  <div class="card-header">
+    <div class="header-icon">🩺</div>
+    <div class="header-text">
+      <h2 class="card-title">Recorded Symptoms</h2>
+      <p class="card-subtitle">Identified clinical complaints extracted from your conversation.</p>
+    </div>
+  </div>
+
+  <div class="card-body">
+    @if (symptomsList.length > 0) {
+      <div class="symptoms-grid">
+        @for (s of symptomsList; track s.name) {
+          <div class="symptom-pill">
+            <div class="pill-name">{{ s.name }}</div>
+            @if (s.duration) {
+              <div class="pill-duration">
+                <span class="clock-icon">⏱</span>
+                <span>{{ s.duration }}</span>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    } @else {
+      <div class="empty-state">
+        <p>No symptoms currently identified. Please share what you are experiencing in the chat.</p>
+      </div>
+    }
+
+    <div class="triage-status-banner">
+      <div class="status-icon">ℹ️</div>
+      <div class="status-content">
+        <strong>Next Clinical Step</strong>
+        <span>Ask the assistant <em>"Which department should I visit?"</em> or <em>"Show general physicians"</em> to proceed.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-footer-note">
+    <span>⚠️ AI clinical triage is for coordination only. Consult a doctor for diagnostic advice.</span>
+  </div>
+</div>

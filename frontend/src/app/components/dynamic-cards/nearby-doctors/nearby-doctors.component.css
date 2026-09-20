@@ -1,0 +1,248 @@
+.dynamic-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: 0 4px 24px rgba(30, 58, 138, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  animation: cardSlideIn 0.35s cubic-bezier(0.34, 1.2, 0.64, 1) both;
+}
+
+@keyframes cardSlideIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.card-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.card-top-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #1d4ed8;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.location-dot {
+  font-size: 1rem;
+}
+
+.location-tag {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #1d4ed8;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 100px;
+  padding: 4px 12px;
+}
+
+/* map strip */
+.map-strip {
+  border-radius: 14px;
+  overflow: hidden;
+  height: 72px;
+}
+
+.map-bg {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 40%, #93c5fd 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 1px dashed #93c5fd;
+  border-radius: 14px;
+}
+
+.map-pin { font-size: 1.5rem; }
+
+.map-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1e3a8a;
+}
+
+/* nearby list */
+.nearby-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.nearby-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 14px 16px;
+  transition: all 0.2s ease;
+}
+
+.nearby-item:hover {
+  border-color: #3b82f6;
+  background: #eff6ff;
+  box-shadow: 0 2px 12px rgba(59, 130, 246, 0.1);
+}
+
+.nearby-item.unavailable {
+  opacity: 0.6;
+}
+
+.doc-avatar {
+  font-size: 1.8rem;
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  background: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 6px rgba(30, 58, 138, 0.1);
+}
+
+.doc-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.doc-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.doc-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.avail-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #15803d;
+  background: #dcfce7;
+  border-radius: 100px;
+  padding: 2px 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.unavail-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #be123c;
+  background: #ffe4e6;
+  border-radius: 100px;
+  padding: 2px 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.doc-dept {
+  font-size: 0.8rem;
+  color: #3b82f6;
+  font-weight: 600;
+}
+
+.doc-hospital {
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.star-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-top: 2px;
+}
+
+.star {
+  font-size: 0.8rem;
+  color: #cbd5e1;
+}
+
+.star.filled {
+  color: #f59e0b;
+}
+
+.rating-val {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #64748b;
+  margin-left: 4px;
+}
+
+/* distance badge */
+.distance-badge {
+  flex-shrink: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  border-radius: 10px;
+  padding: 6px 10px;
+  text-align: center;
+  min-width: 52px;
+}
+
+.dist-close {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.dist-medium {
+  background: #fef9c3;
+  color: #92400e;
+}
+
+.dist-far {
+  background: #fee2e2;
+  color: #be123c;
+}
+
+/* empty state */
+.empty-state {
+  background: #fef9c3;
+  border: 1px dashed #fbbf24;
+  border-radius: 12px;
+  padding: 18px;
+  color: #92400e;
+  font-size: 0.88rem;
+  text-align: center;
+}
+
+/* footer */
+.nearby-footer {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 0.82rem;
+  color: #1d4ed8;
+}
+
+.nearby-footer em {
+  font-style: normal;
+  font-weight: 600;
+}
