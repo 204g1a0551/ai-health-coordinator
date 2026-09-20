@@ -115,7 +115,14 @@ def appointment_node(state: AgentState) -> AgentState:
         }
 
     # Case 3: Book / Reschedule Appointment
-    doctor_query, date_query, time_query = extract_booking_entities(user_msg)
+    parsed = state.get("parsed_intent") or {}
+    if parsed.get("doctor"):
+        doctor_query = parsed["doctor"]
+        date_query = parsed.get("date") or "tomorrow"
+        time_query = parsed.get("time") or "6:00 PM"
+    else:
+        doctor_query, date_query, time_query = extract_booking_entities(user_msg)
+
     hold_id = f"{session_id}:{doctor_query}:{time_query}".replace(" ", "_")
 
     # Temporarily hold appointment slot in Redis with configurable TTL

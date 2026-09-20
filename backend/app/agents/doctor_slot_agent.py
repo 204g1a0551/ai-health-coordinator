@@ -4,6 +4,7 @@ from typing import Dict, Any, List, Optional
 from app.agents.state import AgentState
 from app.services.provider_service import provider_service
 from app.services.redis_service import redis_service
+from app.services.llm_service import llm_service
 
 # Patterns to identify time-of-day preference
 PERIOD_PATTERNS = [
@@ -94,10 +95,18 @@ def doctor_slot_node(state: AgentState) -> AgentState:
     Does NOT allow the LLM to directly communicate with external APIs.
     """
     user_msg = state.get("user_message", "")
-    target_dept = resolve_department_for_booking(state)
-    period_pref = extract_period_preference(user_msg)
-    date_pref = extract_date_preference(user_msg)
-    locality_pref = extract_locality_preference(user_msg)
+    parsed_intent = state.get("parsed_intent") or {}
+
+    # Read from parsed_intent first (if LLM extracted it), fallback to regex
+    target_dept = parsed_intent.get("department") or resolve_department_for_booking(state)
+    period_pref = parsed_intent.get("time") or extract_period_preference(user_msg)
+    date_pref = parsed_intent.get("date") or extract_date_preference(user_msg)
+
+    locality_pref = None
+    if parsed_intent.get("location"):
+        locality_pref = parsed_intent["location"].replace(", Bengaluru", "").strip()
+    if not locality_pref:
+        locality_pref = extract_locality_preference(user_msg)
 
     # 1. Controlled Backend Tool Call: search_doctors via provider_service
     doctors_found = []
@@ -201,6 +210,28 @@ def doctor_slot_node(state: AgentState) -> AgentState:
                 "timestamp": current_timestamp,
             }
         })
+
+    # Persist last shown options into Redis session context for ordinal/follow-up requests (e.g. "Book the second option")
+    session_id = state.get("session_id", "default")
+    options_for_context = []
+    for idx, d in enumerate(structured_doctors):
+        primary_slot = d["slots"][0] if d.get("slots") else "10:00 AM"
+        options_for_context.append({
+            "index": idx + 1,
+            "doctor": d["name"],
+            "department": d["department"],
+            "hospital": d.get("hospital", "Bengaluru Hospital"),
+            "locality": d.get("locality", "Bengaluru"),
+            "time": primary_slot,
+            "date": date_pref,
+        })
+
+    llm_service.update_conversation_context(session_id, {
+        "last_shown_options": options_for_context,
+        "department": target_dept,
+        "location": locality_pref,
+        "date": date_pref,
+    })
 
     return {
         **state,

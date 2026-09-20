@@ -2,6 +2,7 @@ import re
 from typing import Dict, Any, Optional, List, Tuple
 from app.agents.state import AgentState
 from app.services.location_service import location_service
+from app.services.llm_service import llm_service
 
 DEPARTMENT_MAP = {
     "general physician": "General Medicine",
@@ -69,7 +70,7 @@ def extract_location_and_dept(text: str) -> Tuple[Optional[str], Optional[str], 
     Extracts locality, department/specialty preference, and whether 'near me' was requested.
     """
     lower = text.lower().strip()
-    is_near_me = bool(re.search(r"\b(?:near\s+me|nearby|closest(?:\s+to\s+me)?)\b", lower))
+    is_near_me = bool(re.search(r"\b(?:near\s+me|nearby|closest(?:\s+to\s+me)?|nearest(?:\s+available)?)\b", lower))
 
     # 1. Department extraction
     matched_dept = None
@@ -93,7 +94,7 @@ def extract_location_and_dept(text: str) -> Tuple[Optional[str], Optional[str], 
         if m:
             candidate = m.group(1).strip()
             # Exclude common non-location words
-            if candidate not in {"me", "here", "us", "any", "the", "a", "good", "best", "available"}:
+            if candidate not in {"me", "here", "us", "any", "the", "a", "good", "best", "available", "nearest", "doctor", "doctors"}:
                 return candidate, matched_dept, False
 
     return None, matched_dept, False
@@ -115,6 +116,14 @@ def location_node(state: AgentState) -> AgentState:
     coords = state.get("user_coordinates")
 
     loc_query, dept_filter, is_near_me = extract_location_and_dept(user_msg)
+    parsed_intent = state.get("parsed_intent") or {}
+
+    if not loc_query and parsed_intent.get("location"):
+        loc_cand = parsed_intent["location"].replace(", Bengaluru", "").strip()
+        if loc_cand.lower() not in {"near me", "me", "here"}:
+            loc_query = loc_cand
+    if not dept_filter and parsed_intent.get("department"):
+        dept_filter = parsed_intent["department"]
 
     # Handle "near me" query without coordinates
     if is_near_me and not coords:
@@ -214,6 +223,27 @@ def location_node(state: AgentState) -> AgentState:
         f"Closest: {top_summary}. "
         f"The dashboard has been updated with distance information."
     )
+
+    # Persist last shown options into Redis session context
+    session_id = state.get("session_id", "default")
+    options_for_context = [
+        {
+            "index": idx + 1,
+            "doctor": d["name"],
+            "department": d["department"],
+            "hospital": d.get("hospital", ""),
+            "locality": d.get("locality", ""),
+            "time": (d.get("slots") or ["10:00 AM"])[0],
+            "date": "Tomorrow, Oct 24",
+            "distance_km": d.get("distance_km"),
+        }
+        for idx, d in enumerate(structured_doctors[:10])
+    ]
+    llm_service.update_conversation_context(session_id, {
+        "last_shown_options": options_for_context,
+        "department": dept_filter,
+        "location": location_display,
+    })
 
     return {
         **state,

@@ -30,6 +30,8 @@ class AgentState(TypedDict):
     location_query: Optional[str]
     user_coordinates: Optional[Dict[str, float]]
     nearby_doctors_result: Optional[Dict[str, Any]]
+    parsed_intent: Optional[Dict[str, Any]]
+    clarification_question: Optional[str]
     actions: List[Dict[str, Any]]
     final_response: str
 

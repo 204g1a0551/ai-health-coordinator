@@ -14,17 +14,19 @@ from app.agents.doctor_slot_agent import doctor_slot_node
 from app.agents.appointment_agent import appointment_node
 from app.agents.patient_info_agent import patient_info_node
 from app.agents.location_agent import location_node
+from app.agents.llm_agent import llm_node
 from app.agents.ui_agent import ui_action_node
 
 
 def build_health_coordinator_graph():
     """
     Constructs and compiles the full LangGraph coordinator:
-    Supervisor -> Domain Agents -> UI Agent (Action Layer) -> Final Response -> END
+    LLM Node -> Supervisor -> Domain Agents -> UI Agent (Action Layer) -> Final Response -> END
     """
     builder = StateGraph(AgentState)
 
     # Add agent nodes
+    builder.add_node("llm_node", llm_node)
     builder.add_node("supervisor", supervisor_node)
     builder.add_node("patient_info_agent", patient_info_node)
     builder.add_node("location_agent", location_node)
@@ -35,8 +37,9 @@ def build_health_coordinator_graph():
     builder.add_node("ui_agent", ui_action_node)
     builder.add_node("final_response", final_response_node)
 
-    # Set supervisor as entry point
-    builder.set_entry_point("supervisor")
+    # Set LLM intent extraction as entry point
+    builder.set_entry_point("llm_node")
+    builder.add_edge("llm_node", "supervisor")
 
     # Supervisor conditional routing
     builder.add_conditional_edges(

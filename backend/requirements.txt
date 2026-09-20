@@ -3,3 +3,6 @@ uvicorn[standard]>=0.30.6
 pydantic>=2.9.2
 langgraph>=0.2.0
 langchain-core>=0.3.0
+langchain-google-genai>=2.0.0
+redis>=5.0.0
+fakeredis>=2.0.0
