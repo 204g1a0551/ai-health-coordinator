@@ -12,13 +12,17 @@
 
       <!-- Navigation Links -->
       <nav class="header-nav">
-        <a routerLink="/dashboard" class="nav-tab" [class.active]="!isDocumentsPage && !isInsurancePage">
+        <a routerLink="/dashboard" class="nav-tab" [class.active]="!isDocumentsPage && !isInsurancePage && !isLabReportsPage">
           <span class="tab-icon">🩺</span>
           <span>Coordinator &amp; Chat</span>
         </a>
         <a routerLink="/documents" class="nav-tab" [class.active]="isDocumentsPage">
           <span class="tab-icon">📑</span>
           <span>Medical Documents</span>
+        </a>
+        <a routerLink="/lab-reports" class="nav-tab" [class.active]="isLabReportsPage">
+          <span class="tab-icon">🧪</span>
+          <span>Lab Reports</span>
         </a>
         <a routerLink="/insurance" class="nav-tab" [class.active]="isInsurancePage">
           <span class="tab-icon">🛡️</span>
@@ -59,8 +63,12 @@
     </div>
   </header>
 
-  <!-- View Content: Two-Column Coordinator, Medical Documents, or Insurance & Reimbursement -->
-  @if (isInsurancePage) {
+  <!-- View Content: Two-Column Coordinator, Medical Documents, Insurance, or Lab Reports -->
+  @if (isLabReportsPage) {
+    <main class="documents-full-main">
+      <app-lab-reports></app-lab-reports>
+    </main>
+  } @else if (isInsurancePage) {
     <main class="documents-full-main">
       <app-insurance-reimbursement></app-insurance-reimbursement>
     </main>

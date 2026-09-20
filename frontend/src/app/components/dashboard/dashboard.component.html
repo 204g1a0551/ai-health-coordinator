@@ -92,6 +92,27 @@
       />
     }
 
+    @case ('SHOW_LAB_REPORT') {
+      <app-lab-report
+        [data]="uiState.state().currentData"
+        (actionClicked)="onPromptSelected($event)"
+      />
+    }
+
+    @case ('SHOW_LAB_RESULTS') {
+      <app-lab-results
+        [data]="uiState.state().currentData"
+        (actionClicked)="onPromptSelected($event)"
+      />
+    }
+
+    @case ('SHOW_LAB_EVIDENCE') {
+      <app-lab-evidence
+        [data]="uiState.state().currentData"
+        (actionClicked)="onPromptSelected($event)"
+      />
+    }
+
     @case ('SHOW_APPOINTMENT') {
       <app-appointment [data]="uiState.state().currentData" />
     }

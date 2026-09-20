@@ -8,6 +8,7 @@ from app.routers.auth import router as auth_router
 from app.routers.documents import router as documents_router
 from app.routers.pharmacies import router as pharmacies_router
 from app.routers.insurance import router as insurance_router
+from app.routers.lab_reports import router as lab_reports_router
 
 app = FastAPI(
     title="AI Health Checkup & Appointment Coordinator",
@@ -39,6 +40,7 @@ app.include_router(health_router)
 app.include_router(documents_router)
 app.include_router(pharmacies_router)
 app.include_router(insurance_router)
+app.include_router(lab_reports_router)
 
 
 

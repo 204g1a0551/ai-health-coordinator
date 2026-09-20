@@ -18,6 +18,9 @@ export type UIActionType =
   | 'SHOW_POLICY'
   | 'SHOW_COVERAGE_ANALYSIS'
   | 'SHOW_DOCUMENT_EVIDENCE'
+  | 'SHOW_LAB_REPORT'
+  | 'SHOW_LAB_RESULTS'
+  | 'SHOW_LAB_EVIDENCE'
   | 'HIDE_COMPONENT'
   | 'CLEAR_DASHBOARD';
 
@@ -119,6 +122,15 @@ export class UIStateService {
       case 'SHOW_DOCUMENT_EVIDENCE':
       case 'DOCUMENT_EVIDENCE':
         return 'SHOW_DOCUMENT_EVIDENCE';
+      case 'SHOW_LAB_REPORT':
+      case 'LAB_REPORT':
+        return 'SHOW_LAB_REPORT';
+      case 'SHOW_LAB_RESULTS':
+      case 'LAB_RESULTS':
+        return 'SHOW_LAB_RESULTS';
+      case 'SHOW_LAB_EVIDENCE':
+      case 'LAB_EVIDENCE':
+        return 'SHOW_LAB_EVIDENCE';
       case 'CLEAR_DASHBOARD':
       case 'CLEAR_APPOINTMENT':
       case 'HIDE_COMPONENT':

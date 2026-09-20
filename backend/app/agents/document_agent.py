@@ -41,6 +41,8 @@ class DocumentAgent:
     """
 
     def __init__(self):
+        from app.agents.lab_agent import lab_agent
+        self.lab_agent = lab_agent
         self._llm = None
         self._init_llm()
 
@@ -577,12 +579,35 @@ def document_agent_node(state: AgentState) -> AgentState:
     from app.agents.medicine_agent import medicine_agent
     from app.agents.pharmacy_agent import pharmacy_agent
     from app.agents.insurance_agent import insurance_agent
+    from app.agents.lab_agent import lab_agent, lab_agent_node
     from app.services.document_rag_service import document_rag_service
     from app.models.document_rag import DocumentQuestionRequest
 
     user_msg = state.get("user_message", "").strip()
     user_lower = user_msg.lower()
     actions = list(state.get("actions", []))
+
+    # --------------------------------------------------------------------------
+    # 0. Lab Report Analyzer Queries
+    # - "What tests are in this report?"
+    # - "Which values are outside the reference range?"
+    # - "What does page 3 say?"
+    # - "Show my latest lab report."
+    # --------------------------------------------------------------------------
+    parsed_intent = (state.get("parsed_intent") or {}).get("intent", "")
+    is_lab_query = (
+        parsed_intent in ["LAB_REPORT", "LAB_RESULTS", "LAB_EVIDENCE"]
+        or "lab report" in user_lower
+        or "tests in this report" in user_lower
+        or "what tests are in" in user_lower
+        or "values are outside" in user_lower
+        or "outside the reference" in user_lower
+        or "outside reference" in user_lower
+        or "latest lab" in user_lower
+        or "page 3" in user_lower
+    )
+    if is_lab_query:
+        return lab_agent_node(state)
 
     # --------------------------------------------------------------------------
     # 1. Document Upload Request ("Upload this prescription", "Upload document")

@@ -1,0 +1,267 @@
+<div class="lab-page-container">
+  <!-- Page Header -->
+  <header class="page-header">
+    <div class="header-left">
+      <div class="header-badge">
+        <span class="badge-icon">🧪</span>
+        <span>Document Agent • Phase 26</span>
+      </div>
+      <h2 class="page-title">Laboratory Reports Intelligence</h2>
+      <p class="page-subtitle">
+        Upload laboratory reports in PDF format. Automatic parameter extraction, reference range comparison,
+        and page-grounded document intelligence Q&amp;A.
+      </p>
+    </div>
+
+    <div class="header-right">
+      <div class="safety-indicator">
+        <span class="safety-dot"></span>
+        <span class="safety-text">Non-Diagnostic Verification Guardrails Active</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Upload Area -->
+  <section class="upload-section">
+    <div
+      class="upload-dropzone"
+      [class.drag-over]="isDragOver()"
+      (dragover)="onDragOver($event)"
+      (dragleave)="onDragLeave($event)"
+      (drop)="onFileDrop($event)"
+    >
+      <div class="dropzone-icon">📁</div>
+      <h3 class="dropzone-title">Upload Laboratory Report PDF</h3>
+      <p class="dropzone-sub">
+        Drag &amp; drop your CBC, metabolic, lipid, or thyroid laboratory report PDF here, or click to browse.
+      </p>
+      <input
+        type="file"
+        #fileInput
+        accept="application/pdf"
+        style="display: none"
+        (change)="onFileSelected($event)"
+      />
+      <button
+        type="button"
+        class="browse-btn"
+        (click)="fileInput.click()"
+        [disabled]="labService.isUploading()"
+      >
+        {{ labService.isUploading() ? 'Analyzing Report...' : 'Choose Lab PDF' }}
+      </button>
+
+      @if (uploadSuccessMsg()) {
+        <div class="upload-alert alert-success">
+          ✓ {{ uploadSuccessMsg() }}
+        </div>
+      }
+      @if (labService.error()) {
+        <div class="upload-alert alert-error">
+          ⚠️ {{ labService.error() }}
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- Main Report Intelligence Content -->
+  @if (labService.activeReport(); as report) {
+    <!-- Overview Banner -->
+    <section class="report-overview-card">
+      <div class="overview-header">
+        <div class="meta-main">
+          <span class="doc-badge">LAB_REPORT • Verified</span>
+          <h3 class="report-doc-name">{{ report.file_name }}</h3>
+          <span class="lab-name">🏛️ {{ report.laboratory_name }}</span>
+        </div>
+        <div class="meta-pills">
+          <span class="meta-pill">📅 Date: {{ report.report_date }}</span>
+          <span class="meta-pill">👤 Patient: {{ report.patient_name || 'Verified Patient' }}</span>
+          <span class="meta-pill">📄 Pages: {{ report.page_count }}</span>
+        </div>
+      </div>
+
+      <div class="overview-stats">
+        <div class="stat-box">
+          <span class="stat-val">{{ report.total_tests }}</span>
+          <span class="stat-lbl">Total Parameters</span>
+        </div>
+        <div class="stat-box alert-box" [class.has-alerts]="report.out_of_range_count > 0">
+          <span class="stat-val">{{ report.out_of_range_count }}</span>
+          <span class="stat-lbl">Outside Stated Range</span>
+        </div>
+        <div class="stat-box normal-box">
+          <span class="stat-val">{{ report.total_tests - report.out_of_range_count }}</span>
+          <span class="stat-lbl">Within Normal Limits</span>
+        </div>
+      </div>
+
+      <!-- Clinical Disclaimer -->
+      <div class="disclaimer-banner">
+        <span class="disclaimer-ico">⚠️</span>
+        <p class="disclaimer-txt">{{ report.disclaimer }}</p>
+      </div>
+    </section>
+
+    <!-- Interactive AI Chat & RAG Assistant Section -->
+    <section class="rag-assistant-section">
+      <div class="section-heading">
+        <div class="heading-icon">💬</div>
+        <div>
+          <h3 class="heading-title">Laboratory Document Intelligence Q&amp;A</h3>
+          <p class="heading-sub">Ask questions grounded strictly on your uploaded report with exact page citations</p>
+        </div>
+      </div>
+
+      <!-- Prompt Chips -->
+      <div class="chips-row">
+        @for (sq of suggestedQuestions; track sq) {
+          <button class="chip-button" (click)="submitQuestion(sq)">
+            {{ sq }}
+          </button>
+        }
+      </div>
+
+      <!-- Query Box -->
+      <div class="query-box">
+        <input
+          type="text"
+          class="query-input"
+          placeholder="Ask a question about this lab report (e.g. 'What does page 3 say?')..."
+          [value]="userQuestionInput()"
+          (input)="userQuestionInput.set($any($event.target).value)"
+          (keyup.enter)="submitQuestion()"
+        />
+        <button
+          class="query-btn"
+          (click)="submitQuestion()"
+          [disabled]="labService.isQuerying() || !userQuestionInput().trim()"
+        >
+          {{ labService.isQuerying() ? 'Retrieving...' : 'Ask AI' }}
+        </button>
+      </div>
+
+      <!-- Grounded Answer Card -->
+      @if (labService.qaAnswer(); as ans) {
+        <div class="answer-card">
+          <div class="answer-header">
+            <span class="answer-tag">💡 Grounded RAG Answer</span>
+            @if (ans.source_page) {
+              <span class="page-citation">📄 Cited: Page {{ ans.source_page }}</span>
+            }
+          </div>
+          <div class="answer-body">
+            <p class="answer-text">{{ ans.answer }}</p>
+          </div>
+
+          @if (ans.referenced_tests && ans.referenced_tests.length > 0) {
+            <div class="referenced-tests">
+              <span class="ref-title">Referenced Test Parameters:</span>
+              <div class="ref-grid">
+                @for (t of ans.referenced_tests; track t.test_name) {
+                  <div class="ref-card" [class.card-alert]="t.is_out_of_range">
+                    <span class="ref-name">{{ t.test_name }}</span>
+                    <span class="ref-val">{{ t.result }} {{ t.unit }}</span>
+                    <span class="ref-range">Reference: {{ t.reference_range }} {{ t.unit }}</span>
+                    <span class="ref-page">Page {{ t.source_page }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </section>
+
+    <!-- Clean Tabular Results Section -->
+    <section class="results-table-section">
+      <div class="table-header-row">
+        <div class="table-title-wrap">
+          <h3 class="table-heading">Extracted Test Results</h3>
+          <span class="table-sub">Clean tabular overview of all biological parameters</span>
+        </div>
+
+        <div class="table-actions">
+          <div class="tab-filters">
+            <button
+              class="filter-pill"
+              [class.active]="filterMode() === 'all'"
+              (click)="setFilter('all')"
+            >
+              All Tests ({{ report.total_tests }})
+            </button>
+            <button
+              class="filter-pill pill-alert"
+              [class.active]="filterMode() === 'outside'"
+              (click)="setFilter('outside')"
+            >
+              ⚠️ Outside Reference Range ({{ report.out_of_range_count }})
+            </button>
+          </div>
+
+          <input
+            type="text"
+            class="filter-search"
+            placeholder="Search test name..."
+            [value]="searchQuery()"
+            (input)="searchQuery.set($any($event.target).value)"
+          />
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table class="clinical-table">
+          <thead>
+            <tr>
+              <th>Test Parameter</th>
+              <th>Observed Result</th>
+              <th>Biological Unit</th>
+              <th>Stated Reference Range</th>
+              <th>Status</th>
+              <th>Source Page</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (test of filteredTests(); track test.test_name) {
+              <tr [class.highlight-alert]="test.is_out_of_range">
+                <td class="col-name">
+                  <span class="t-name">{{ test.test_name }}</span>
+                  @if (test.panel_name) {
+                    <span class="t-panel">{{ test.panel_name }}</span>
+                  }
+                </td>
+                <td class="col-result">
+                  <span class="t-result" [class.t-alert]="test.is_out_of_range">
+                    {{ test.result }}
+                  </span>
+                </td>
+                <td class="col-unit">{{ test.unit }}</td>
+                <td class="col-range">{{ test.reference_range }}</td>
+                <td class="col-status">
+                  @if (test.is_out_of_range) {
+                    <span
+                      class="status-tag"
+                      [class.status-high]="test.status.includes('HIGH')"
+                      [class.status-low]="test.status.includes('LOW')"
+                    >
+                      {{ test.status.includes('HIGH') ? '▲ Outside Range (High)' : '▼ Outside Range (Low)' }}
+                    </span>
+                  } @else {
+                    <span class="status-tag status-normal">✓ Within Reference Range</span>
+                  }
+                </td>
+                <td class="col-page">
+                  <span class="page-tag">Page {{ test.source_page }}</span>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="6" class="no-results">No matching laboratory parameters found.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
+</div>

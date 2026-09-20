@@ -110,6 +110,16 @@ INSURANCE_PATTERNS = [
     r"\bclaim\s+submission\s+deadline\b",
 ]
 
+LAB_PATTERNS = [
+    r"\b(?:lab\s+report|laboratory\s+report|blood\s+test\s+report|pathology\s+report|cbc\s+report)\b",
+    r"\bwhat\s+tests?\s+(?:are\s+)?in\s+(?:this\s+)?(?:report|lab)\b",
+    r"\bwhich\s+values?\s+are\s+outside\s+(?:the\s+)?reference\s+range\b",
+    r"\boutside\s+(?:the\s+)?(?:reference\s+)?range\b",
+    r"\bshow\s+(?:my\s+)?(?:latest\s+)?lab\s+report\b",
+    r"\bwhat\s+does\s+page\s+3\s+say\b",
+    r"\bpage\s+3\b",
+]
+
 
 DOCUMENT_PATTERNS = [
     r"\bupload\s+(?:this\s+)?(?:prescription|document|medical\s+report|bill|pdf)\b",
@@ -149,7 +159,11 @@ def supervisor_node(state: AgentState) -> AgentState:
 
     if intent == "CLARIFICATION" or parsed.get("needs_clarification"):
         route = "final_response"
-    elif intent in ["UPLOAD_DOCUMENT", "ANALYZE_INSURANCE", "CHECK_COVERAGE", "CHECK_REIMBURSEMENT", "SEARCH_PHARMACY", "SEARCH_MEDICINE", "DOCUMENT_SUMMARY", "GET_MEDICINES", "GET_MEDICINE_INFO"]:
+    elif intent in [
+        "UPLOAD_DOCUMENT", "ANALYZE_INSURANCE", "CHECK_COVERAGE", "CHECK_REIMBURSEMENT",
+        "SEARCH_PHARMACY", "SEARCH_MEDICINE", "DOCUMENT_SUMMARY", "GET_MEDICINES", "GET_MEDICINE_INFO",
+        "LAB_REPORT", "LAB_RESULTS", "LAB_EVIDENCE",
+    ]:
         route = "document_agent"
     elif intent == "UPDATE_PATIENT":
         route = "patient_info_agent"
@@ -165,6 +179,7 @@ def supervisor_node(state: AgentState) -> AgentState:
         route = "symptom_agent"
     else:
         # Fallback to pattern matching
+        is_lab_query = any(re.search(pat, user_msg) for pat in LAB_PATTERNS)
         is_document_query = any(re.search(pat, user_msg) for pat in DOCUMENT_PATTERNS)
         is_insurance_query = any(re.search(pat, user_msg) for pat in INSURANCE_PATTERNS)
         is_pharmacy_query = any(re.search(pat, user_msg) for pat in PHARMACY_PATTERNS)
@@ -176,7 +191,7 @@ def supervisor_node(state: AgentState) -> AgentState:
         is_browsing_slots = any(re.search(kw, user_msg) for kw in SLOT_BROWSE_KEYWORDS)
         has_dept = any(re.search(kw, user_msg) for kw in DEPARTMENT_KEYWORDS)
 
-        if is_document_query or is_insurance_query or is_pharmacy_query:
+        if is_lab_query or is_document_query or is_insurance_query or is_pharmacy_query:
             route = "document_agent"
         elif is_patient_info:
             route = "patient_info_agent"

@@ -1,0 +1,71 @@
+<div class="lab-report-card">
+  <div class="card-header">
+    <div class="icon-title">
+      <span class="header-icon">🧪</span>
+      <div>
+        <h3 class="card-title">Laboratory Report Overview</h3>
+        <span class="badge-source">PDF Grounded Evidence • 3 Pages</span>
+      </div>
+    </div>
+    <span class="badge-doc">{{ documentName }}</span>
+  </div>
+
+  <!-- Key Meta Banner -->
+  <div class="meta-grid">
+    <div class="meta-item">
+      <span class="meta-label">Laboratory</span>
+      <span class="meta-value lab-name">{{ laboratoryName }}</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Report Date</span>
+      <span class="meta-value">{{ reportDate }}</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Patient Name</span>
+      <span class="meta-value">{{ patientName }}</span>
+    </div>
+  </div>
+
+  <!-- Stats Grid -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <span class="stat-number">{{ totalTests }}</span>
+      <span class="stat-label">Total Tests Extracted</span>
+    </div>
+    <div class="stat-card stat-alert" [class.has-alerts]="outOfRangeCount > 0">
+      <span class="stat-number">{{ outOfRangeCount }}</span>
+      <span class="stat-label">Outside Stated Range</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-number">3</span>
+      <span class="stat-label">Document Pages</span>
+    </div>
+  </div>
+
+  <!-- Summary Description -->
+  <div class="summary-box">
+    <p class="summary-text">{{ summary }}</p>
+  </div>
+
+  <!-- Clinical Guardrail Disclaimer -->
+  <div class="disclaimer-box">
+    <span class="disclaimer-icon">⚠️</span>
+    <p class="disclaimer-text">{{ disclaimer }}</p>
+  </div>
+
+  <!-- Action Prompt Suggestions -->
+  <div class="actions-section">
+    <span class="actions-label">Ask Document Intelligence:</span>
+    <div class="action-chips">
+      <button class="chip-btn" (click)="onSelectAction('Which values are outside the reference range?')">
+        🚨 Which values are outside reference range?
+      </button>
+      <button class="chip-btn" (click)="onSelectAction('What tests are in this report?')">
+        📋 What tests are in this report?
+      </button>
+      <button class="chip-btn" (click)="onSelectAction('What does page 3 say?')">
+        📄 What does page 3 say?
+      </button>
+    </div>
+  </div>
+</div>

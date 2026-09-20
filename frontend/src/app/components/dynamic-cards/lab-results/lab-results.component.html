@@ -1,0 +1,116 @@
+<div class="lab-results-card">
+  <div class="card-header">
+    <div class="icon-title">
+      <span class="header-icon">📊</span>
+      <div>
+        <h3 class="card-title">Extracted Laboratory Parameters</h3>
+        <span class="badge-source">{{ laboratoryName }} • {{ reportDate }}</span>
+      </div>
+    </div>
+    <span class="badge-doc">{{ documentName }}</span>
+  </div>
+
+  <!-- Filter Toolbar -->
+  <div class="filter-toolbar">
+    <div class="tab-pills">
+      <button
+        class="tab-btn"
+        [class.active]="filterMode() === 'all'"
+        (click)="setFilter('all')"
+      >
+        All Tests ({{ totalTests }})
+      </button>
+      <button
+        class="tab-btn tab-alert"
+        [class.active]="filterMode() === 'outside'"
+        (click)="setFilter('outside')"
+      >
+        ⚠️ Outside Stated Range ({{ outOfRangeCount }})
+      </button>
+    </div>
+
+    <div class="search-wrap">
+      <input
+        type="text"
+        class="search-input"
+        placeholder="Filter by test name..."
+        [value]="searchQuery()"
+        (input)="searchQuery.set($any($event.target).value)"
+      />
+    </div>
+  </div>
+
+  <!-- Table View -->
+  <div class="table-container">
+    <table class="lab-table">
+      <thead>
+        <tr>
+          <th>Test Name</th>
+          <th>Observed Result</th>
+          <th>Unit</th>
+          <th>Reference Range</th>
+          <th>Status</th>
+          <th>Page</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of filteredTests(); track item.test_name) {
+          <tr [class.row-alert]="item.is_out_of_range">
+            <td class="cell-name">
+              <span class="test-name">{{ item.test_name }}</span>
+              @if (item.panel_name) {
+                <span class="panel-tag">{{ item.panel_name }}</span>
+              }
+            </td>
+            <td class="cell-result">
+              <span class="result-val" [class.val-alert]="item.is_out_of_range">
+                {{ item.result }}
+              </span>
+            </td>
+            <td class="cell-unit">{{ item.unit }}</td>
+            <td class="cell-ref">{{ item.reference_range }}</td>
+            <td class="cell-status">
+              @if (item.is_out_of_range) {
+                <span
+                  class="badge-status"
+                  [class.badge-high]="item.status.includes('HIGH')"
+                  [class.badge-low]="item.status.includes('LOW')"
+                >
+                  {{ item.status.includes('HIGH') ? '▲ Outside (High)' : '▼ Outside (Low)' }}
+                </span>
+              } @else {
+                <span class="badge-status badge-normal">✓ Within Range</span>
+              }
+            </td>
+            <td class="cell-page">
+              <span class="page-badge">p.{{ item.source_page }}</span>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="6" class="empty-table">No matching laboratory tests found.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Clinical Disclaimer -->
+  <div class="disclaimer-box">
+    <span class="disclaimer-icon">⚠️</span>
+    <p class="disclaimer-text">{{ disclaimer }}</p>
+  </div>
+
+  <!-- Action chips -->
+  <div class="actions-section">
+    <span class="actions-label">Ask Document Intelligence:</span>
+    <div class="action-chips">
+      <button class="chip-btn" (click)="onSelectAction('What does page 3 say?')">
+        📄 What does page 3 say?
+      </button>
+      <button class="chip-btn" (click)="onSelectAction('Show my latest lab report')">
+        🧪 Show complete lab report
+      </button>
+    </div>
+  </div>
+</div>

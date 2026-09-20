@@ -20,6 +20,9 @@ import { MedicineInformationComponent } from '../dynamic-cards/medicine-informat
 import { InsurancePolicyComponent } from '../dynamic-cards/insurance-policy/insurance-policy.component';
 import { CoverageAnalysisComponent } from '../dynamic-cards/coverage-analysis/coverage-analysis.component';
 import { DocumentEvidenceComponent } from '../dynamic-cards/document-evidence/document-evidence.component';
+import { LabReportComponent } from '../dynamic-cards/lab-report/lab-report.component';
+import { LabResultsComponent } from '../dynamic-cards/lab-results/lab-results.component';
+import { LabEvidenceComponent } from '../dynamic-cards/lab-evidence/lab-evidence.component';
 
 @Component({
   selector: 'app-dashboard',
@@ -43,6 +46,9 @@ import { DocumentEvidenceComponent } from '../dynamic-cards/document-evidence/do
     InsurancePolicyComponent,
     CoverageAnalysisComponent,
     DocumentEvidenceComponent,
+    LabReportComponent,
+    LabResultsComponent,
+    LabEvidenceComponent,
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css',

@@ -376,6 +376,18 @@ class LLMService:
             return ParsedUserIntent(intent="UPDATE_PATIENT")
 
         # ------------------------------------------------------------------
+        # 8.4 Lab Report Analyzer Intents
+        # ------------------------------------------------------------------
+        if re.search(r"\b(?:what\s+tests?\s+(?:are\s+)?in\s+(?:this\s+)?report|which\s+values?\s+are\s+outside|outside\s+(?:the\s+)?reference\s+range|out\s+of\s+range)\b", lower):
+            return ParsedUserIntent(intent="LAB_RESULTS")
+
+        if re.search(r"\b(?:what\s+does\s+page\s+3\s+say|page\s+3\b)", lower):
+            return ParsedUserIntent(intent="LAB_EVIDENCE")
+
+        if re.search(r"\b(?:show\s+(?:my\s+)?(?:latest\s+)?lab\s+report|latest\s+lab\s+report|upload\s+lab\s+report|lab\s+report)\b", lower):
+            return ParsedUserIntent(intent="LAB_REPORT")
+
+        # ------------------------------------------------------------------
         # 8.5 Document AI, Medicine & Insurance Workspace Intents
         # ------------------------------------------------------------------
         if re.search(r"\bupload\s+(?:this\s+)?(?:prescription|document|report|bill|pdf)\b", lower):

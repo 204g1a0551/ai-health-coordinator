@@ -27,6 +27,10 @@ ALLOWED_ACTIONS = {
     "SHOW_COVERAGE_ANALYSIS",
     "SHOW_DOCUMENT_EVIDENCE",
     "SHOW_INSURANCE_COVERAGE",  # alias for SHOW_COVERAGE_ANALYSIS
+    # Lab Report Analyzer Predefined Actions
+    "SHOW_LAB_REPORT",
+    "SHOW_LAB_RESULTS",
+    "SHOW_LAB_EVIDENCE",
     # Legacy / alias compatibility
     "UPDATE_SYMPTOMS",
     "UPDATE_DEPARTMENT",
@@ -103,9 +107,16 @@ def ui_action_node(state: AgentState) -> AgentState:
     primary_data: Dict[str, Any] = {}
 
     # --------------------------------------------------------------------------
+    # 0. Direct Lab Action passthrough
+    # --------------------------------------------------------------------------
+    if state.get("primary_ui_action") in ["SHOW_LAB_REPORT", "SHOW_LAB_RESULTS", "SHOW_LAB_EVIDENCE"]:
+        primary_action = state["primary_ui_action"]
+        primary_data = state.get("primary_ui_data", {})
+
+    # --------------------------------------------------------------------------
     # 1. Clear / Reset / Welcome Request
     # --------------------------------------------------------------------------
-    if any(k in user_msg for k in ["clear dashboard", "clear canvas", "reset dashboard", "hide component"]):
+    elif any(k in user_msg for k in ["clear dashboard", "clear canvas", "reset dashboard", "hide component"]):
         primary_action = "CLEAR_DASHBOARD"
         primary_data = {"message": "Dashboard cleared"}
 
@@ -191,6 +202,24 @@ def ui_action_node(state: AgentState) -> AgentState:
             primary_data = pharm_act.get("payload") or pharm_act.get("data") or {}
         else:
             primary_data = state.get("pharmacy_results") or {}
+
+    # --------------------------------------------------------------------------
+    # 1.9 Lab Report Analyzer Predefined Actions
+    # --------------------------------------------------------------------------
+    elif any(a.get("action") == "SHOW_LAB_REPORT" or a.get("type") == "SHOW_LAB_REPORT" for a in raw_actions):
+        primary_action = "SHOW_LAB_REPORT"
+        act = next((a for a in raw_actions if a.get("action") == "SHOW_LAB_REPORT" or a.get("type") == "SHOW_LAB_REPORT"), None)
+        primary_data = act.get("payload") or act.get("data") or {}
+
+    elif any(a.get("action") == "SHOW_LAB_RESULTS" or a.get("type") == "SHOW_LAB_RESULTS" for a in raw_actions):
+        primary_action = "SHOW_LAB_RESULTS"
+        act = next((a for a in raw_actions if a.get("action") == "SHOW_LAB_RESULTS" or a.get("type") == "SHOW_LAB_RESULTS"), None)
+        primary_data = act.get("payload") or act.get("data") or {}
+
+    elif any(a.get("action") == "SHOW_LAB_EVIDENCE" or a.get("type") == "SHOW_LAB_EVIDENCE" for a in raw_actions):
+        primary_action = "SHOW_LAB_EVIDENCE"
+        act = next((a for a in raw_actions if a.get("action") == "SHOW_LAB_EVIDENCE" or a.get("type") == "SHOW_LAB_EVIDENCE"), None)
+        primary_data = act.get("payload") or act.get("data") or {}
 
     # --------------------------------------------------------------------------
     # 2. Appointment Booking / Confirmation

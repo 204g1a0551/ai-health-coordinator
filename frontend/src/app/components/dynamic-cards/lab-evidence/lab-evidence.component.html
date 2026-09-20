@@ -1,0 +1,91 @@
+<div class="lab-evidence-card">
+  <div class="card-header">
+    <div class="icon-title">
+      <span class="header-icon">📄</span>
+      <div>
+        <h3 class="card-title">Laboratory Document Evidence</h3>
+        <span class="badge-source">Grounded Extraction • Page {{ pageNumber }}</span>
+      </div>
+    </div>
+    <span class="badge-doc">{{ documentName }}</span>
+  </div>
+
+  <!-- Page Citation Banner -->
+  <div class="citation-banner">
+    <div class="page-badge-lg">
+      <span class="page-num">Page {{ pageNumber }}</span>
+      <span class="page-sub">Report Verification</span>
+    </div>
+    <div class="source-info">
+      <span class="source-title">{{ documentName }}</span>
+      <span class="source-sub">Exact Document Excerpt Grounding</span>
+    </div>
+  </div>
+
+  <!-- Extracted Text Block -->
+  <div class="evidence-block">
+    <div class="block-header">
+      <span class="block-title">Extracted Text (Page {{ pageNumber }})</span>
+      <span class="badge-grounded">Verified Grounding</span>
+    </div>
+    <pre class="extracted-text">{{ extractedText }}</pre>
+  </div>
+
+  <!-- Relevant Tests Found on this Page -->
+  @if (relevantTests.length > 0) {
+    <div class="relevant-tests-section">
+      <h4 class="section-title">Tests on Page {{ pageNumber }}:</h4>
+      <div class="tests-list">
+        @for (t of relevantTests; track t.test_name) {
+          <div class="test-item" [class.test-alert]="t.is_out_of_range">
+            <div class="test-meta">
+              <span class="test-name">{{ t.test_name }}</span>
+              <span class="test-ref">Reference: {{ t.reference_range }} {{ t.unit }}</span>
+            </div>
+            <div class="test-values">
+              <span class="test-res" [class.res-alert]="t.is_out_of_range">
+                {{ t.result }} {{ t.unit }}
+              </span>
+              <span
+                class="test-badge"
+                [class.badge-high]="t.status.includes('HIGH')"
+                [class.badge-low]="t.status.includes('LOW')"
+                [class.badge-norm]="!t.is_out_of_range"
+              >
+                {{ t.is_out_of_range ? (t.status.includes('HIGH') ? '▲ High' : '▼ Low') : '✓ Normal' }}
+              </span>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Explanation -->
+  <div class="explanation-box">
+    <h4 class="explanation-title">Page Summary</h4>
+    <p class="explanation-text">{{ explanation }}</p>
+  </div>
+
+  <!-- Clinical Disclaimer -->
+  <div class="disclaimer-box">
+    <span class="disclaimer-icon">⚠️</span>
+    <p class="disclaimer-text">{{ disclaimer }}</p>
+  </div>
+
+  <!-- Action Prompt Suggestions -->
+  <div class="actions-section">
+    <span class="actions-label">Ask More Questions:</span>
+    <div class="action-chips">
+      <button class="chip-btn" (click)="onSelectAction('Which values are outside the reference range?')">
+        🚨 Which values are outside reference range?
+      </button>
+      <button class="chip-btn" (click)="onSelectAction('What tests are in this report?')">
+        📋 What tests are in this report?
+      </button>
+      <button class="chip-btn" (click)="onSelectAction('Show my latest lab report')">
+        🧪 Show complete lab report
+      </button>
+    </div>
+  </div>
+</div>
