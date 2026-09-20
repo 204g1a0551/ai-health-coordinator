@@ -16,5 +16,7 @@ class AgentState(TypedDict):
     session_id: str
     route: str
     symptoms: List[SymptomItem]
+    suggested_department: Optional[str]
+    department_reason: Optional[str]
     actions: List[AgentAction]
     final_response: str

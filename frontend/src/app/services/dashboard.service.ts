@@ -9,7 +9,7 @@ export const INITIAL_DASHBOARD_STATE: DashboardState = {
   },
   symptoms: [], // Empty initially until user shares symptoms with AI agent
   suggestedDepartment: {
-    name: 'General Medicine',
+    name: '', // Unassigned initially
   },
   doctors: [
     {
@@ -90,6 +90,22 @@ export class DashboardService {
   }
 
   /**
+   * Dynamically update suggested department based on Department Agent structured output
+   */
+  updateDepartment(departmentName: string): void {
+    this.state.update((s) => ({
+      ...s,
+      suggestedDepartment: {
+        name: departmentName,
+      },
+      appointmentSummary: {
+        ...s.appointmentSummary,
+        department: departmentName,
+      },
+    }));
+  }
+
+  /**
    * Process structured UI actions returned by the backend coordinator
    */
   applyActions(actions: any[]): void {
@@ -98,6 +114,8 @@ export class DashboardService {
     for (const action of actions) {
       if (action.type === 'UPDATE_SYMPTOMS' && action.payload?.symptoms) {
         this.updateSymptoms(action.payload.symptoms);
+      } else if (action.type === 'UPDATE_DEPARTMENT' && action.payload?.department) {
+        this.updateDepartment(action.payload.department);
       }
     }
   }

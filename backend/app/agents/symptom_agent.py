@@ -19,9 +19,12 @@ SYMPTOM_PATTERNS = [
     (r"\brunny\s+nose\b|\bblocked\s+nose\b|\bnasal\s+congestion\b|\bcoryza\b", "Runny Nose"),
     (r"\bstomach\s+ache\b|\babdominal\s+pain\b|\bbelly\s+ache\b|\bstomach\s+pain\b", "Stomach Ache"),
     (r"\bdiarrhea\b|\bloose\s+stools\b|\bloose\s+motion\b", "Diarrhea"),
-    (r"\brash\b|\bskin\s+rash\b|\bitching\b", "Rash"),
-    (r"\bmuscle\s+pain\b|\bjoint\s+pain\b|\bmyalgia\b|\barthralgia\b", "Joint Pain"),
+    (r"\brash\b|\bskin\s+rash\b|\bitching\b|\bitchy\b", "Rash"),
+    (r"\bmuscle\s+pain\b|\bjoint\s+pain\b|\bknee\s+pain\b|\bknee\b|\bshoulder\s+pain\b|\bmyalgia\b|\barthralgia\b", "Joint Pain"),
     (r"\bback\s+pain\b|\bbackache\b", "Back Pain"),
+    (r"\btooth(ache)?\b|\btooth\s+pain\b|\bgum(s)?\b|\bteeth\b", "Toothache"),
+    (r"\bear\s+pain\b|\bearache\b", "Ear Pain"),
+    (r"\beye\s+pain\b|\bred\s+eye(s)?\b|\beye\s+irritation\b", "Eye Pain"),
 ]
 
 # Words to numbers for duration normalization
