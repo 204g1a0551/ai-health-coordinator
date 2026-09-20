@@ -113,6 +113,19 @@ class PostgresService:
             );
         """)
 
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id VARCHAR(50) PRIMARY KEY,
+                full_name VARCHAR(150) NOT NULL,
+                email VARCHAR(150) UNIQUE NOT NULL,
+                phone VARCHAR(50) NOT NULL,
+                dob VARCHAR(50),
+                password_hash VARCHAR(255) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+
     def is_connected(self) -> bool:
         """Returns whether live PostgreSQL connection is active."""
         if not self._connected:
@@ -209,6 +222,64 @@ class PostgresService:
             return dict(row) if row else None
         except Exception as e:
             logger.error("Failed to fetch appointment from PostgreSQL: %s", str(e))
+            return None
+
+    def create_user(self, user_data: Dict[str, Any]) -> bool:
+        """Inserts a new user record into PostgreSQL."""
+        if not self.is_connected():
+            return False
+
+        try:
+            conn = self._get_connection()
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO users (id, full_name, email, phone, dob, password_hash)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (
+                user_data["id"],
+                user_data["full_name"],
+                user_data["email"].lower().strip(),
+                user_data["phone"].strip(),
+                user_data.get("dob"),
+                user_data["password_hash"],
+            ))
+            conn.commit()
+            conn.close()
+            return True
+        except Exception as e:
+            logger.error("Failed to insert user into PostgreSQL: %s", str(e))
+            return False
+
+    def get_user_by_email(self, email: str) -> Optional[Dict[str, Any]]:
+        """Queries a user by email from PostgreSQL."""
+        if not self.is_connected():
+            return None
+
+        try:
+            conn = self._get_connection()
+            cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cursor.execute("SELECT * FROM users WHERE LOWER(email) = LOWER(%s)", (email.strip(),))
+            row = cursor.fetchone()
+            conn.close()
+            return dict(row) if row else None
+        except Exception as e:
+            logger.error("Failed to query user by email from PostgreSQL: %s", str(e))
+            return None
+
+    def get_user_by_id(self, user_id: str) -> Optional[Dict[str, Any]]:
+        """Queries a user by id from PostgreSQL."""
+        if not self.is_connected():
+            return None
+
+        try:
+            conn = self._get_connection()
+            cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
+            row = cursor.fetchone()
+            conn.close()
+            return dict(row) if row else None
+        except Exception as e:
+            logger.error("Failed to query user by id from PostgreSQL: %s", str(e))
             return None
 
 

@@ -29,5 +29,14 @@ class PostgresSettings(BaseModel):
     url: str = os.getenv("POSTGRES_URL") or os.getenv("DATABASE_URL", "")
 
 
+class AuthSettings(BaseModel):
+    jwt_secret: str = os.getenv("JWT_SECRET", "super-secret-healthcare-jwt-key-change-in-prod-2026")
+    jwt_algorithm: str = os.getenv("JWT_ALGORITHM", "HS256")
+    access_token_expire_minutes: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440"))  # 24 hours
+    login_rate_limit_attempts: int = int(os.getenv("LOGIN_RATE_LIMIT_ATTEMPTS", "5"))
+    login_rate_limit_window: int = int(os.getenv("LOGIN_RATE_LIMIT_WINDOW", "300"))  # 5 minutes
+
+
 redis_settings = RedisSettings()
 postgres_settings = PostgresSettings()
+auth_settings = AuthSettings()

@@ -1,0 +1,56 @@
+<div class="app-layout">
+  <!-- Modern Healthcare Navigation Header -->
+  <header class="app-header">
+    <div class="header-content">
+      <div class="brand">
+        <span class="brand-icon">+</span>
+        <div class="brand-text">
+          <h1 class="brand-title">AI Health Checkup &amp; Appointment Coordinator</h1>
+          <span class="brand-sub">Bengaluru Clinical Network</span>
+        </div>
+      </div>
+
+      <div class="header-meta">
+        <!-- Live status -->
+        <div class="status-indicator">
+          <span class="live-pulse"></span>
+          <span class="system-status">System Connected</span>
+        </div>
+
+        <!-- Authenticated user info -->
+        @if (authService.currentUser$ | async; as user) {
+          <div class="user-profile-badge">
+            <div class="user-avatar">
+              {{ (user.full_name ? user.full_name.charAt(0) : 'U').toUpperCase() }}
+            </div>
+            <div class="user-info">
+              <span class="user-name">{{ user.full_name }}</span>
+              <span class="user-role">Verified Patient</span>
+            </div>
+          </div>
+        }
+
+        <!-- Logout Action Button -->
+        <button type="button" class="logout-btn" (click)="onLogout()" title="Log out from Healthcare Portal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+          <span class="logout-label">Sign Out</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Two-Column Clinical Dashboard Layout -->
+  <main class="main-content">
+    <section class="left-column">
+      <app-dashboard></app-dashboard>
+    </section>
+
+    <section class="right-column">
+      <app-chat></app-chat>
+    </section>
+  </main>
+</div>

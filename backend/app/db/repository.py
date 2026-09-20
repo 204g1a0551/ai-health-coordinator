@@ -1,8 +1,13 @@
 import sqlite3
 import os
 import re
+import uuid
+import logging
+from datetime import datetime
 from typing import List, Dict, Any, Optional, Tuple
 from app.db.postgres import postgres_service
+
+logger = logging.getLogger(__name__)
 
 DB_FILE = os.path.join(os.path.dirname(__file__), "health_system.db")
 
@@ -62,6 +67,19 @@ def init_db():
             age INTEGER DEFAULT 32,
             phone TEXT DEFAULT '+1 (555) 019-2834',
             preferred_department TEXT DEFAULT ''
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id TEXT PRIMARY KEY,
+            full_name TEXT NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            phone TEXT NOT NULL,
+            dob TEXT,
+            password_hash TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
 
@@ -542,3 +560,102 @@ def update_patient_info(session_id: str, updates: Dict[str, Any]) -> Dict[str, A
         "phone": new_phone,
         "preferred_department": new_dept
     }
+
+
+def create_user_record(user_data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Creates a user record in both SQLite and PostgreSQL (dual-storage).
+    Raises ValueError if email is already registered.
+    """
+    init_db()
+    email_clean = user_data["email"].strip().lower()
+
+    # Check existence
+    existing = get_user_by_email(email_clean)
+    if existing:
+        raise ValueError("An account with this email address already exists.")
+
+    user_id = user_data.get("id") or f"usr_{uuid.uuid4().hex[:12]}"
+    record = {
+        "id": user_id,
+        "full_name": user_data["full_name"].strip(),
+        "email": email_clean,
+        "phone": user_data["phone"].strip(),
+        "dob": user_data.get("dob"),
+        "password_hash": user_data["password_hash"],
+        "created_at": datetime.utcnow().isoformat(),
+        "updated_at": datetime.utcnow().isoformat(),
+    }
+
+    # Store in SQLite
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO users (id, full_name, email, phone, dob, password_hash, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        record["id"],
+        record["full_name"],
+        record["email"],
+        record["phone"],
+        record["dob"],
+        record["password_hash"],
+        record["created_at"],
+        record["updated_at"]
+    ))
+    conn.commit()
+    conn.close()
+
+    # Dual-store in PostgreSQL if connected
+    try:
+        postgres_service.create_user(record)
+    except Exception as e:
+        logger.warning("Postgres user dual-storage notice: %s", str(e))
+
+    return record
+
+
+def get_user_by_email(email: str) -> Optional[Dict[str, Any]]:
+    """Retrieves user by email, checking PostgreSQL first, with SQLite fallback."""
+    init_db()
+    email_clean = email.strip().lower()
+
+    # Try PostgreSQL first
+    try:
+        pg_user = postgres_service.get_user_by_email(email_clean)
+        if pg_user:
+            return pg_user
+    except Exception:
+        pass
+
+    # SQLite fallback
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users WHERE LOWER(email) = LOWER(?)", (email_clean,))
+    row = cursor.fetchone()
+    conn.close()
+    if row:
+        return dict(row)
+    return None
+
+
+def get_user_by_id(user_id: str) -> Optional[Dict[str, Any]]:
+    """Retrieves user by ID, checking PostgreSQL first, with SQLite fallback."""
+    init_db()
+
+    try:
+        pg_user = postgres_service.get_user_by_id(user_id)
+        if pg_user:
+            return pg_user
+    except Exception:
+        pass
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
+    row = cursor.fetchone()
+    conn.close()
+    if row:
+        return dict(row)
+    return None
+

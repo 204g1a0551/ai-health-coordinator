@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Tuple
 import redis
 import fakeredis
 
@@ -353,7 +353,44 @@ class RedisService:
         for k in keys_healthcare:
             self._client.delete(k)
 
+    # ----------------------------------------------------------------------
+    # 11. Auth Rate Limiting (ratelimit:login:{key})
+    # ----------------------------------------------------------------------
+    def check_login_rate_limit(self, identifier: str, max_attempts: int = 5) -> Tuple[bool, int]:
+        """
+        Checks if the given identifier (email or IP) is rate-limited.
+        Returns (is_allowed, remaining_attempts).
+        """
+        key = f"ratelimit:login:{identifier.strip().lower()}"
+        raw = self._client.get(key)
+        if raw is None:
+            return True, max_attempts
+        try:
+            attempts = int(raw)
+            if attempts >= max_attempts:
+                return False, 0
+            return True, max_attempts - attempts
+        except Exception:
+            return True, max_attempts
+
+    def record_failed_login(self, identifier: str, window_seconds: int = 300) -> int:
+        """
+        Increments failed login counter and sets TTL window.
+        Returns the new attempt count.
+        """
+        key = f"ratelimit:login:{identifier.strip().lower()}"
+        attempts = self._client.incr(key)
+        if attempts == 1:
+            self._client.expire(key, window_seconds)
+        return int(attempts)
+
+    def clear_login_rate_limit(self, identifier: str) -> None:
+        """Clears the rate limit counter upon successful authentication."""
+        key = f"ratelimit:login:{identifier.strip().lower()}"
+        self._client.delete(key)
+
 
 # Global singleton instance
 redis_service = RedisService()
+
 
