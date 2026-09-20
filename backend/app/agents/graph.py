@@ -5,6 +5,7 @@ from app.agents.supervisor import (
     should_route_from_supervisor,
     post_symptom_router,
     post_department_router,
+    post_doctor_slot_router,
     final_response_node,
 )
 from app.agents.symptom_agent import symptom_node
@@ -69,9 +70,18 @@ def build_health_coordinator_graph():
         },
     )
 
+    # Routing from Doctor/Slot Agent (routes to Appointment Agent if booking, else UI Agent)
+    builder.add_conditional_edges(
+        "doctor_slot_agent",
+        post_doctor_slot_router,
+        {
+            "appointment_agent": "appointment_agent",
+            "ui_agent": "ui_agent",
+        },
+    )
+
     # Routing from Domain Agents to UI Agent
     builder.add_edge("patient_info_agent", "ui_agent")
-    builder.add_edge("doctor_slot_agent", "ui_agent")
     builder.add_edge("appointment_agent", "ui_agent")
 
     # UI Action Layer routes to Final Response synthesis

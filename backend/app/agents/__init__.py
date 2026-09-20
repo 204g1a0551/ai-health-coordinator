@@ -1,6 +1,6 @@
 from .graph import health_graph
 from .state import AgentState, SymptomItem, AgentAction, UIAction
-from .supervisor import supervisor_node
+from .supervisor import supervisor_node, post_doctor_slot_router
 from .symptom_agent import symptom_node
 from .department_agent import department_node, determine_department
 from .doctor_slot_agent import doctor_slot_node
@@ -15,6 +15,7 @@ __all__ = [
     "AgentAction",
     "UIAction",
     "supervisor_node",
+    "post_doctor_slot_router",
     "symptom_node",
     "department_node",
     "determine_department",

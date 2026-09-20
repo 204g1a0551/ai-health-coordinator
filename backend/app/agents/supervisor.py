@@ -1,22 +1,26 @@
 import re
 from app.agents.state import AgentState
 
-# Specific appointment actions (booking specific doctor/time, cancelling, rescheduling)
-APPOINTMENT_ACTION_PATTERNS = [
+# Specific booking action patterns (booking specific doctor/time)
+BOOKING_ACTION_PATTERNS = [
     r"\bbook\s+(?:dr\.?|doctor)\b",
     r"\bbook\s+dr\b",
     r"\bbook\s+[a-zA-Z]+\s+(?:tomorrow|today|at|\d)\b",
     r"\bbook\s+appointment\s+with\b",
+    r"\bconfirm\s+appointment\b",
+    r"\bappointment\s+at\s+\d",
+    r"\bbook\b.*\bat\s+\d{1,2}(?::\d{2})?\s*(?:am|pm)?\b",
+    r"\breschedule\b",
+]
+
+# Direct appointment management patterns (cancel, clear, show status)
+DIRECT_APPOINTMENT_PATTERNS = [
     r"\bcancel\s+(?:my\s+)?appointment\b",
     r"\bclear\s+(?:my\s+)?appointment\b",
     r"\breset\s+(?:my\s+)?appointment\b",
     r"\bclear\s+summary\b",
-    r"\breschedule\b",
     r"\bmy\s+appointment\b",
     r"\bshow\s+appointment\b",
-    r"\bconfirm\s+appointment\b",
-    r"\bappointment\s+at\s+\d",
-    r"\bbook\b.*\bat\s+\d{1,2}(?::\d{2})?\s*(?:am|pm)?\b",
 ]
 
 SYMPTOM_KEYWORDS = [
@@ -58,29 +62,35 @@ PATIENT_INFO_PATTERNS = [
 def supervisor_node(state: AgentState) -> AgentState:
     """
     Supervisor Agent:
-    Evaluates user's intent and decides routing:
-    - 'patient_info_agent': managing demographic/contact info (name, age, phone, preferred department)
-    - 'appointment_agent': booking specific doctor/time, cancellation, rescheduling
-    - 'symptom_agent': describing symptoms
-    - 'doctor_slot_agent': browsing doctors and open slots
-    - 'department_agent': department queries
-    - 'final_response': greetings or clarifications
+    Evaluates user's intent and dynamically determines the multi-agent pipeline:
+    - 'patient_info_agent': demographic/contact management
+    - 'symptom_agent': clinical symptoms (routes -> department -> doctor/slot -> ui_agent)
+    - 'doctor_slot_agent': booking specific doctors/slots (routes -> appointment_agent -> ui_agent)
+    - 'appointment_agent': direct cancellation, status, or clearing
+    - 'department_agent': explicit department inquiry
+    - 'final_response': simple greetings or clarifications
     """
     user_msg = state.get("user_message", "").strip().lower()
 
     is_patient_info = any(re.search(pat, user_msg) for pat in PATIENT_INFO_PATTERNS)
-    is_appointment_action = any(re.search(pat, user_msg) for pat in APPOINTMENT_ACTION_PATTERNS)
+    is_booking_action = any(re.search(pat, user_msg) for pat in BOOKING_ACTION_PATTERNS)
+    is_direct_appointment = any(re.search(pat, user_msg) for pat in DIRECT_APPOINTMENT_PATTERNS)
     has_symptoms = any(re.search(kw, user_msg) for kw in SYMPTOM_KEYWORDS)
     is_browsing_slots = any(re.search(kw, user_msg) for kw in SLOT_BROWSE_KEYWORDS)
     has_dept = any(re.search(kw, user_msg) for kw in DEPARTMENT_KEYWORDS)
 
     if is_patient_info:
         route = "patient_info_agent"
-    elif is_appointment_action:
-        route = "appointment_agent"
     elif has_symptoms:
+        # Example 1: Symptoms -> Department -> Doctor/Slot -> UI Action
         route = "symptom_agent"
-    elif is_browsing_slots or ("book" in user_msg and "general physician" in user_msg):
+    elif is_booking_action:
+        # Example 2: Booking -> Doctor/Slot -> Appointment -> UI Action
+        route = "doctor_slot_agent"
+    elif is_direct_appointment:
+        # Example 3: Cancel/Clear/Show -> Appointment -> UI Action
+        route = "appointment_agent"
+    elif is_browsing_slots or ("general physician" in user_msg):
         route = "doctor_slot_agent"
     elif has_dept:
         route = "department_agent"
@@ -114,6 +124,19 @@ def post_department_router(state: AgentState) -> str:
     dept = state.get("suggested_department")
     if dept and dept != "Needs clarification":
         return "doctor_slot_agent"
+    return "ui_agent"
+
+
+def post_doctor_slot_router(state: AgentState) -> str:
+    """
+    After doctor/slot processing:
+    - If user wants to book, route to appointment_agent.
+    - Otherwise, route to ui_agent to display available doctors/slots on dashboard.
+    """
+    user_msg = state.get("user_message", "").lower()
+    is_booking = any(re.search(pat, user_msg) for pat in BOOKING_ACTION_PATTERNS)
+    if is_booking:
+        return "appointment_agent"
     return "ui_agent"
 
 
