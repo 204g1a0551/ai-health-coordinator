@@ -1,58 +1,58 @@
 <div class="app-layout">
   <!-- Modern Healthcare Navigation Header -->
-  <header class="app-header">
+  <header class="app-header" role="banner">
     <div class="header-content">
       <div class="brand">
-        <span class="brand-icon">+</span>
+        <span class="brand-icon" aria-hidden="true">+</span>
         <div class="brand-text">
           <h1 class="brand-title">AI Health Checkup &amp; Appointment Coordinator</h1>
           <span class="brand-sub">Bengaluru Clinical Network</span>
         </div>
       </div>
 
-      <!-- Navigation Links -->
-      <nav class="header-nav">
+      <!-- Desktop Navigation Links -->
+      <nav class="header-nav" aria-label="Main Navigation">
         <a routerLink="/dashboard" class="nav-tab" [class.active]="!isDocumentsPage && !isInsurancePage && !isLabReportsPage && !isBillVerificationPage && !isDrugInteractionsPage && !isCostSaverPage">
-          <span class="tab-icon">🩺</span>
-          <span>Coordinator &amp; Chat</span>
+          <span class="tab-icon" aria-hidden="true">🩺</span>
+          <span>Coordinator</span>
         </a>
         <a routerLink="/cost-saver" class="nav-tab" [class.active]="isCostSaverPage">
-          <span class="tab-icon">💰</span>
+          <span class="tab-icon" aria-hidden="true">💰</span>
           <span>Cost-Saver</span>
         </a>
         <a routerLink="/drug-interactions" class="nav-tab" [class.active]="isDrugInteractionsPage">
-          <span class="tab-icon">💊</span>
-          <span>Drug Interactions</span>
+          <span class="tab-icon" aria-hidden="true">💊</span>
+          <span>Interactions</span>
         </a>
         <a routerLink="/documents" class="nav-tab" [class.active]="isDocumentsPage">
-          <span class="tab-icon">📑</span>
-          <span>Medical Documents</span>
+          <span class="tab-icon" aria-hidden="true">📑</span>
+          <span>Documents</span>
         </a>
         <a routerLink="/lab-reports" class="nav-tab" [class.active]="isLabReportsPage">
-          <span class="tab-icon">🧪</span>
+          <span class="tab-icon" aria-hidden="true">🧪</span>
           <span>Lab Reports</span>
         </a>
         <a routerLink="/bill-verification" class="nav-tab" [class.active]="isBillVerificationPage">
-          <span class="tab-icon">🧾</span>
-          <span>Bill Verification</span>
+          <span class="tab-icon" aria-hidden="true">🧾</span>
+          <span>Bill Verify</span>
         </a>
         <a routerLink="/insurance" class="nav-tab" [class.active]="isInsurancePage">
-          <span class="tab-icon">🛡️</span>
-          <span>Insurance &amp; Reimbursement</span>
+          <span class="tab-icon" aria-hidden="true">🛡️</span>
+          <span>Insurance</span>
         </a>
       </nav>
 
       <div class="header-meta">
         <!-- Live status -->
-        <div class="status-indicator">
-          <span class="live-pulse"></span>
-          <span class="system-status">System Connected</span>
+        <div class="status-indicator" role="status" aria-label="System status online">
+          <span class="live-pulse" aria-hidden="true"></span>
+          <span class="system-status">Connected</span>
         </div>
 
         <!-- Authenticated user info -->
         @if (authService.currentUser$ | async; as user) {
-          <div class="user-profile-badge">
-            <div class="user-avatar">
+          <div class="user-profile-badge" [attr.aria-label]="'Logged in as ' + user.full_name">
+            <div class="user-avatar" aria-hidden="true">
               {{ (user.full_name ? user.full_name.charAt(0) : 'U').toUpperCase() }}
             </div>
             <div class="user-info">
@@ -63,8 +63,8 @@
         }
 
         <!-- Logout Action Button -->
-        <button type="button" class="logout-btn" (click)="onLogout()" title="Log out from Healthcare Portal">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+        <button type="button" class="logout-btn" (click)="onLogout()" title="Log out from Healthcare Portal" aria-label="Sign Out">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" aria-hidden="true">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
             <polyline points="16 17 21 12 16 7"></polyline>
             <line x1="21" y1="12" x2="9" y2="12"></line>
@@ -77,38 +77,102 @@
 
   <!-- View Content: Two-Column Coordinator, Medical Documents, Insurance, Lab Reports, Drug Interactions, or Cost-Saver -->
   @if (isCostSaverPage) {
-    <main class="documents-full-main">
+    <main class="documents-full-main" role="main">
       <app-cost-saver-page />
     </main>
   } @else if (isDrugInteractionsPage) {
-    <main class="documents-full-main">
+    <main class="documents-full-main" role="main">
       <app-drug-interaction-page />
     </main>
   } @else if (isLabReportsPage) {
-    <main class="documents-full-main">
+    <main class="documents-full-main" role="main">
       <app-lab-reports></app-lab-reports>
     </main>
   } @else if (isBillVerificationPage) {
-    <main class="documents-full-main">
+    <main class="documents-full-main" role="main">
       <app-bill-verification />
     </main>
   } @else if (isInsurancePage) {
-    <main class="documents-full-main">
+    <main class="documents-full-main" role="main">
       <app-insurance-reimbursement></app-insurance-reimbursement>
     </main>
   } @else if (isDocumentsPage) {
-    <main class="documents-full-main">
+    <main class="documents-full-main" role="main">
       <app-medical-documents></app-medical-documents>
     </main>
   } @else {
-    <main class="main-content">
-      <section class="left-column">
+    <!-- Coordinator Mobile View Switcher (Visible only below 992px) -->
+    <div class="mobile-coordinator-toggle" role="tablist" aria-label="View switch">
+      <button
+        type="button"
+        role="tab"
+        [attr.aria-selected]="activeMobileTab === 'workspace'"
+        class="mobile-toggle-btn"
+        [class.active]="activeMobileTab === 'workspace'"
+        (click)="setMobileTab('workspace')"
+      >
+        <span>🩺 Medical Canvas</span>
+      </button>
+      <button
+        type="button"
+        role="tab"
+        [attr.aria-selected]="activeMobileTab === 'chat'"
+        class="mobile-toggle-btn"
+        [class.active]="activeMobileTab === 'chat'"
+        (click)="setMobileTab('chat')"
+      >
+        <span>💬 AI Assistant Chat</span>
+      </button>
+    </div>
+
+    <main class="main-content" role="main">
+      <section
+        class="left-column"
+        [class.mobile-hidden]="activeMobileTab !== 'workspace'"
+        aria-label="Clinical workspace"
+      >
         <app-dashboard></app-dashboard>
       </section>
 
-      <section class="right-column">
+      <section
+        class="right-column"
+        [class.mobile-hidden]="activeMobileTab !== 'chat'"
+        aria-label="AI Health Assistant"
+      >
         <app-chat></app-chat>
       </section>
     </main>
   }
+
+  <!-- Mobile Bottom Tab Bar (Visible on mobile viewports) -->
+  <nav class="mobile-bottom-nav" aria-label="Mobile Navigation">
+    <a routerLink="/dashboard" class="bottom-nav-item" [class.active]="!isDocumentsPage && !isInsurancePage && !isLabReportsPage && !isBillVerificationPage && !isDrugInteractionsPage && !isCostSaverPage">
+      <span class="bottom-icon">🩺</span>
+      <span class="bottom-label">Coordinator</span>
+    </a>
+    <a routerLink="/cost-saver" class="bottom-nav-item" [class.active]="isCostSaverPage">
+      <span class="bottom-icon">💰</span>
+      <span class="bottom-label">Cost-Saver</span>
+    </a>
+    <a routerLink="/drug-interactions" class="bottom-nav-item" [class.active]="isDrugInteractionsPage">
+      <span class="bottom-icon">💊</span>
+      <span class="bottom-label">DDI</span>
+    </a>
+    <a routerLink="/documents" class="bottom-nav-item" [class.active]="isDocumentsPage">
+      <span class="bottom-icon">📑</span>
+      <span class="bottom-label">Docs</span>
+    </a>
+    <a routerLink="/lab-reports" class="bottom-nav-item" [class.active]="isLabReportsPage">
+      <span class="bottom-icon">🧪</span>
+      <span class="bottom-label">Labs</span>
+    </a>
+    <a routerLink="/bill-verification" class="bottom-nav-item" [class.active]="isBillVerificationPage">
+      <span class="bottom-icon">🧾</span>
+      <span class="bottom-label">Bills</span>
+    </a>
+    <a routerLink="/insurance" class="bottom-nav-item" [class.active]="isInsurancePage">
+      <span class="bottom-icon">🛡️</span>
+      <span class="bottom-label">Insurance</span>
+    </a>
+  </nav>
 </div>

@@ -41,6 +41,8 @@ export class DashboardLayoutComponent {
   isDrugInteractionsPage = false;
   isCostSaverPage = false;
 
+  activeMobileTab: 'workspace' | 'chat' = 'workspace';
+
   constructor() {
     this.checkRoute(this.router.url);
     this.router.events
@@ -48,6 +50,10 @@ export class DashboardLayoutComponent {
       .subscribe((event) => {
         this.checkRoute(event.urlAfterRedirects || event.url);
       });
+  }
+
+  setMobileTab(tab: 'workspace' | 'chat'): void {
+    this.activeMobileTab = tab;
   }
 
   private checkRoute(url: string): void {

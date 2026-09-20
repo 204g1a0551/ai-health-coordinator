@@ -136,3 +136,24 @@
 .action-btn:hover { background: #3367d6; }
 
 .empty-state { text-align: center; padding: 24px; color: #a0aec0; font-size: 0.9rem; }
+
+@media (max-width: 640px) {
+  .bill-comparison-card {
+    padding: 14px;
+    border-radius: var(--radius-sm);
+  }
+
+  .fin-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .quick-actions {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 4px;
+  }
+
+  .action-btn {
+    white-space: nowrap;
+  }
+}

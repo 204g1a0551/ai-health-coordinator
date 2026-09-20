@@ -171,3 +171,19 @@
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+@media (max-width: 640px) {
+  .welcome-card {
+    padding: 1.25rem 1rem;
+    border-radius: var(--radius-sm);
+    gap: 1.25rem;
+  }
+
+  .welcome-title {
+    font-size: 1.15rem;
+  }
+
+  .welcome-instructions {
+    padding: 1rem;
+  }
+}

@@ -336,3 +336,36 @@
   color: #a0aec0;
   font-size: 0.9rem;
 }
+
+@media (max-width: 600px) {
+  .ddi-card {
+    padding: 14px;
+    border-radius: var(--radius-sm);
+  }
+
+  .ddi-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .item-top {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .meds-pair {
+    font-size: 0.92rem;
+    flex-wrap: wrap;
+  }
+
+  .actions-chips {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 4px;
+  }
+
+  .chip-btn {
+    white-space: nowrap;
+  }
+}
