@@ -104,28 +104,38 @@
     <!-- 6. Appointment Summary -->
     <section class="dash-card">
       <h3 class="card-title">6. Appointment Summary</h3>
-      <div class="summary-grid">
-        <div class="summary-item">
-          <span class="field-label">Doctor</span>
-          <span class="field-value">{{ state().appointmentSummary.doctor || 'Not selected' }}</span>
+      @if (state().appointmentSummary.status === 'Confirmed' || state().appointmentSummary.status === 'Booked') {
+        <div class="appointment-confirmed-container">
+          <div class="confirmed-badge">Appointment Confirmed</div>
+          <div class="confirmed-doctor-name">{{ state().appointmentSummary.doctor }}</div>
+          <div class="confirmed-department-name">{{ state().appointmentSummary.department }}</div>
+          <div class="confirmed-date-str">{{ state().appointmentSummary.date }}</div>
+          <div class="confirmed-time-str">{{ state().appointmentSummary.time }}</div>
         </div>
-        <div class="summary-item">
-          <span class="field-label">Department</span>
-          <span class="field-value">{{ state().appointmentSummary.department || '--' }}</span>
+      } @else {
+        <div class="summary-grid">
+          <div class="summary-item">
+            <span class="field-label">Doctor</span>
+            <span class="field-value">{{ state().appointmentSummary.doctor || 'Not selected' }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="field-label">Department</span>
+            <span class="field-value">{{ state().appointmentSummary.department || '--' }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="field-label">Date</span>
+            <span class="field-value">{{ state().appointmentSummary.date || '--' }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="field-label">Time</span>
+            <span class="field-value highlight">{{ state().appointmentSummary.time || '--' }}</span>
+          </div>
+          <div class="summary-item full-width status-row">
+            <span class="field-label">Status</span>
+            <span class="summary-status-pill">{{ state().appointmentSummary.status || 'Pending' }}</span>
+          </div>
         </div>
-        <div class="summary-item">
-          <span class="field-label">Date</span>
-          <span class="field-value">{{ state().appointmentSummary.date || '--' }}</span>
-        </div>
-        <div class="summary-item">
-          <span class="field-label">Time</span>
-          <span class="field-value highlight">{{ state().appointmentSummary.time || '--' }}</span>
-        </div>
-        <div class="summary-item full-width status-row">
-          <span class="field-label">Status</span>
-          <span class="summary-status-pill">{{ state().appointmentSummary.status || 'Pending' }}</span>
-        </div>
-      </div>
+      }
     </section>
   </div>
 </div>

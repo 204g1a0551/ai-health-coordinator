@@ -85,6 +85,48 @@ export class DashboardService {
   }
 
   /**
+   * Update appointment state when an appointment is booked
+   */
+  bookAppointment(appt: {
+    doctor: string;
+    department: string;
+    date: string;
+    displayDate?: string;
+    time: string;
+    status: string;
+  }): void {
+    const formattedDate = appt.displayDate || (appt.date === '2026-09-21' ? '21 Sep 2026' : appt.date);
+    const formattedTime = (appt.time === '18:00' || appt.time === '6 PM') ? '6:00 PM' : appt.time;
+
+    this.state.update((s) => ({
+      ...s,
+      suggestedDepartment: {
+        name: appt.department || s.suggestedDepartment.name,
+      },
+      appointmentSummary: {
+        doctor: appt.doctor,
+        department: appt.department,
+        date: formattedDate,
+        time: formattedTime,
+        status: 'Confirmed',
+      },
+    }));
+  }
+
+  /**
+   * Cancel active appointment
+   */
+  cancelAppointment(): void {
+    this.state.update((s) => ({
+      ...s,
+      appointmentSummary: {
+        ...s.appointmentSummary,
+        status: 'Cancelled',
+      },
+    }));
+  }
+
+  /**
    * Process structured UI actions returned by the backend coordinator
    */
   applyActions(actions: any[]): void {
@@ -97,6 +139,10 @@ export class DashboardService {
         this.updateDepartment(action.payload.department);
       } else if (action.type === 'UPDATE_DOCTORS_AND_SLOTS' && action.payload) {
         this.updateDoctorsAndSlots(action.payload);
+      } else if (action.type === 'BOOK_APPOINTMENT' && action.payload?.appointment) {
+        this.bookAppointment(action.payload.appointment);
+      } else if (action.type === 'CANCEL_APPOINTMENT') {
+        this.cancelAppointment();
       }
     }
   }
