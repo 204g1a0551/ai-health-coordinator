@@ -137,6 +137,14 @@ DDI_PATTERNS = [
     r"\bcheck\s+(?:drug\s+)?interactions?\b",
 ]
 
+COST_SAVER_PATTERNS = [
+    r"\b(?:cost\s+saver|generic\s+medicines?|generic\s+options?|generic\s+equivalents?)\b",
+    r"\b(?:price\s+comparison|cheaper\s+alternatives?|cheaper\s+options?)\b",
+    r"\b(?:medicine\s+costs?|how\s+much\s+do\s+these\s+cost|price\s+differences?)\b",
+    r"\b(?:jan\s+aushadhi|save\s+on\s+medicines?|affordable\s+medicines?)\b",
+    r"\b(?:medicine\s+source|pricing\s+source)\b",
+]
+
 
 DOCUMENT_PATTERNS = [
     r"\bupload\s+(?:this\s+)?(?:prescription|document|medical\s+report|bill|pdf)\b",
@@ -182,6 +190,7 @@ def supervisor_node(state: AgentState) -> AgentState:
         "LAB_REPORT", "LAB_RESULTS", "LAB_EVIDENCE",
         "VERIFY_BILL", "COMPARE_BILL", "BILL_COMPARISON", "BILL_DETAILS", "VERIFICATION_EVIDENCE",
         "CHECK_DRUG_INTERACTIONS", "SHOW_DRUG_INTERACTIONS", "INTERACTION_DETAILS", "SHOW_INTERACTION_DETAILS", "SHOW_MEDICATION_LIST", "MEDICATION_LIST",
+        "SHOW_MEDICINE_COST", "SHOW_GENERIC_OPTIONS", "SHOW_PRICE_COMPARISON", "SHOW_MEDICINE_SOURCE", "CHECK_MEDICINE_COST", "GENERIC_OPTIONS",
     ]:
         route = "document_agent"
     elif intent == "UPDATE_PATIENT":
@@ -201,6 +210,7 @@ def supervisor_node(state: AgentState) -> AgentState:
         is_lab_query = any(re.search(pat, user_msg) for pat in LAB_PATTERNS)
         is_bill_query = any(re.search(pat, user_msg) for pat in BILL_VERIFICATION_PATTERNS)
         is_ddi_query = any(re.search(pat, user_msg) for pat in DDI_PATTERNS)
+        is_cost_saver_query = any(re.search(pat, user_msg) for pat in COST_SAVER_PATTERNS)
         is_document_query = any(re.search(pat, user_msg) for pat in DOCUMENT_PATTERNS)
         is_insurance_query = any(re.search(pat, user_msg) for pat in INSURANCE_PATTERNS)
         is_pharmacy_query = any(re.search(pat, user_msg) for pat in PHARMACY_PATTERNS)
@@ -212,7 +222,7 @@ def supervisor_node(state: AgentState) -> AgentState:
         is_browsing_slots = any(re.search(kw, user_msg) for kw in SLOT_BROWSE_KEYWORDS)
         has_dept = any(re.search(kw, user_msg) for kw in DEPARTMENT_KEYWORDS)
 
-        if is_lab_query or is_bill_query or is_ddi_query or is_document_query or is_insurance_query or is_pharmacy_query:
+        if is_lab_query or is_bill_query or is_ddi_query or is_cost_saver_query or is_document_query or is_insurance_query or is_pharmacy_query:
             route = "document_agent"
         elif is_patient_info:
             route = "patient_info_agent"

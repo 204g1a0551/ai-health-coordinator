@@ -441,6 +441,21 @@ class LLMService:
         if re.search(r"\b(?:drug\s+interactions?|medicine\s+interactions?|drug-drug\s+interactions?|can\s+i\s+take\s+(?:these|them)\s+together|take\s+together|combine\s+medicines?|check\s+(?:drug\s+)?interactions?)\b", lower):
             return ParsedUserIntent(intent="SHOW_DRUG_INTERACTIONS")
 
+        # ------------------------------------------------------------------
+        # 8.47 Generic Medicine & Cost-Saver Intents
+        # ------------------------------------------------------------------
+        if re.search(r"\b(?:generic\s+options?|generic\s+equivalents?|generic\s+alternatives?|cheaper\s+alternatives?)\b", lower):
+            return ParsedUserIntent(intent="SHOW_GENERIC_OPTIONS")
+
+        if re.search(r"\b(?:price\s+comparison|compare\s+medicine\s+prices?|brand\s+vs\s+generic|price\s+differences?)\b", lower):
+            return ParsedUserIntent(intent="SHOW_PRICE_COMPARISON")
+
+        if re.search(r"\b(?:medicine\s+source|pricing\s+source|where\s+do\s+prices\s+come\s+from)\b", lower):
+            return ParsedUserIntent(intent="SHOW_MEDICINE_SOURCE")
+
+        if re.search(r"\b(?:cost\s+saver|medicine\s+costs?|how\s+much\s+do\s+these\s+cost|save\s+on\s+medicines?|jan\s+aushadhi)\b", lower):
+            return ParsedUserIntent(intent="SHOW_PRICE_COMPARISON")
+
         if re.search(r"\b(?:where\s+can\s+i\s+(?:buy|get|find)|where\s+to\s+buy)\s+(?:these\s+)?medicines?\b|\b(?:pharmacies?|medical\s+stores?)\s+near\b|\bnearby\s+pharmac", lower):
             return ParsedUserIntent(intent="SEARCH_PHARMACY")
 

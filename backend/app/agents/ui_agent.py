@@ -39,6 +39,11 @@ ALLOWED_ACTIONS = {
     "SHOW_DRUG_INTERACTIONS",
     "SHOW_INTERACTION_DETAILS",
     "SHOW_MEDICATION_LIST",
+    # Generic Medicine & Cost-Saver Predefined Actions
+    "SHOW_MEDICINE_COST",
+    "SHOW_GENERIC_OPTIONS",
+    "SHOW_PRICE_COMPARISON",
+    "SHOW_MEDICINE_SOURCE",
     # Legacy / alias compatibility
     "UPDATE_SYMPTOMS",
     "UPDATE_DEPARTMENT",
@@ -126,6 +131,7 @@ def ui_action_node(state: AgentState) -> AgentState:
         "SHOW_LAB_REPORT", "SHOW_LAB_RESULTS", "SHOW_LAB_EVIDENCE",
         "SHOW_BILL_COMPARISON", "SHOW_BILL_DETAILS", "SHOW_VERIFICATION_EVIDENCE",
         "SHOW_DRUG_INTERACTIONS", "SHOW_INTERACTION_DETAILS", "SHOW_MEDICATION_LIST",
+        "SHOW_MEDICINE_COST", "SHOW_GENERIC_OPTIONS", "SHOW_PRICE_COMPARISON", "SHOW_MEDICINE_SOURCE",
     ]:
         primary_action = state["primary_ui_action"]
         primary_data = state.get("primary_ui_data", {})
@@ -272,6 +278,29 @@ def ui_action_node(state: AgentState) -> AgentState:
     elif any(a.get("action") == "SHOW_MEDICATION_LIST" or a.get("type") == "SHOW_MEDICATION_LIST" for a in raw_actions):
         primary_action = "SHOW_MEDICATION_LIST"
         act = next((a for a in raw_actions if a.get("action") == "SHOW_MEDICATION_LIST" or a.get("type") == "SHOW_MEDICATION_LIST"), None)
+        primary_data = act.get("payload") or act.get("data") or {}
+
+    # --------------------------------------------------------------------------
+    # 1.12 Generic Medicine & Cost-Saver Predefined Actions
+    # --------------------------------------------------------------------------
+    elif any(a.get("action") == "SHOW_MEDICINE_COST" or a.get("type") == "SHOW_MEDICINE_COST" for a in raw_actions):
+        primary_action = "SHOW_MEDICINE_COST"
+        act = next((a for a in raw_actions if a.get("action") == "SHOW_MEDICINE_COST" or a.get("type") == "SHOW_MEDICINE_COST"), None)
+        primary_data = act.get("payload") or act.get("data") or {}
+
+    elif any(a.get("action") == "SHOW_GENERIC_OPTIONS" or a.get("type") == "SHOW_GENERIC_OPTIONS" for a in raw_actions):
+        primary_action = "SHOW_GENERIC_OPTIONS"
+        act = next((a for a in raw_actions if a.get("action") == "SHOW_GENERIC_OPTIONS" or a.get("type") == "SHOW_GENERIC_OPTIONS"), None)
+        primary_data = act.get("payload") or act.get("data") or {}
+
+    elif any(a.get("action") == "SHOW_PRICE_COMPARISON" or a.get("type") == "SHOW_PRICE_COMPARISON" for a in raw_actions):
+        primary_action = "SHOW_PRICE_COMPARISON"
+        act = next((a for a in raw_actions if a.get("action") == "SHOW_PRICE_COMPARISON" or a.get("type") == "SHOW_PRICE_COMPARISON"), None)
+        primary_data = act.get("payload") or act.get("data") or {}
+
+    elif any(a.get("action") == "SHOW_MEDICINE_SOURCE" or a.get("type") == "SHOW_MEDICINE_SOURCE" for a in raw_actions):
+        primary_action = "SHOW_MEDICINE_SOURCE"
+        act = next((a for a in raw_actions if a.get("action") == "SHOW_MEDICINE_SOURCE" or a.get("type") == "SHOW_MEDICINE_SOURCE"), None)
         primary_data = act.get("payload") or act.get("data") or {}
 
     # --------------------------------------------------------------------------

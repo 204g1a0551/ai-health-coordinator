@@ -1,0 +1,58 @@
+<div class="cost-card">
+  <div class="card-header">
+    <div class="header-left">
+      <span class="card-icon">💰</span>
+      <div>
+        <h3>Prescribed Medicine Costs</h3>
+        <span class="sub">Current Listed Retail &amp; Market Pricing</span>
+      </div>
+    </div>
+    @if (analysis) {
+      <div class="total-tag">
+        Total: ₹{{ analysis.total_prescribed_cost }}
+      </div>
+    }
+  </div>
+
+  @if (comparisons.length > 0) {
+    <div class="medicines-list">
+      @for (item of comparisons; track item.prescribed_medicine.medicine_name) {
+        <div class="cost-item">
+          <div class="item-top">
+            <span class="med-name">{{ item.prescribed_medicine.medicine_name }}</span>
+            <span class="price-val">₹{{ item.prescribed_medicine.listed_price }}</span>
+          </div>
+          <div class="med-details">
+            <span><strong>Active:</strong> {{ item.prescribed_medicine.active_ingredient }}</span>
+            <span><strong>Strength:</strong> {{ item.prescribed_medicine.strength }}</span>
+            <span><strong>Pack:</strong> {{ item.prescribed_medicine.pack_size }}</span>
+            @if (item.prescribed_medicine.manufacturer) {
+              <span><strong>Mfr:</strong> {{ item.prescribed_medicine.manufacturer }}</span>
+            }
+          </div>
+          <div class="unit-price">
+            Unit Price: ₹{{ item.prescribed_medicine.price_per_unit }} / tablet
+          </div>
+        </div>
+      }
+    </div>
+
+    <div class="action-row">
+      <button class="action-btn" (click)="askAbout('Show generic options')">
+        💊 View Jan Aushadhi Generic Equivalents
+      </button>
+      <button class="action-btn" (click)="askAbout('Show price comparison')">
+        ⚖️ Compare Brand vs. Generic Prices
+      </button>
+    </div>
+
+    <div class="meta-footer">
+      <span>Source: {{ analysis?.data_source || 'NPPA / PMBJP National Drug Price Registry' }}</span>
+      <span>Updated: {{ (analysis?.price_timestamp || '2026-09-01') | slice:0:10 }}</span>
+    </div>
+  } @else {
+    <div class="empty-state">
+      <p>No prescribed medicines identified to evaluate costs.</p>
+    </div>
+  }
+</div>

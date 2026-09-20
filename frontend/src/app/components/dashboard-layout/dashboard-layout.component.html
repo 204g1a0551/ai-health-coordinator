@@ -12,9 +12,13 @@
 
       <!-- Navigation Links -->
       <nav class="header-nav">
-        <a routerLink="/dashboard" class="nav-tab" [class.active]="!isDocumentsPage && !isInsurancePage && !isLabReportsPage && !isBillVerificationPage && !isDrugInteractionsPage">
+        <a routerLink="/dashboard" class="nav-tab" [class.active]="!isDocumentsPage && !isInsurancePage && !isLabReportsPage && !isBillVerificationPage && !isDrugInteractionsPage && !isCostSaverPage">
           <span class="tab-icon">🩺</span>
           <span>Coordinator &amp; Chat</span>
+        </a>
+        <a routerLink="/cost-saver" class="nav-tab" [class.active]="isCostSaverPage">
+          <span class="tab-icon">💰</span>
+          <span>Cost-Saver</span>
         </a>
         <a routerLink="/drug-interactions" class="nav-tab" [class.active]="isDrugInteractionsPage">
           <span class="tab-icon">💊</span>
@@ -71,8 +75,12 @@
     </div>
   </header>
 
-  <!-- View Content: Two-Column Coordinator, Medical Documents, Insurance, Lab Reports, or Drug Interactions -->
-  @if (isDrugInteractionsPage) {
+  <!-- View Content: Two-Column Coordinator, Medical Documents, Insurance, Lab Reports, Drug Interactions, or Cost-Saver -->
+  @if (isCostSaverPage) {
+    <main class="documents-full-main">
+      <app-cost-saver-page />
+    </main>
+  } @else if (isDrugInteractionsPage) {
     <main class="documents-full-main">
       <app-drug-interaction-page />
     </main>

@@ -30,6 +30,8 @@ import { VerificationEvidenceComponent } from '../dynamic-cards/verification-evi
 import { DDIInteractionComponent } from '../dynamic-cards/ddi-interaction/ddi-interaction.component';
 import { InteractionDetailsComponent } from '../dynamic-cards/interaction-details/interaction-details.component';
 import { MedicationListComponent } from '../dynamic-cards/medication-list/medication-list.component';
+import { MedicineCostComponent } from '../dynamic-cards/medicine-cost/medicine-cost.component';
+import { GenericComparisonComponent } from '../dynamic-cards/generic-comparison/generic-comparison.component';
 
 @Component({
   selector: 'app-dashboard',
@@ -63,6 +65,8 @@ import { MedicationListComponent } from '../dynamic-cards/medication-list/medica
     DDIInteractionComponent,
     InteractionDetailsComponent,
     MedicationListComponent,
+    MedicineCostComponent,
+    GenericComparisonComponent,
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css',

@@ -649,6 +649,27 @@ def document_agent_node(state: AgentState) -> AgentState:
         return ddi_checker_agent_node(state)
 
     # --------------------------------------------------------------------------
+    # 0.7 Generic Medicine & Cost-Saver Queries
+    # --------------------------------------------------------------------------
+    from app.agents.cost_saver_agent import cost_saver_agent_node
+    is_cost_saver_query = (
+        parsed_intent in ["SHOW_MEDICINE_COST", "SHOW_GENERIC_OPTIONS", "SHOW_PRICE_COMPARISON", "SHOW_MEDICINE_SOURCE", "CHECK_MEDICINE_COST", "GENERIC_OPTIONS"]
+        or "cost saver" in user_lower
+        or "generic medicine" in user_lower
+        or "generic option" in user_lower
+        or "generic equivalent" in user_lower
+        or "price comparison" in user_lower
+        or "cheaper alternative" in user_lower
+        or "medicine cost" in user_lower
+        or "how much do these cost" in user_lower
+        or "price difference" in user_lower
+        or "save on medicines" in user_lower
+        or "jan aushadhi" in user_lower
+    )
+    if is_cost_saver_query:
+        return cost_saver_agent_node(state)
+
+    # --------------------------------------------------------------------------
     # 1. Document Upload Request ("Upload this prescription", "Upload document")
     # --------------------------------------------------------------------------
     if any(k in user_lower for k in ["upload this prescription", "upload prescription", "upload document", "upload my document", "upload medical report", "upload pdf", "choose pdf"]):

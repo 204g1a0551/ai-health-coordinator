@@ -1,0 +1,113 @@
+<div class="generic-comp-card">
+  <div class="card-header">
+    <div class="header-left">
+      <span class="card-icon">⚖️</span>
+      <div>
+        <h3>Generic Equivalence &amp; Cost Savings</h3>
+        <span class="sub">Jan Aushadhi &amp; NPPA Verified Equivalents</span>
+      </div>
+    </div>
+    @if (analysis) {
+      <div class="savings-tag">
+        Save up to ₹{{ analysis.total_potential_savings }} ({{ analysis.savings_percentage }}%)
+      </div>
+    }
+  </div>
+
+  <!-- Mandatory Doctor Consultation Warning Banner -->
+  <div class="doctor-warning-banner">
+    <span class="banner-icon">⚠️</span>
+    <div class="banner-text">
+      <strong>Important:</strong> Do not change or substitute the prescribed medicine without consulting your doctor or pharmacist.
+    </div>
+  </div>
+
+  @if (comparisons.length > 0) {
+    <!-- Verified Generic Options -->
+    <div class="comparisons-list">
+      @for (item of verifiedComparisons; track item.prescribed_medicine.medicine_name) {
+        <div class="comp-box">
+          <div class="box-grid">
+            <!-- Branded Column -->
+            <div class="col brand-col">
+              <span class="col-label">Prescribed Branded</span>
+              <h4 class="med-title">{{ item.prescribed_medicine.medicine_name }}</h4>
+              <div class="med-spec">
+                <span>{{ item.prescribed_medicine.strength }} • {{ item.prescribed_medicine.dosage_form }}</span>
+                <span>Pack: {{ item.prescribed_medicine.pack_size }}</span>
+              </div>
+              <div class="price-row">
+                <span class="price-val">₹{{ item.prescribed_medicine.listed_price }}</span>
+                <span class="unit-val">(₹{{ item.prescribed_medicine.price_per_unit }}/tab)</span>
+              </div>
+            </div>
+
+            <!-- Arrow / Difference Divider -->
+            <div class="col diff-col">
+              <span class="diff-badge">-₹{{ item.price_difference }}</span>
+              <span class="diff-pct">{{ item.savings_percentage }}% cheaper</span>
+            </div>
+
+            <!-- Generic Column -->
+            <div class="col generic-col">
+              <span class="col-label generic-lbl">Jan Aushadhi Equivalent</span>
+              <h4 class="med-title generic-title">{{ item.generic_equivalent?.medicine_name }}</h4>
+              <div class="med-spec">
+                <span>{{ item.generic_equivalent?.strength }} • {{ item.generic_equivalent?.dosage_form }}</span>
+                <span>Pack: {{ item.generic_equivalent?.pack_size }}</span>
+              </div>
+              <div class="price-row">
+                <span class="price-val generic-price">₹{{ item.generic_equivalent?.listed_price }}</span>
+                <span class="unit-val">(₹{{ item.generic_equivalent?.price_per_unit }}/tab)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Equivalence Distinction Badges -->
+          <div class="equivalence-bar">
+            <div class="eq-tags">
+              <span class="eq-tag">✓ Same Active Ingredient ({{ item.prescribed_medicine.active_ingredient }})</span>
+              <span class="eq-tag">✓ Same Strength ({{ item.prescribed_medicine.strength }})</span>
+              <span class="eq-tag">✓ Same Dosage Form ({{ item.prescribed_medicine.dosage_form }})</span>
+              <span class="eq-tag bio-tag">✓ Bioequivalent Standard (IP)</span>
+            </div>
+            <p class="eq-notes">{{ item.equivalence_notes }}</p>
+          </div>
+        </div>
+      }
+
+      <!-- Unverified Medicines List if any -->
+      @for (unv of unverifiedComparisons; track unv.prescribed_medicine.medicine_name) {
+        <div class="unv-box">
+          <div class="unv-header">
+            <strong>{{ unv.prescribed_medicine.medicine_name }}</strong>
+            <span class="unv-badge">Verification Pending</span>
+          </div>
+          <p class="unv-msg">Equivalent product could not be reliably verified.</p>
+        </div>
+      }
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="action-row">
+      <button class="chip-btn" (click)="askAbout('Show medicine cost')">
+        💰 View Prescription Listed Prices
+      </button>
+      <button class="chip-btn" (click)="askAbout('Where can I buy these medicines?')">
+        🏪 Find Nearby Jan Aushadhi Stores
+      </button>
+      <button class="chip-btn" (click)="askAbout('Where do prices come from?')">
+        ℹ️ Pricing Data Sources
+      </button>
+    </div>
+
+    <div class="meta-footer">
+      <span>Database: {{ analysis?.data_source || 'PMBJP / NPPA National Formulary' }}</span>
+      <span>Effective Date: {{ (analysis?.price_timestamp || '2026-09-01') | slice:0:10 }}</span>
+    </div>
+  } @else {
+    <div class="empty-state">
+      <p>No medicines available for generic equivalence evaluation.</p>
+    </div>
+  }
+</div>

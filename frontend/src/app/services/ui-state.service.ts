@@ -27,6 +27,10 @@ export type UIActionType =
   | 'SHOW_DRUG_INTERACTIONS'
   | 'SHOW_INTERACTION_DETAILS'
   | 'SHOW_MEDICATION_LIST'
+  | 'SHOW_MEDICINE_COST'
+  | 'SHOW_GENERIC_OPTIONS'
+  | 'SHOW_PRICE_COMPARISON'
+  | 'SHOW_MEDICINE_SOURCE'
   | 'HIDE_COMPONENT'
   | 'CLEAR_DASHBOARD'
   | 'SHOW_EMERGENCY_ALERT'
@@ -176,6 +180,19 @@ export class UIStateService {
       case 'SHOW_MEDICATION_LIST':
       case 'MEDICATION_LIST':
         return 'SHOW_MEDICATION_LIST';
+      case 'SHOW_MEDICINE_COST':
+      case 'MEDICINE_COST':
+        return 'SHOW_MEDICINE_COST';
+      case 'SHOW_GENERIC_OPTIONS':
+      case 'GENERIC_OPTIONS':
+      case 'GENERIC_EQUIVALENT':
+        return 'SHOW_GENERIC_OPTIONS';
+      case 'SHOW_PRICE_COMPARISON':
+      case 'PRICE_COMPARISON':
+        return 'SHOW_PRICE_COMPARISON';
+      case 'SHOW_MEDICINE_SOURCE':
+      case 'MEDICINE_SOURCE':
+        return 'SHOW_MEDICINE_SOURCE';
       case 'CLEAR_DASHBOARD':
       case 'CLEAR_APPOINTMENT':
       case 'HIDE_COMPONENT':

@@ -1,0 +1,277 @@
+.generic-comp-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  max-height: 75vh;
+  overflow-y: auto;
+  font-family: inherit;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 12px;
+  margin-bottom: 14px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.card-icon {
+  font-size: 26px;
+}
+
+.card-header h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  color: #1a202c;
+}
+
+.sub {
+  font-size: 0.78rem;
+  color: #718096;
+}
+
+.savings-tag {
+  background: #f0fff4;
+  color: #276749;
+  border: 1px solid #9ae6b4;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.doctor-warning-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fffaf0;
+  border-left: 4px solid #dd6b20;
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+}
+
+.banner-icon {
+  font-size: 20px;
+}
+
+.banner-text {
+  font-size: 0.85rem;
+  color: #7b341e;
+  line-height: 1.4;
+}
+
+.comparisons-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.comp-box {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 16px;
+  background: #ffffff;
+}
+
+.box-grid {
+  display: grid;
+  grid-template-columns: 1fr 100px 1fr;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+@media (max-width: 600px) {
+  .box-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.col-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #718096;
+  text-transform: uppercase;
+}
+
+.col-label.generic-lbl {
+  color: #276749;
+}
+
+.med-title {
+  margin: 0;
+  font-size: 0.98rem;
+  color: #2d3748;
+}
+
+.generic-title {
+  color: #276749;
+}
+
+.med-spec {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.76rem;
+  color: #718096;
+}
+
+.price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.price-val {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #2d3748;
+}
+
+.generic-price {
+  color: #276749;
+}
+
+.unit-val {
+  font-size: 0.72rem;
+  color: #a0aec0;
+}
+
+.diff-col {
+  text-align: center;
+  align-items: center;
+}
+
+.diff-badge {
+  background: #c6f6d5;
+  color: #22543d;
+  font-weight: 800;
+  font-size: 0.95rem;
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+.diff-pct {
+  font-size: 0.72rem;
+  color: #276749;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.equivalence-bar {
+  border-top: 1px dashed #e2e8f0;
+  padding-top: 10px;
+}
+
+.eq-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.eq-tag {
+  background: #edf2f7;
+  color: #4a5568;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.bio-tag {
+  background: #ebf8ff;
+  color: #2b6cb0;
+}
+
+.eq-notes {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #718096;
+  line-height: 1.35;
+}
+
+.unv-box {
+  border: 1px dashed #cbd5e0;
+  border-radius: 8px;
+  padding: 12px;
+  background: #f7fafc;
+}
+
+.unv-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  color: #4a5568;
+  margin-bottom: 4px;
+}
+
+.unv-badge {
+  font-size: 0.7rem;
+  background: #edf2f7;
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #718096;
+}
+
+.unv-msg {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #718096;
+  font-style: italic;
+}
+
+.action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.chip-btn {
+  padding: 8px 14px;
+  background: #ebf8ff;
+  color: #2b6cb0;
+  border: 1px solid #bee3f8;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.chip-btn:hover {
+  background: #bee3f8;
+}
+
+.meta-footer {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: #a0aec0;
+  border-top: 1px dashed #e2e8f0;
+  padding-top: 8px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 24px;
+  color: #a0aec0;
+}

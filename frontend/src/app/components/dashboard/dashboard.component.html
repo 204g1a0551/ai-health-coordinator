@@ -135,6 +135,18 @@
     @case ('SHOW_MEDICATION_LIST') {
       <app-medication-list [data]="uiState.state().currentData" (actionClicked)="onPromptSelected($event)" />
     }
+    @case ('SHOW_MEDICINE_COST') {
+      <app-medicine-cost [data]="uiState.state().currentData" (actionClicked)="onPromptSelected($event)" />
+    }
+    @case ('SHOW_GENERIC_OPTIONS') {
+      <app-generic-comparison [data]="uiState.state().currentData" (actionClicked)="onPromptSelected($event)" />
+    }
+    @case ('SHOW_PRICE_COMPARISON') {
+      <app-generic-comparison [data]="uiState.state().currentData" (actionClicked)="onPromptSelected($event)" />
+    }
+    @case ('SHOW_MEDICINE_SOURCE') {
+      <app-generic-comparison [data]="uiState.state().currentData" (actionClicked)="onPromptSelected($event)" />
+    }
 
     @case ('SHOW_APPOINTMENT') {
       <app-appointment [data]="uiState.state().currentData" />

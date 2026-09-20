@@ -1,0 +1,197 @@
+<div class="cost-page-container">
+  <div class="page-header">
+    <div class="header-icon">💰</div>
+    <div>
+      <h2>Generic Medicine &amp; Cost-Saver</h2>
+      <p class="header-desc">
+        Informational price comparisons between prescribed branded medicines and Jan Aushadhi (PMBJP) / NPPA generic equivalents.
+      </p>
+    </div>
+  </div>
+
+  <!-- Mandatory Doctor Consultation Warning Banner -->
+  <div class="mandatory-alert">
+    <span class="alert-icon">⚠️</span>
+    <div class="alert-content">
+      <strong>Important Medical Guidance:</strong>
+      Do not change or substitute the prescribed medicine without consulting your doctor or pharmacist.
+      This tool provides price transparency and informational generic comparisons only.
+    </div>
+  </div>
+
+  <!-- Single Medicine Generic Lookup -->
+  <div class="section-box lookup-box">
+    <h3>🔍 Check Generic Equivalent for Any Medicine</h3>
+    <p class="sub-desc">Enter any branded or prescribed medicine name (e.g. Augmentin, Dolo, Pan 40, Atorva):</p>
+    <div class="lookup-input-row">
+      <input
+        type="text"
+        [(ngModel)]="lookupName"
+        (keyup.enter)="lookupMedicine()"
+        placeholder="Enter medicine name..."
+        class="lookup-input"
+      />
+      <button class="lookup-btn" (click)="lookupMedicine()" [disabled]="lookupLoading || !lookupName.trim()">
+        {{ lookupLoading ? 'Checking...' : 'Check Equivalent' }}
+      </button>
+    </div>
+
+    @if (lookupResult) {
+      <div class="lookup-result-card" [class.unverified-card]="!lookupResult.is_verified">
+        @if (lookupResult.is_verified && lookupResult.generic_equivalent) {
+          <div class="res-grid">
+            <div class="res-col">
+              <span class="res-tag">Prescribed Brand</span>
+              <h4 class="res-name">{{ lookupResult.prescribed_medicine.medicine_name }}</h4>
+              <span class="res-sub">{{ lookupResult.prescribed_medicine.strength }} • {{ lookupResult.prescribed_medicine.dosage_form }}</span>
+              <span class="res-price">₹{{ lookupResult.prescribed_medicine.listed_price }}</span>
+              <span class="res-unit">({{ lookupResult.prescribed_medicine.pack_size }})</span>
+            </div>
+            <div class="res-divider">
+              <span class="savings-badge">Save ₹{{ lookupResult.price_difference }}</span>
+              <span class="savings-pct">{{ lookupResult.savings_percentage }}% cheaper</span>
+            </div>
+            <div class="res-col generic-side">
+              <span class="res-tag generic-tag">Jan Aushadhi Generic</span>
+              <h4 class="res-name generic-name">{{ lookupResult.generic_equivalent.medicine_name }}</h4>
+              <span class="res-sub">{{ lookupResult.generic_equivalent.strength }} • {{ lookupResult.generic_equivalent.dosage_form }}</span>
+              <span class="res-price generic-price">₹{{ lookupResult.generic_equivalent.listed_price }}</span>
+              <span class="res-unit">({{ lookupResult.generic_equivalent.pack_size }})</span>
+            </div>
+          </div>
+          <div class="res-notes">
+            <span><strong>Equivalence Status:</strong> {{ lookupResult.equivalence_level }}</span>
+            <p>{{ lookupResult.equivalence_notes }}</p>
+          </div>
+        } @else {
+          <div class="unverified-msg">
+            <span class="unv-icon">ℹ️</span>
+            <div>
+              <strong>{{ lookupResult.prescribed_medicine.medicine_name }}</strong>
+              <p>Equivalent product could not be reliably verified from the configured database.</p>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  @if (loading) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading prescription cost comparison from PMBJP / NPPA database...</p>
+    </div>
+  } @else if (analysis) {
+    <!-- Stats Row -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <span class="stat-num">₹{{ analysis.total_prescribed_cost }}</span>
+        <span class="stat-lbl">Prescribed Brand Cost</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-num generic-num">₹{{ analysis.potential_generic_cost }}</span>
+        <span class="stat-lbl">Jan Aushadhi Cost</span>
+      </div>
+      <div class="stat-card highlight-card">
+        <span class="stat-num savings-num">₹{{ analysis.total_potential_savings }}</span>
+        <span class="stat-lbl">Potential Savings ({{ analysis.savings_percentage }}%)</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-num">{{ analysis.comparisons.length }}</span>
+        <span class="stat-lbl">Medicines Analyzed</span>
+      </div>
+    </div>
+
+    <!-- Comparisons Table Section -->
+    <div class="section-box">
+      <h3>⚖️ Prescription Medicine Comparison Matrix</h3>
+      <div class="table-scroll">
+        <table class="cost-table">
+          <thead>
+            <tr>
+              <th>Prescribed Medicine</th>
+              <th>Active Ingredient &amp; Strength</th>
+              <th>Brand Price</th>
+              <th>Jan Aushadhi Generic</th>
+              <th>Generic Price</th>
+              <th>Savings</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (c of analysis.comparisons; track c.prescribed_medicine.medicine_name) {
+              <tr>
+                <td>
+                  <strong>{{ c.prescribed_medicine.medicine_name }}</strong>
+                  <div class="pack-sub">{{ c.prescribed_medicine.pack_size }}</div>
+                </td>
+                <td>
+                  <span>{{ c.prescribed_medicine.active_ingredient }}</span>
+                  <div class="strength-sub">{{ c.prescribed_medicine.strength }} • {{ c.prescribed_medicine.dosage_form }}</div>
+                </td>
+                <td class="brand-price-cell">
+                  ₹{{ c.prescribed_medicine.listed_price }}
+                </td>
+                <td>
+                  @if (c.is_verified && c.generic_equivalent) {
+                    <span class="gen-name">{{ c.generic_equivalent.medicine_name }}</span>
+                    <div class="bio-sub">✓ Bioequivalent IP</div>
+                  } @else {
+                    <span class="unv-text">Equivalent product could not be reliably verified</span>
+                  }
+                </td>
+                <td>
+                  @if (c.is_verified && c.generic_equivalent) {
+                    <span class="gen-price">₹{{ c.generic_equivalent.listed_price }}</span>
+                  } @else {
+                    <span>-</span>
+                  }
+                </td>
+                <td>
+                  @if (c.price_difference) {
+                    <span class="save-tag">Save ₹{{ c.price_difference }} ({{ c.savings_percentage }}%)</span>
+                  } @else {
+                    <span>-</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Q&A Section -->
+    <div class="section-box qa-box">
+      <h3>💬 Ask Cost &amp; Generic Questions</h3>
+      <div class="qa-input-row">
+        <input
+          type="text"
+          [(ngModel)]="question"
+          (keyup.enter)="askQuestion()"
+          placeholder="e.g. What is the generic alternative for Augmentin 625mg?"
+          class="qa-input"
+        />
+        <button class="qa-btn" (click)="askQuestion()" [disabled]="qaLoading || !question.trim()">
+          {{ qaLoading ? 'Thinking...' : 'Ask Cost Agent' }}
+        </button>
+      </div>
+
+      @for (item of qaHistory; track item.q) {
+        <div class="qa-bubble">
+          <div class="q-row"><strong>Q:</strong> {{ item.q }}</div>
+          <div class="a-row">{{ item.a }}</div>
+        </div>
+      }
+    </div>
+
+    <!-- Regulatory Data Source Footer -->
+    <div class="source-box">
+      <span class="src-icon">🏛️</span>
+      <div>
+        <strong>Authoritative Data Source:</strong>
+        {{ analysis.data_source }} • Effective date: {{ analysis.price_timestamp | slice:0:10 }}.
+        Prices are benchmarked under Drug Price Control Orders (DPCO) and PMBJP generic drug schedules.
+      </div>
+    </div>
+  }
+</div>
