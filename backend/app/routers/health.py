@@ -50,3 +50,42 @@ async def check_provider_status():
         "sampleHospitals": [h["name"] for h in hospitals[:4]],
     }
 
+
+@router.get("/db")
+async def check_db_health():
+    """
+    Test and verify database health, active engine (PostgreSQL or fallback SQLite), and table stats.
+    """
+    from app.db.postgres import postgres_service
+    from app.db.repository import get_db_connection
+
+    pg_diag = postgres_service.health_check()
+
+    sqlite_stats = {}
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM appointments")
+        appt_count = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(*) FROM appointment_slots")
+        slot_count = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(*) FROM appointment_slots WHERE is_available = 1")
+        avail_count = cursor.fetchone()[0]
+        conn.close()
+        sqlite_stats = {
+            "connected": True,
+            "totalAppointments": appt_count,
+            "totalSlots": slot_count,
+            "availableSlots": avail_count,
+        }
+    except Exception as e:
+        sqlite_stats = {"connected": False, "error": str(e)}
+
+    return {
+        "status": "healthy",
+        "timestamp": datetime.utcnow().isoformat(),
+        "primaryEngine": pg_diag["engine"],
+        "postgres": pg_diag,
+        "sqliteFallback": sqlite_stats,
+    }
+

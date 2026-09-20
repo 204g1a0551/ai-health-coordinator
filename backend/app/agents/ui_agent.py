@@ -142,6 +142,12 @@ def ui_action_node(state: AgentState) -> AgentState:
                     "dataSource": p.get("dataSource", "Bengaluru Health Grid (Verified Provider)"),
                     "timestamp": p.get("timestamp"),
                 })
+        elif r_type == "SHOW_SLOTS":
+            p = raw.get("payload", {})
+            add_action("SHOW_SLOTS", p)
+        elif r_type == "SHOW_DOCTORS":
+            p = raw.get("payload", {})
+            add_action("SHOW_DOCTORS", p)
 
     # 5. Process Appointments (BOOK_APPOINTMENT, CANCEL_APPOINTMENT, CLEAR_APPOINTMENT)
     for raw in raw_actions:

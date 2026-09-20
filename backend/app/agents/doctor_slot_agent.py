@@ -5,6 +5,7 @@ from app.agents.state import AgentState
 from app.services.provider_service import provider_service
 from app.services.redis_service import redis_service
 from app.services.llm_service import llm_service
+from app.db.repository import revalidate_slot
 
 # Patterns to identify time-of-day preference
 PERIOD_PATTERNS = [
@@ -128,12 +129,33 @@ def doctor_slot_node(state: AgentState) -> AgentState:
     flat_doctor_cards = []
 
     for d in doctors_found:
-        # 2. Controlled Backend Tool Call: get_available_slots via provider_service
-        slots = provider_service.get_available_slots(
-            doctor_id=d["id"],
-            date=date_pref,
-            period=period_pref,
-        )
+        # 2. Controlled Backend Tool Call: Query Redis availability cache or provider_service
+        cached_slots = redis_service.get_slot_availability(d["id"], date_pref)
+        if cached_slots:
+            slots = cached_slots
+            if period_pref:
+                slots = [s for s in slots if s.get("period") == period_pref]
+        else:
+            slots = provider_service.get_available_slots(
+                doctor_id=d["id"],
+                date=date_pref,
+                period=period_pref,
+            )
+            # Cache availability in Redis for short configurable period (default 60s)
+            redis_service.set_slot_availability(d["id"], date_pref, slots)
+
+        # Real-time database availability & lock check: mark slot unavailable if booked or locked
+        current_session = state.get("session_id", "")
+        for s in slots:
+            # 1. Check database availability
+            slot_check = revalidate_slot(d["id"], s["time"])
+            if not slot_check.get("is_available", True):
+                s["isAvailable"] = False
+
+            # 2. Check active concurrency lock
+            lock_holder = redis_service.is_slot_locked(d["id"], date_pref, s["time"])
+            if lock_holder and lock_holder != current_session:
+                s["isAvailable"] = False
 
         slot_times = [s["time"] for s in slots if s.get("isAvailable", True)]
 

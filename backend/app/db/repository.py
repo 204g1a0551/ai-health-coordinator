@@ -1,7 +1,8 @@
 import sqlite3
 import os
 import re
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
+from app.db.postgres import postgres_service
 
 DB_FILE = os.path.join(os.path.dirname(__file__), "health_system.db")
 
@@ -248,6 +249,63 @@ def find_doctor_by_name(doctor_query: str) -> Optional[Dict[str, Any]]:
     return None
 
 
+def revalidate_slot(doctor_id: str, time_query: str) -> Dict[str, Any]:
+    """
+    Revalidates the current availability of a specific slot immediately before booking.
+    Returns whether it is currently available, the slot id, and alternative available slots.
+    """
+    init_db()
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    normalized_time = time_query.strip().upper()
+    if normalized_time in ["6 PM", "6PM", "18:00"]:
+        normalized_time = "6:00 PM"
+    elif normalized_time in ["5:30 PM", "5:30PM", "17:30"]:
+        normalized_time = "5:30 PM"
+    elif normalized_time in ["6:30 PM", "6:30PM", "18:30"]:
+        normalized_time = "6:30 PM"
+    elif normalized_time in ["10 AM", "10AM"]:
+        normalized_time = "10:00 AM"
+
+    stripped_time = re.sub(r"^0", "", normalized_time)
+    padded_time = f"0{stripped_time}" if len(stripped_time) < 8 else stripped_time
+
+    cursor.execute(
+        """SELECT id, time, is_available FROM appointment_slots
+           WHERE doctor_id = ? AND (time = ? OR time = ? OR time = ?)""",
+        (doctor_id, normalized_time, stripped_time, padded_time)
+    )
+    slot_row = cursor.fetchone()
+
+    cursor.execute(
+        """SELECT time FROM appointment_slots WHERE doctor_id = ? AND is_available = 1""",
+        (doctor_id,)
+    )
+    alt_slots = [r["time"] for r in cursor.fetchall()]
+    conn.close()
+
+    if not slot_row:
+        return {
+            "is_available": False,
+            "slot_id": None,
+            "normalized_time": normalized_time,
+            "alternatives": alt_slots,
+            "reason": "Not found"
+        }
+
+    is_avail = bool(slot_row["is_available"] == 1)
+    filtered_alts = [t for t in alt_slots if t != normalized_time]
+
+    return {
+        "is_available": is_avail,
+        "slot_id": slot_row["id"],
+        "normalized_time": normalized_time,
+        "alternatives": filtered_alts,
+        "reason": "Already booked" if not is_avail else None
+    }
+
+
 def book_appointment(
     session_id: str,
     doctor_query: str,
@@ -255,8 +313,9 @@ def book_appointment(
     date_query: Optional[str] = "tomorrow"
 ) -> Dict[str, Any]:
     """
-    Validates doctor, date, and time slot. Checks availability and creates appointment.
+    Validates doctor, date, and time slot. Revalidates availability and creates appointment.
     If unavailable, returns available alternatives.
+    Stores confirmed appointment in PostgreSQL (with SQLite dual-storage).
     """
     init_db()
     conn = get_db_connection()
@@ -289,54 +348,27 @@ def book_appointment(
         iso_date = "2026-09-20"
         display_date = "20 Sep 2026"
 
-    # 2 & 3. Check Slot Availability
-    stripped_time = re.sub(r"^0", "", normalized_time)
-    padded_time = f"0{stripped_time}" if len(stripped_time) < 8 else stripped_time
-
-    cursor.execute(
-        """SELECT id, time, is_available FROM appointment_slots
-           WHERE doctor_id = ? AND (time = ? OR time = ? OR time = ?)""",
-        (doctor["id"], normalized_time, stripped_time, padded_time)
-    )
-    slot_row = cursor.fetchone()
-
-    if not slot_row:
-        # Check all available alternative slots for this doctor
-        cursor.execute(
-            """SELECT time FROM appointment_slots WHERE doctor_id = ? AND is_available = 1""",
-            (doctor["id"],)
-        )
-        alt_slots = [r["time"] for r in cursor.fetchall()]
+    # 2 & 3. Revalidate Slot Availability
+    reval = revalidate_slot(doctor["id"], normalized_time)
+    if not reval["is_available"] or not reval["slot_id"]:
         conn.close()
         return {
             "success": False,
-            "error": f"The requested slot ({normalized_time}) is not available for {doctor['name']}.",
-            "alternatives": alt_slots,
+            "error": f"The slot at {normalized_time} is already booked or no longer available for {doctor['name']}.",
+            "alternatives": reval["alternatives"],
             "doctor": doctor["name"]
         }
 
-    if slot_row["is_available"] == 0:
-        cursor.execute(
-            """SELECT time FROM appointment_slots WHERE doctor_id = ? AND is_available = 1""",
-            (doctor["id"],)
-        )
-        alt_slots = [r["time"] for r in cursor.fetchall()]
-        conn.close()
-        return {
-            "success": False,
-            "error": f"The slot at {normalized_time} is already booked.",
-            "alternatives": alt_slots,
-            "doctor": doctor["name"]
-        }
+    slot_id = reval["slot_id"]
 
     # 4. Mark slot as booked
     cursor.execute(
         "UPDATE appointment_slots SET is_available = 0 WHERE id = ?",
-        (slot_row["id"],)
+        (slot_id,)
     )
 
-    # 5. Create Appointment Record
-    appt_id = f"appt_{session_id}_{slot_row['id']}"
+    # 5. Create Appointment Record in SQLite
+    appt_id = f"appt_{session_id}_{slot_id}"
     cursor.execute(
         """INSERT OR REPLACE INTO appointments
            (id, session_id, doctor_id, doctor_name, department, date, display_date, time, status)
@@ -357,6 +389,20 @@ def book_appointment(
     conn.commit()
     conn.close()
 
+    # 6. Store final appointment in PostgreSQL
+    appt_record = {
+        "id": appt_id,
+        "session_id": session_id,
+        "doctor_id": doctor["id"],
+        "doctor_name": doctor["name"],
+        "department": doctor["department"],
+        "date": iso_date,
+        "display_date": display_date,
+        "time": normalized_time,
+        "status": "Booked"
+    }
+    postgres_service.save_final_appointment(appt_record)
+
     return {
         "success": True,
         "appointment": {
@@ -372,7 +418,7 @@ def book_appointment(
 
 
 def cancel_appointment(session_id: str) -> Dict[str, Any]:
-    """Cancels active appointment for the session and frees up the slot."""
+    """Cancels active appointment for the session and frees up the slot in PostgreSQL & SQLite."""
     init_db()
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -396,7 +442,7 @@ def cancel_appointment(session_id: str) -> Dict[str, Any]:
         (row["doctor_id"], row["time"])
     )
 
-    # Mark appointment cancelled
+    # Mark appointment cancelled in SQLite
     cursor.execute(
         "UPDATE appointments SET status = 'Cancelled' WHERE id = ?",
         (row["id"],)
@@ -404,6 +450,9 @@ def cancel_appointment(session_id: str) -> Dict[str, Any]:
 
     conn.commit()
     conn.close()
+
+    # Cancel in PostgreSQL
+    postgres_service.cancel_appointment(session_id)
 
     return {
         "success": True,

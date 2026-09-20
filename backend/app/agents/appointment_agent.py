@@ -6,6 +6,7 @@ from app.db.repository import (
     cancel_appointment,
     get_active_appointment,
     find_doctor_by_name,
+    revalidate_slot,
 )
 from app.services.redis_service import redis_service
 
@@ -123,22 +124,83 @@ def appointment_node(state: AgentState) -> AgentState:
     else:
         doctor_query, date_query, time_query = extract_booking_entities(user_msg)
 
-    hold_id = f"{session_id}:{doctor_query}:{time_query}".replace(" ", "_")
+    # 1. Resolve Doctor
+    doctor = find_doctor_by_name(doctor_query)
+    if not doctor:
+        return {
+            **state,
+            "actions": actions,
+            "final_response": f"Doctor '{doctor_query}' was not found. Please choose from our available doctors.",
+        }
 
-    # Temporarily hold appointment slot in Redis with configurable TTL
-    redis_service.hold_appointment_slot(
-        appointment_id=hold_id,
-        hold_data={"doctor": doctor_query, "time": time_query, "sessionId": session_id},
+    doc_id = doctor["id"]
+
+    # 2. Check current availability & Revalidate slot
+    reval = revalidate_slot(doc_id, time_query)
+
+    # 3. Concurrency Protection: Acquire Redis atomic slot lock (prevents two users booking the same slot)
+    lock_acquired = redis_service.acquire_slot_lock(
+        doctor_id=doc_id,
+        date=date_query,
+        time=time_query,
+        session_id=session_id
     )
 
+    if not lock_acquired:
+        # Another user currently holds the reservation lock!
+        alts = reval.get("alternatives", [])
+        alt_str = ", ".join(alts[:5]) if alts else "None currently available"
+        actions.append({
+            "type": "SHOW_SLOTS",
+            "action": "SHOW_SLOTS",
+            "payload": {
+                "slots": [
+                    {"doctor": doctor["name"], "time": t, "isAvailable": True}
+                    for t in alts
+                ],
+                "date": date_query,
+            }
+        })
+        return {
+            **state,
+            "actions": actions,
+            "final_response": (
+                f"The slot at {time_query} for {doctor['name']} is currently reserved by another patient or no longer available. "
+                f"Alternative available slots: {alt_str}. Would you like to book one of these instead?"
+            ),
+        }
+
+    # If slot already booked in database
+    if not reval.get("is_available"):
+        redis_service.release_slot_lock(doc_id, date_query, time_query, session_id)
+        alts = reval.get("alternatives", [])
+        alt_str = ", ".join(alts[:5]) if alts else "None currently available"
+        actions.append({
+            "type": "SHOW_SLOTS",
+            "action": "SHOW_SLOTS",
+            "payload": {
+                "slots": [
+                    {"doctor": doctor["name"], "time": t, "isAvailable": True}
+                    for t in alts
+                ],
+                "date": date_query,
+            }
+        })
+        return {
+            **state,
+            "actions": actions,
+            "final_response": (
+                f"The slot at {time_query} for {doctor['name']} is no longer available. "
+                f"Alternative available slots: {alt_str}. Would you like to book one of these instead?"
+            ),
+        }
+
+    # 4. Create appointment in PostgreSQL & SQLite
     booking_res = book_appointment(session_id, doctor_query, time_query, date_query)
 
-    # Release temporary hold once permanent database booking completes
-    redis_service.release_appointment_hold(hold_id)
-
-    if booking_res.get("success"):
-        redis_service.invalidate_doctor_availability("doc-ravi")
-        redis_service.invalidate_doctor_availability("doc-priya")
+    # 5. Invalidate Redis availability cache & release lock
+    redis_service.invalidate_all_doctor_availability(doc_id)
+    redis_service.release_slot_lock(doc_id, date_query, time_query, session_id)
 
     if booking_res.get("success"):
         appt_data = booking_res["appointment"]
@@ -185,7 +247,21 @@ def appointment_node(state: AgentState) -> AgentState:
         # Slot was unavailable or doctor not found
         error_msg = booking_res.get("error", "The requested time slot is unavailable.")
         alts = booking_res.get("alternatives", [])
-        alt_text = f" Available alternatives for {booking_res.get('doctor', 'this doctor')}: {', '.join(alts)}." if alts else ""
+        alt_text = f" Available alternatives for {booking_res.get('doctor', doctor['name'])}: {', '.join(alts)}." if alts else ""
+
+        # Emit SHOW_SLOTS action so Angular dashboard refreshes immediately with alternatives
+        if alts:
+            actions.append({
+                "type": "SHOW_SLOTS",
+                "action": "SHOW_SLOTS",
+                "payload": {
+                    "slots": [
+                        {"doctor": doctor["name"], "time": t, "isAvailable": True}
+                        for t in alts
+                    ],
+                    "date": date_query,
+                }
+            })
 
         final_msg = f"{error_msg}{alt_text} Please select one of the available alternatives."
         structured_res = {

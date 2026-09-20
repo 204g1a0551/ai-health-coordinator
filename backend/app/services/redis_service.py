@@ -268,6 +268,91 @@ class RedisService:
         expire = ttl_seconds or redis_settings.cache_ttl
         self._client.set(key, json.dumps(data), ex=expire)
 
+    # ----------------------------------------------------------------------
+    # 9. Concurrency & Slot Locking (slot:lock:{doctor_id}:{date}:{time})
+    # ----------------------------------------------------------------------
+    def _format_slot_lock_key(self, doctor_id: str, date: str, time: str) -> str:
+        clean_date = date.replace(" ", "_").replace(",", "").lower()
+        clean_time = time.replace(" ", "_").lower()
+        return f"slot:lock:{doctor_id}:{clean_date}:{clean_time}"
+
+    def acquire_slot_lock(
+        self, doctor_id: str, date: str, time: str, session_id: str, ttl_seconds: Optional[int] = None
+    ) -> bool:
+        """
+        Acquires an atomic lock on a specific doctor slot.
+        Prevents two users from simultaneously booking the same slot.
+        Returns True if acquired, False if already held by another session.
+        """
+        key = self._format_slot_lock_key(doctor_id, date, time)
+        expire = ttl_seconds or redis_settings.slot_lock_ttl
+        acquired = self._client.set(
+            key,
+            json.dumps({"sessionId": session_id, "lockedAt": str(expire)}),
+            ex=expire,
+            nx=True,
+        )
+        return bool(acquired)
+
+    def release_slot_lock(self, doctor_id: str, date: str, time: str, session_id: str) -> bool:
+        """Releases the slot lock if held by this session."""
+        key = self._format_slot_lock_key(doctor_id, date, time)
+        raw = self._client.get(key)
+        if raw:
+            try:
+                data = json.loads(raw)
+                if data.get("sessionId") == session_id:
+                    return bool(self._client.delete(key))
+            except Exception:
+                return bool(self._client.delete(key))
+        return False
+
+    def is_slot_locked(self, doctor_id: str, date: str, time: str) -> Optional[str]:
+        """Returns the holder's session_id if the slot is currently locked, else None."""
+        key = self._format_slot_lock_key(doctor_id, date, time)
+        raw = self._client.get(key)
+        if raw:
+            try:
+                data = json.loads(raw)
+                return data.get("sessionId")
+            except Exception:
+                return "unknown"
+        return None
+
+    # ----------------------------------------------------------------------
+    # 10. Real-Time Slot Availability Caching (Short configurable TTL)
+    # ----------------------------------------------------------------------
+    def get_slot_availability(self, doctor_id: str, date: Optional[str] = None) -> Optional[List[Dict[str, Any]]]:
+        """Retrieves cached slot availability with short TTL."""
+        key = f"doctor:{doctor_id}:availability:{date or 'all'}"
+        raw = self._client.get(key)
+        if raw:
+            try:
+                return json.loads(raw)
+            except Exception:
+                return None
+        return None
+
+    def set_slot_availability(
+        self, doctor_id: str, date: Optional[str], slots: List[Dict[str, Any]], ttl_seconds: Optional[int] = None
+    ) -> None:
+        """Caches slot availability for a short configurable period (e.g. 60s)."""
+        key = f"doctor:{doctor_id}:availability:{date or 'all'}"
+        expire = ttl_seconds or redis_settings.availability_cache_ttl
+        self._client.set(key, json.dumps(slots), ex=expire)
+
+    def invalidate_all_doctor_availability(self, doctor_id: str) -> None:
+        """Invalidates all cached availability entries for a doctor."""
+        keys = self._client.keys(f"doctor:{doctor_id}:*")
+        for k in keys:
+            self._client.delete(k)
+        keys_bengaluru = self._client.keys(f"bengaluru:slots:{doctor_id}:*")
+        for k in keys_bengaluru:
+            self._client.delete(k)
+        keys_healthcare = self._client.keys("healthcare:bengaluru:slots:*")
+        for k in keys_healthcare:
+            self._client.delete(k)
+
 
 # Global singleton instance
 redis_service = RedisService()
