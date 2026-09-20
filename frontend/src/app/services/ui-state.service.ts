@@ -27,7 +27,10 @@ export type UIActionType =
   | 'SHOW_EMERGENCY_CONTACTS'
   | 'SHOW_EMERGENCY_DEPARTMENTS'
   | 'BLOCK_NORMAL_WORKFLOW'
-  | 'CLEAR_EMERGENCY_STATE';
+  | 'CLEAR_EMERGENCY_STATE'
+  | 'SHOW_DRUG_INTERACTIONS'
+  | 'SHOW_INTERACTION_DETAILS'
+  | 'SHOW_MEDICATION_LIST';
 
 export interface UIState {
   currentComponent: UIActionType;
@@ -103,6 +106,12 @@ export class UIStateService {
         return 'SHOW_EMERGENCY_ALERT';
       case 'CLEAR_EMERGENCY_STATE':
         return 'CLEAR_EMERGENCY_STATE';
+      case 'SHOW_DRUG_INTERACTIONS':
+        return 'SHOW_DRUG_INTERACTIONS';
+      case 'SHOW_INTERACTION_DETAILS':
+        return 'SHOW_INTERACTION_DETAILS';
+      case 'SHOW_MEDICATION_LIST':
+        return 'SHOW_MEDICATION_LIST';
       case 'SHOW_WELCOME':
         return 'SHOW_WELCOME';
       case 'SHOW_PATIENT_INFO':

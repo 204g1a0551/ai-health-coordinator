@@ -44,6 +44,9 @@ ALLOWED_ACTIONS = {
     "SHOW_EMERGENCY_DEPARTMENTS",
     "BLOCK_NORMAL_WORKFLOW",
     "CLEAR_EMERGENCY_STATE",
+    "SHOW_DRUG_INTERACTIONS",
+    "SHOW_INTERACTION_DETAILS",
+    "SHOW_MEDICATION_LIST",
 }
 
 # Dangerous patterns to reject from LLM / payload injection

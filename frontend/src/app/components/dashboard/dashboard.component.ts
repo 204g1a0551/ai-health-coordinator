@@ -24,6 +24,8 @@ import { LabReportComponent } from '../dynamic-cards/lab-report/lab-report.compo
 import { LabResultsComponent } from '../dynamic-cards/lab-results/lab-results.component';
 import { LabEvidenceComponent } from '../dynamic-cards/lab-evidence/lab-evidence.component';
 import { EmergencyAlertComponent } from '../emergency-alert/emergency-alert.component';
+import { DDIInteractionComponent } from '../ddi-interaction/ddi-interaction.component';
+import { DDIService } from '../../services/ddi.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -51,6 +53,7 @@ import { EmergencyAlertComponent } from '../emergency-alert/emergency-alert.comp
     LabResultsComponent,
     LabEvidenceComponent,
     EmergencyAlertComponent,
+    DDIInteractionComponent,
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css',
@@ -58,6 +61,7 @@ import { EmergencyAlertComponent } from '../emergency-alert/emergency-alert.comp
 export class DashboardComponent {
   protected readonly uiState = inject(UIStateService);
   protected readonly chatService = inject(ChatService);
+  protected readonly ddiService = inject(DDIService);
 
   /** Handle document upload completion */
   onDocumentUploaded(summaryData: any): void {
@@ -68,6 +72,12 @@ export class DashboardComponent {
   onPromptSelected(prompt: string): void {
     this.chatService.sendMessage(prompt).subscribe({
       error: () => {/* handled by ChatService itself */}
+    });
+  }
+
+  onCheckDrugInteractions(): void {
+    this.ddiService.check().subscribe({
+      next: (result) => this.uiState.dispatchAction('SHOW_DRUG_INTERACTIONS', result),
     });
   }
 

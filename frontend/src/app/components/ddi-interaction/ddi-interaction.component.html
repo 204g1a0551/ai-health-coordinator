@@ -1,0 +1,50 @@
+<section class="ddi-card" aria-labelledby="ddi-title">
+  <div class="ddi-header">
+    <span class="ddi-badge">Medication safety</span>
+    <h2 id="ddi-title">Drug-Drug Interaction Checker</h2>
+  </div>
+
+  @if (ddiService.isChecking()) {
+    <p class="status">Checking the configured medical interaction database...</p>
+  } @else if (!result) {
+    <p class="status">No interaction check has been run yet.</p>
+  } @else {
+    <p class="summary">{{ result.message }}</p>
+
+    @if (interactions.length) {
+      @for (interaction of interactions; track interaction.medicineA + interaction.medicineB) {
+        <article class="interaction-card">
+          <h3>Potential interaction detected</h3>
+          <p class="medicine-pair"><strong>{{ interaction.medicineA }}</strong> + <strong>{{ interaction.medicineB }}</strong></p>
+          <p>{{ interaction.interactionDescription }}</p>
+          @if (interaction.severity || interaction.category) {
+            <p><strong>Severity/category:</strong> {{ interaction.severity || interaction.category }}</p>
+          }
+          <p><strong>Source:</strong> {{ interaction.source }}</p>
+          <p class="warning"><strong>Warning:</strong> {{ interaction.warning }}</p>
+          <p class="recommendation">{{ interaction.recommendation }}</p>
+        </article>
+      }
+    } @else {
+      <p class="not-verified">{{ result.message }}</p>
+    }
+
+    @if (result.unresolvedMedicines?.length) {
+      <div class="unresolved">
+        <strong>Names not verified:</strong> {{ result.unresolvedMedicines.join(', ') }}
+        <p>Review the original documents with a pharmacist or qualified healthcare professional.</p>
+      </div>
+    }
+
+    <div class="medicine-list">
+      <h3>Medication list used</h3>
+      @for (medicine of medicines; track medicine.rxcui || medicine.originalName) {
+        <div class="medicine-row">
+          <span>{{ medicine.normalizedName || medicine.originalName }}</span>
+          <small>{{ medicine.status }}</small>
+        </div>
+      }
+    </div>
+    <p class="disclaimer">{{ result.disclaimer }}</p>
+  }
+</section>

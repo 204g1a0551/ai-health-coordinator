@@ -20,6 +20,7 @@ export interface PrescribedMedicine {
 export class ExtractedMedicinesComponent {
   @Input() data: any;
   @Output() actionClicked = new EventEmitter<string>();
+  @Output() checkInteractions = new EventEmitter<void>();
 
   get medicines(): PrescribedMedicine[] {
     return this.data?.medicines || [
@@ -52,5 +53,9 @@ export class ExtractedMedicinesComponent {
 
   onSelectAction(prompt: string): void {
     this.actionClicked.emit(prompt);
+  }
+
+  onCheckInteractions(): void {
+    this.checkInteractions.emit();
   }
 }

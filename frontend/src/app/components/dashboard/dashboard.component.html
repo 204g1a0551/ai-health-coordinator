@@ -5,6 +5,18 @@
       <app-emergency-alert [data]="uiState.state().currentData" />
     }
 
+    @case ('SHOW_DRUG_INTERACTIONS') {
+      <app-ddi-interaction [data]="uiState.state().currentData" />
+    }
+
+    @case ('SHOW_INTERACTION_DETAILS') {
+      <app-ddi-interaction [data]="uiState.state().currentData" />
+    }
+
+    @case ('SHOW_MEDICATION_LIST') {
+      <app-ddi-interaction [data]="uiState.state().currentData" />
+    }
+
     @case ('SHOW_PATIENT_INFO') {
       <app-patient-info [data]="uiState.state().currentData" />
     }
@@ -61,6 +73,7 @@
       <app-extracted-medicines
         [data]="uiState.state().currentData"
         (actionClicked)="onPromptSelected($event)"
+        (checkInteractions)="onCheckDrugInteractions()"
       />
     }
 

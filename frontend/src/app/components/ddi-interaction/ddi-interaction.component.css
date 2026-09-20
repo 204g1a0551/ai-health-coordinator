@@ -1,0 +1,14 @@
+.ddi-card { padding: 26px; color: #202b3c; background: #f5f8ff; border: 1px solid #c9d7ef; border-radius: 14px; }
+.ddi-badge { padding: 6px 10px; color: #174a8b; font-size: .75rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; background: #dceaff; border-radius: 5px; }
+h2 { margin: 16px 0 8px; color: #173b68; }
+h3 { margin: 0 0 10px; color: #24496f; }
+.summary, .status { line-height: 1.5; }
+.interaction-card { margin-top: 16px; padding: 18px; background: #fff; border-left: 5px solid #d97706; border-radius: 8px; box-shadow: 0 2px 8px #102a4314; }
+.medicine-pair { font-size: 1.05rem; }
+.warning { color: #8a3b00; }
+.recommendation { font-weight: 700; }
+.not-verified, .unresolved { margin-top: 16px; padding: 14px; color: #713f12; background: #fff7ed; border-radius: 7px; }
+.medicine-list { margin-top: 20px; padding-top: 16px; border-top: 1px solid #c9d7ef; }
+.medicine-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e7eef8; }
+.medicine-row small { color: #58708f; }
+.disclaimer { margin-top: 20px; font-size: .85rem; color: #52677f; }
