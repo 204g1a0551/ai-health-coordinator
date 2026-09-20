@@ -1,0 +1,25 @@
+# Node / Angular
+**/node_modules/
+**/dist/
+frontend/.angular/
+.npm
+npm-debug.log*
+
+# Python / FastAPI
+**/__pycache__/
+*.py[cod]
+*$py.class
+backend/venv/
+.env
+.pytest_cache/
+
+# IDE / OS
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.swp

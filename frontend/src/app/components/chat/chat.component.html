@@ -1,0 +1,50 @@
+<div class="chat-container">
+  <div class="chat-header">
+    <div class="chat-header-info">
+      <h3>AI Health Assistant</h3>
+      <span class="status-indicator">Online</span>
+    </div>
+  </div>
+
+  <div class="chat-messages" #messagesScroll>
+    @for (msg of messages(); track $index) {
+      <div class="message-wrapper" [class.user]="msg.sender === 'user'" [class.assistant]="msg.sender === 'assistant'">
+        <div class="message-bubble">
+          <div class="message-text">{{ msg.text }}</div>
+          <div class="message-time">{{ msg.timestamp }}</div>
+        </div>
+      </div>
+    }
+
+    @if (isSending()) {
+      <div class="message-wrapper assistant">
+        <div class="message-bubble typing-bubble">
+          <span class="typing-dot"></span>
+          <span class="typing-dot"></span>
+          <span class="typing-dot"></span>
+        </div>
+      </div>
+    }
+  </div>
+
+  <div class="chat-input-container">
+    <div class="input-row">
+      <input
+        type="text"
+        class="chat-input"
+        placeholder="Type a message (e.g. 'I have a mild fever')..."
+        [(ngModel)]="userInput"
+        (keydown)="onKeyDown($event)"
+        [disabled]="isSending()"
+      />
+      <button
+        type="button"
+        class="send-btn"
+        (click)="sendMessage()"
+        [disabled]="!userInput.trim() || isSending()"
+      >
+        Send
+      </button>
+    </div>
+  </div>
+</div>
