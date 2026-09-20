@@ -1,119 +1,130 @@
-<div class="dashboard-container">
+<div class="dashboard">
   <div class="dashboard-header">
-    <div class="title-wrap">
-      <h2>Healthcare Dashboard</h2>
-      <span class="live-indicator">Active Clinical Session</span>
-    </div>
+    <h2 class="dashboard-title">Healthcare Dashboard</h2>
   </div>
 
   <div class="dashboard-grid">
-    <!-- 1. Patient Info Card -->
-    <div class="card patient-card">
-      <div class="card-title">Patient Profile</div>
-      <div class="patient-details">
-        <div class="avatar">
-          {{ state().patient.name.charAt(0) }}
+    <!-- 1. Patient Information -->
+    <section class="dash-card">
+      <h3 class="card-title">1. Patient Information</h3>
+      <div class="patient-grid">
+        <div class="field-item">
+          <span class="field-label">Patient Name</span>
+          <span class="field-value">{{ state().patient.name || 'Not provided' }}</span>
         </div>
-        <div class="patient-info">
-          <div class="patient-name">{{ state().patient.name }}</div>
-          <div class="patient-meta">
-            <span>Age: {{ state().patient.age ?? 'N/A' }}</span> •
-            <span>Gender: {{ state().patient.gender ?? 'N/A' }}</span>
-          </div>
-          <div class="patient-contact">{{ state().patient.contact }}</div>
+        <div class="field-item">
+          <span class="field-label">Age</span>
+          <span class="field-value">{{ state().patient.age ? state().patient.age + ' yrs' : '--' }}</span>
+        </div>
+        <div class="field-item full-width">
+          <span class="field-label">Phone</span>
+          <span class="field-value">{{ state().patient.phone || '--' }}</span>
         </div>
       </div>
-    </div>
+    </section>
 
-    <!-- 2. Symptoms Section -->
-    <div class="card symptoms-card">
-      <div class="card-title">Reported Symptoms</div>
-      <div class="symptoms-list">
-        @for (symptom of state().symptoms; track symptom.name) {
-          <div class="symptom-tag" [attr.data-severity]="symptom.severity.toLowerCase()">
-            <span class="symptom-name">{{ symptom.name }}</span>
-            <span class="symptom-badge">{{ symptom.severity }}</span>
-            @if (symptom.duration) {
-              <span class="symptom-duration">({{ symptom.duration }})</span>
-            }
-          </div>
-        }
-      </div>
-    </div>
+    <!-- 2. Symptoms -->
+    <section class="dash-card">
+      <h3 class="card-title">2. Symptoms</h3>
+      @if (state().symptoms.length > 0) {
+        <div class="symptoms-tags">
+          @for (symptom of state().symptoms; track symptom.name) {
+            <div class="symptom-tag">
+              <span class="symptom-name">{{ symptom.name }}</span>
+              @if (symptom.duration) {
+                <span class="symptom-duration">• {{ symptom.duration }}</span>
+              }
+            </div>
+          }
+        </div>
+      } @else {
+        <p class="empty-state">No symptoms recorded yet</p>
+      }
+    </section>
 
     <!-- 3. Suggested Department -->
-    <div class="card department-card">
-      <div class="card-title">Suggested Department</div>
-      <div class="dept-content">
-        <div class="dept-badge-row">
-          <span class="dept-name">{{ state().suggested_department.name }}</span>
-          <span class="confidence-tag">Confidence: {{ state().suggested_department.confidence }}</span>
-        </div>
-        <p class="dept-desc">{{ state().suggested_department.description }}</p>
+    <section class="dash-card">
+      <h3 class="card-title">3. Suggested Department</h3>
+      <div class="dept-box">
+        <span class="dept-name">{{ state().suggestedDepartment.name || 'Not assigned yet' }}</span>
       </div>
-    </div>
+    </section>
 
-    <!-- 4. Available Doctors -->
-    <div class="card doctors-card">
-      <div class="card-title">Available Doctors</div>
-      <div class="doctor-list">
-        @for (doctor of state().available_doctors; track doctor.id) {
-          <div class="doctor-row" [class.selected]="state().appointment_summary.doctor_name === doctor.name">
-            <div class="doctor-info">
-              <div class="doctor-name">{{ doctor.name }}</div>
-              <div class="doctor-spec">{{ doctor.specialty }} • {{ doctor.experience }} exp</div>
-              <div class="doctor-qual">{{ doctor.qualification }}</div>
+    <!-- 4. Doctors -->
+    <section class="dash-card">
+      <h3 class="card-title">4. Doctors</h3>
+      @if (state().doctors.length > 0) {
+        <div class="doctors-list">
+          @for (doctor of state().doctors; track doctor.id) {
+            <div class="doctor-item">
+              <div class="doctor-info">
+                <span class="doctor-name">{{ doctor.name }}</span>
+                <span class="doctor-dept">{{ doctor.department }}</span>
+              </div>
+              <span class="status-pill" [class.available]="doctor.availableStatus === 'Available'">
+                {{ doctor.availableStatus }}
+              </span>
             </div>
-          </div>
-        }
-      </div>
-    </div>
+          }
+        </div>
+      } @else {
+        <p class="empty-state">No doctors listed</p>
+      }
+    </section>
 
-    <!-- 5. Available Time Slots -->
-    <div class="card slots-card">
-      <div class="card-title">Available Time Slots (Tomorrow)</div>
-      <div class="slots-grid">
-        @for (slot of state().available_time_slots; track slot.id) {
-          <button
-            type="button"
-            class="slot-btn"
-            [class.unavailable]="!slot.is_available"
-            [class.selected]="state().appointment_summary.slot_time === slot.time"
-            [disabled]="!slot.is_available"
-            (click)="onSelectSlot(slot.id, slot.is_available)"
-          >
-            <span class="slot-time">{{ slot.time }}</span>
-            <span class="slot-status">{{ slot.is_available ? 'Available' : 'Booked' }}</span>
-          </button>
-        }
-      </div>
-    </div>
+    <!-- 5. Available Slots -->
+    <section class="dash-card">
+      <h3 class="card-title">5. Available Slots</h3>
+      @if (state().availableSlots.length > 0) {
+        <div class="slots-list">
+          @for (slot of state().availableSlots; track slot.id) {
+            <div
+              class="slot-item"
+              [class.unavailable]="!slot.isAvailable"
+              [class.selected]="state().appointmentSummary.time === slot.time && state().appointmentSummary.doctor === slot.doctor"
+              (click)="slot.isAvailable && onSelectSlot(slot.id)"
+            >
+              <div class="slot-time-col">
+                <span class="slot-time">{{ slot.time }}</span>
+                <span class="slot-date">{{ slot.date }}</span>
+              </div>
+              <div class="slot-doc-col">
+                <span class="slot-doc">{{ slot.doctor }}</span>
+                <span class="slot-avail">{{ slot.isAvailable ? 'Available' : 'Booked' }}</span>
+              </div>
+            </div>
+          }
+        </div>
+      } @else {
+        <p class="empty-state">No available slots found</p>
+      }
+    </section>
 
     <!-- 6. Appointment Summary -->
-    <div class="card summary-card">
-      <div class="card-title">Appointment Summary</div>
-      <div class="summary-details">
-        <div class="summary-row">
-          <span class="label">Patient</span>
-          <span class="val">{{ state().appointment_summary.patient_name }}</span>
+    <section class="dash-card">
+      <h3 class="card-title">6. Appointment Summary</h3>
+      <div class="summary-grid">
+        <div class="summary-item">
+          <span class="field-label">Doctor</span>
+          <span class="field-value">{{ state().appointmentSummary.doctor || 'Not selected' }}</span>
         </div>
-        <div class="summary-row">
-          <span class="label">Department</span>
-          <span class="val">{{ state().appointment_summary.department }}</span>
+        <div class="summary-item">
+          <span class="field-label">Department</span>
+          <span class="field-value">{{ state().appointmentSummary.department || '--' }}</span>
         </div>
-        <div class="summary-row">
-          <span class="label">Doctor</span>
-          <span class="val">{{ state().appointment_summary.doctor_name }}</span>
+        <div class="summary-item">
+          <span class="field-label">Date</span>
+          <span class="field-value">{{ state().appointmentSummary.date || '--' }}</span>
         </div>
-        <div class="summary-row">
-          <span class="label">Date & Time</span>
-          <span class="val highlight">{{ state().appointment_summary.appointment_date }} at {{ state().appointment_summary.slot_time }}</span>
+        <div class="summary-item">
+          <span class="field-label">Time</span>
+          <span class="field-value highlight">{{ state().appointmentSummary.time || '--' }}</span>
         </div>
-        <div class="summary-row">
-          <span class="label">Status</span>
-          <span class="status-badge">{{ state().appointment_summary.status }}</span>
+        <div class="summary-item full-width status-row">
+          <span class="field-label">Status</span>
+          <span class="summary-status-pill">{{ state().appointmentSummary.status || 'Pending' }}</span>
         </div>
       </div>
-    </div>
+    </section>
   </div>
 </div>

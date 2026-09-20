@@ -1,8 +1,8 @@
 from .chat import ChatRequest, ChatResponse
 from .dashboard import (
-    Patient,
-    SymptomItem,
-    Department,
+    PatientInfo,
+    Symptom,
+    SuggestedDepartment,
     Doctor,
     TimeSlot,
     AppointmentSummary,
@@ -12,9 +12,9 @@ from .dashboard import (
 __all__ = [
     "ChatRequest",
     "ChatResponse",
-    "Patient",
-    "SymptomItem",
-    "Department",
+    "PatientInfo",
+    "Symptom",
+    "SuggestedDepartment",
     "Doctor",
     "TimeSlot",
     "AppointmentSummary",

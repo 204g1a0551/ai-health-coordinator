@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DashboardService } from '../../services/dashboard.service';
 
@@ -9,17 +9,11 @@ import { DashboardService } from '../../services/dashboard.service';
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css',
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent {
   protected readonly dashboardService = inject(DashboardService);
   protected readonly state = this.dashboardService.state;
-  protected readonly isLoading = this.dashboardService.isLoading;
 
-  ngOnInit(): void {
-    this.dashboardService.loadDashboard().subscribe();
-  }
-
-  onSelectSlot(slotId: string, isAvailable: boolean): void {
-    if (!isAvailable) return;
+  onSelectSlot(slotId: string): void {
     this.dashboardService.selectSlot(slotId);
   }
 }

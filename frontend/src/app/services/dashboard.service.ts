@@ -1,62 +1,75 @@
-import { Injectable, inject, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, catchError, of, tap } from 'rxjs';
+import { Injectable, signal } from '@angular/core';
 import { DashboardState } from '../models/dashboard.model';
 
-const INITIAL_DEFAULT_STATE: DashboardState = {
+export const MOCK_DASHBOARD_STATE: DashboardState = {
   patient: {
-    name: 'John Doe',
-    age: 34,
-    gender: 'Male',
-    contact: '+1 (555) 234-5678',
+    name: 'Sarah Connor',
+    age: 32,
+    phone: '+1 (555) 019-2834',
   },
   symptoms: [
-    { name: 'Persistent Dry Cough', severity: 'Moderate', duration: '3 days' },
-    { name: 'Mild Fever (100.2°F)', severity: 'Mild', duration: '2 days' },
-    { name: 'Fatigue & Body Aches', severity: 'Mild', duration: '1 day' },
+    { name: 'Fever', duration: '2 days' },
+    { name: 'Headache', duration: '1 day' },
+    { name: 'Fatigue', duration: '3 days' },
   ],
-  suggested_department: {
+  suggestedDepartment: {
     name: 'General Medicine',
-    confidence: 'High',
-    description: 'Recommended for initial evaluation of respiratory and febrile symptoms.',
   },
-  available_doctors: [
+  doctors: [
     {
-      id: 'doc-1',
-      name: 'Dr. Sarah Jenkins, MD',
-      specialty: 'General Internal Medicine',
-      qualification: 'MD, Harvard Medical School',
-      experience: '12 years',
+      id: 'd1',
+      name: 'Dr. Alex Taylor',
+      department: 'General Medicine',
+      availableStatus: 'Available',
     },
     {
-      id: 'doc-2',
-      name: 'Dr. Robert Miller, MD',
-      specialty: 'Pulmonology & Respiratory Care',
-      qualification: 'MD, Johns Hopkins',
-      experience: '15 years',
+      id: 'd2',
+      name: 'Dr. Brenda Vance',
+      department: 'Internal Medicine',
+      availableStatus: 'Available',
     },
     {
-      id: 'doc-3',
-      name: 'Dr. Emily Chen, DO',
-      specialty: 'Family & Community Medicine',
-      qualification: 'DO, Stanford Medicine',
-      experience: '8 years',
+      id: 'd3',
+      name: 'Dr. Marcus Reed',
+      department: 'Neurology',
+      availableStatus: 'Unavailable',
     },
   ],
-  available_time_slots: [
-    { id: 'slot-1', doctor_id: 'doc-1', time: '09:30 AM', date: 'Tomorrow, Oct 24', is_available: true },
-    { id: 'slot-2', doctor_id: 'doc-1', time: '10:30 AM', date: 'Tomorrow, Oct 24', is_available: true },
-    { id: 'slot-3', doctor_id: 'doc-1', time: '02:00 PM', date: 'Tomorrow, Oct 24', is_available: true },
-    { id: 'slot-4', doctor_id: 'doc-2', time: '11:15 AM', date: 'Tomorrow, Oct 24', is_available: true },
-    { id: 'slot-5', doctor_id: 'doc-2', time: '03:30 PM', date: 'Tomorrow, Oct 24', is_available: false },
-    { id: 'slot-6', doctor_id: 'doc-3', time: '04:00 PM', date: 'Tomorrow, Oct 24', is_available: true },
+  availableSlots: [
+    {
+      id: 's1',
+      date: 'Tomorrow, Oct 24',
+      time: '09:30 AM',
+      doctor: 'Dr. Alex Taylor',
+      isAvailable: true,
+    },
+    {
+      id: 's2',
+      date: 'Tomorrow, Oct 24',
+      time: '11:00 AM',
+      doctor: 'Dr. Alex Taylor',
+      isAvailable: true,
+    },
+    {
+      id: 's3',
+      date: 'Tomorrow, Oct 24',
+      time: '02:15 PM',
+      doctor: 'Dr. Brenda Vance',
+      isAvailable: true,
+    },
+    {
+      id: 's4',
+      date: 'Tomorrow, Oct 24',
+      time: '04:00 PM',
+      doctor: 'Dr. Brenda Vance',
+      isAvailable: false,
+    },
   ],
-  appointment_summary: {
-    patient_name: 'John Doe',
+  appointmentSummary: {
+    doctor: 'Dr. Alex Taylor',
     department: 'General Medicine',
-    doctor_name: 'Dr. Sarah Jenkins, MD',
-    slot_time: '10:30 AM',
-    appointment_date: 'Tomorrow, Oct 24',
+    date: 'Tomorrow, Oct 24',
+    time: '11:00 AM',
     status: 'Pending Confirmation',
   },
 };
@@ -65,52 +78,48 @@ const INITIAL_DEFAULT_STATE: DashboardState = {
   providedIn: 'root',
 })
 export class DashboardService {
-  private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://127.0.0.1:8000/api/dashboard';
+  // Reactive dashboard state initialized with mock data
+  readonly state = signal<DashboardState>(MOCK_DASHBOARD_STATE);
 
-  // Reactive state signal for the dashboard
-  readonly state = signal<DashboardState>(INITIAL_DEFAULT_STATE);
-  readonly isLoading = signal<boolean>(false);
+  selectSlot(slotId: string): void {
+    const slot = this.state().availableSlots.find((s) => s.id === slotId);
+    if (!slot || !slot.isAvailable) return;
 
-  loadDashboard(): Observable<DashboardState> {
-    this.isLoading.set(true);
-    return this.http.get<DashboardState>(this.apiUrl).pipe(
-      tap((data) => {
-        if (data) {
-          this.state.set(data);
-        }
-        this.isLoading.set(false);
-      }),
-      catchError((error) => {
-        console.warn('Could not fetch dashboard from backend, using default initial state:', error);
-        this.isLoading.set(false);
-        return of(this.state());
-      })
-    );
-  }
-
-  updatePatient(name: string, contact?: string) {
-    this.state.update((s) => ({
-      ...s,
-      patient: { ...s.patient, name, contact: contact ?? s.patient.contact },
-      appointment_summary: { ...s.appointment_summary, patient_name: name },
-    }));
-  }
-
-  selectSlot(slotId: string) {
-    const slot = this.state().available_time_slots.find((s) => s.id === slotId);
-    if (!slot) return;
-    const doctor = this.state().available_doctors.find((d) => d.id === slot.doctor_id);
+    const matchedDoctor = this.state().doctors.find((d) => d.name === slot.doctor);
 
     this.state.update((s) => ({
       ...s,
-      appointment_summary: {
-        ...s.appointment_summary,
-        slot_time: slot.time,
-        appointment_date: slot.date,
-        doctor_name: doctor ? doctor.name : s.appointment_summary.doctor_name,
-        department: doctor ? doctor.specialty : s.appointment_summary.department,
+      appointmentSummary: {
+        ...s.appointmentSummary,
+        doctor: slot.doctor,
+        department: matchedDoctor ? matchedDoctor.department : s.appointmentSummary.department,
+        date: slot.date,
+        time: slot.time,
+        status: 'Selected',
       },
     }));
+  }
+
+  // Helper method to clear dashboard to demonstrate empty/default state handling
+  resetToDefault(): void {
+    this.state.set({
+      patient: { name: '', age: undefined, phone: '' },
+      symptoms: [],
+      suggestedDepartment: { name: '' },
+      doctors: [],
+      availableSlots: [],
+      appointmentSummary: {
+        doctor: '',
+        department: '',
+        date: '',
+        time: '',
+        status: 'None',
+      },
+    });
+  }
+
+  // Restore mock data
+  loadMockData(): void {
+    this.state.set(MOCK_DASHBOARD_STATE);
   }
 }

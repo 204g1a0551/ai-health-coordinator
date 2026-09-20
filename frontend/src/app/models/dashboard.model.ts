@@ -1,52 +1,46 @@
-export interface Patient {
+export interface PatientInfo {
   name: string;
-  age?: number;
-  gender?: string;
-  contact?: string;
+  age?: number | string;
+  phone?: string;
 }
 
-export interface SymptomItem {
+export interface Symptom {
   name: string;
-  severity: string;
   duration?: string;
 }
 
-export interface Department {
+export interface SuggestedDepartment {
   name: string;
-  confidence?: string;
-  description?: string;
 }
 
 export interface Doctor {
   id: string;
   name: string;
-  specialty: string;
-  qualification: string;
-  experience: string;
+  department: string;
+  availableStatus: 'Available' | 'Unavailable' | 'In Consultation';
 }
 
 export interface TimeSlot {
   id: string;
-  doctor_id: string;
-  time: string;
   date: string;
-  is_available: boolean;
+  time: string;
+  doctor: string;
+  isAvailable: boolean;
 }
 
 export interface AppointmentSummary {
-  patient_name: string;
+  doctor: string;
   department: string;
-  doctor_name: string;
-  slot_time: string;
-  appointment_date: string;
+  date: string;
+  time: string;
   status: string;
 }
 
 export interface DashboardState {
-  patient: Patient;
-  symptoms: SymptomItem[];
-  suggested_department: Department;
-  available_doctors: Doctor[];
-  available_time_slots: TimeSlot[];
-  appointment_summary: AppointmentSummary;
+  patient: PatientInfo;
+  symptoms: Symptom[];
+  suggestedDepartment: SuggestedDepartment;
+  doctors: Doctor[];
+  availableSlots: TimeSlot[];
+  appointmentSummary: AppointmentSummary;
 }
