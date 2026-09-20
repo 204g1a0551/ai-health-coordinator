@@ -27,12 +27,13 @@
     <section class="dash-card">
       <h3 class="card-title">2. Symptoms</h3>
       @if (state().symptoms.length > 0) {
-        <div class="symptoms-tags">
+        <div class="symptoms-list">
           @for (symptom of state().symptoms; track symptom.name) {
             <div class="symptom-tag">
               <span class="symptom-name">{{ symptom.name }}</span>
               @if (symptom.duration) {
-                <span class="symptom-duration">• {{ symptom.duration }}</span>
+                <span class="symptom-dash">—</span>
+                <span class="symptom-duration">{{ symptom.duration }}</span>
               }
             </div>
           }

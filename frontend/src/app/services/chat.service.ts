@@ -3,12 +3,14 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, catchError, map, tap, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { ChatMessage, ChatRequest, ChatResponse } from '../models/chat.model';
+import { DashboardService } from './dashboard.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ChatService {
   private readonly http = inject(HttpClient);
+  private readonly dashboardService = inject(DashboardService);
   private readonly chatApiUrl = `${environment.apiUrl}/chat`;
 
   // Persistent conversation/session ID for current session
@@ -63,6 +65,12 @@ export class ChatService {
         };
 
         this.messages.update((msgs) => [...msgs, assistantMessage]);
+
+        // Automatically update the dashboard with structured actions (e.g. UPDATE_SYMPTOMS)
+        if (res.actions && res.actions.length > 0) {
+          this.dashboardService.applyActions(res.actions);
+        }
+
         this.isSending.set(false);
       }),
       catchError((error: HttpErrorResponse) => {

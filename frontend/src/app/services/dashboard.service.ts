@@ -1,17 +1,13 @@
 import { Injectable, signal } from '@angular/core';
-import { DashboardState } from '../models/dashboard.model';
+import { DashboardState, Symptom } from '../models/dashboard.model';
 
-export const MOCK_DASHBOARD_STATE: DashboardState = {
+export const INITIAL_DASHBOARD_STATE: DashboardState = {
   patient: {
     name: 'Sarah Connor',
     age: 32,
     phone: '+1 (555) 019-2834',
   },
-  symptoms: [
-    { name: 'Fever', duration: '2 days' },
-    { name: 'Headache', duration: '1 day' },
-    { name: 'Fatigue', duration: '3 days' },
-  ],
+  symptoms: [], // Empty initially until user shares symptoms with AI agent
   suggestedDepartment: {
     name: 'General Medicine',
   },
@@ -78,8 +74,33 @@ export const MOCK_DASHBOARD_STATE: DashboardState = {
   providedIn: 'root',
 })
 export class DashboardService {
-  // Reactive dashboard state initialized with mock data
-  readonly state = signal<DashboardState>(MOCK_DASHBOARD_STATE);
+  readonly state = signal<DashboardState>(INITIAL_DASHBOARD_STATE);
+
+  /**
+   * Dynamically update symptoms based on Symptom Agent structured output
+   */
+  updateSymptoms(symptoms: Symptom[]): void {
+    this.state.update((s) => ({
+      ...s,
+      symptoms: symptoms.map((item) => ({
+        name: item.name,
+        duration: item.duration || undefined,
+      })),
+    }));
+  }
+
+  /**
+   * Process structured UI actions returned by the backend coordinator
+   */
+  applyActions(actions: any[]): void {
+    if (!actions || !Array.isArray(actions)) return;
+
+    for (const action of actions) {
+      if (action.type === 'UPDATE_SYMPTOMS' && action.payload?.symptoms) {
+        this.updateSymptoms(action.payload.symptoms);
+      }
+    }
+  }
 
   selectSlot(slotId: string): void {
     const slot = this.state().availableSlots.find((s) => s.id === slotId);
@@ -100,7 +121,6 @@ export class DashboardService {
     }));
   }
 
-  // Helper method to clear dashboard to demonstrate empty/default state handling
   resetToDefault(): void {
     this.state.set({
       patient: { name: '', age: undefined, phone: '' },
@@ -116,10 +136,5 @@ export class DashboardService {
         status: 'None',
       },
     });
-  }
-
-  // Restore mock data
-  loadMockData(): void {
-    this.state.set(MOCK_DASHBOARD_STATE);
   }
 }
