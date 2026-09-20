@@ -171,10 +171,13 @@ MEDICAL_BIGDATA_CORPUS = [
         "primary_symptom": "Musculoskeletal / Orthopedic Disorder",
         "severity": "Medium",
         "keywords": [
+            "fracture", "small fracture", "hairline fracture", "bone fracture", "broken bone",
+            "bone crack", "cracked bone", "bone pain", "fractured bone", "wrist fracture",
+            "ankle fracture", "finger fracture", "leg fracture", "arm fracture", "toe fracture",
             "joint pain", "knee pain", "knee swelling", "knee stiffness", "difficulty walking pain",
             "back pain", "lower back ache", "lumbago", "slip disc", "herniated disc", "sciatica",
             "neck pain", "cervical spondylosis", "shoulder pain", "frozen shoulder", "rotator cuff",
-            "bone fracture", "broken bone", "sprain", "twisted ankle", "ligament tear", "acl tear",
+            "wrist pain", "ankle pain", "sprain", "twisted ankle", "ligament tear", "acl tear",
             "meniscus tear", "arthritis", "osteoarthritis", "rheumatoid arthritis joint", "gout",
             "high uric acid pain", "swollen big toe", "osteoporosis", "hip pain", "heel pain", "plantar fasciitis"
         ],
@@ -239,15 +242,17 @@ MEDICAL_BIGDATA_CORPUS = [
     # --------------------------------------------------------------------------
     {
         "department": "Gynecology",
-        "primary_symptom": "Gynecological / Menstrual / Obstetric Condition",
+        "primary_symptom": "Gynecological / Menstrual Condition",
         "severity": "Medium",
         "keywords": [
-            "pregnancy", "pregnant", "missed period", "positive pregnancy test", "prenatal checkup",
-            "morning sickness", "irregular periods", "menstrual irregularities", "heavy menstrual bleeding",
-            "menorrhagia", "severe period cramps", "period cramps", "menstrual cramps", "dysmenorrhea", "pelvic pain",
-            "pcos", "pcod", "ovarian cyst", "uterine fibroids", "vaginal discharge", "vaginal itching", "yeast infection",
-            "post-menopausal bleeding", "hot flashes", "menopause symptoms", "endometriosis",
-            "fertility consultation", "conception advice", "pap smear screening", "breast lump screening"
+            "periods", "period", "my periods", "have periods", "period pain", "missed period",
+            "missed periods", "delayed period", "delayed periods", "heavy periods", "period blood",
+            "irregular periods", "menstrual irregularities", "heavy menstrual bleeding", "menstrual",
+            "menses", "spotting", "menorrhagia", "severe period cramps", "period cramps", "menstrual cramps",
+            "dysmenorrhea", "pelvic pain", "pregnancy", "pregnant", "positive pregnancy test", "prenatal checkup",
+            "morning sickness", "pcos", "pcod", "ovarian cyst", "uterine fibroids", "vaginal discharge",
+            "vaginal itching", "yeast infection", "post-menopausal bleeding", "hot flashes", "menopause symptoms",
+            "endometriosis", "fertility consultation", "conception advice", "pap smear screening", "breast lump screening"
         ],
         "description": "Comprehensive women's healthcare, obstetric pregnancy care, PCOS, and reproductive medicine."
     },
@@ -260,13 +265,14 @@ MEDICAL_BIGDATA_CORPUS = [
         "primary_symptom": "Anxiety / Depression / Mental Health",
         "severity": "Medium",
         "keywords": [
-            "anxiety", "severe anxiety", "anxious", "feeling anxious", "panic attack", "constant worry",
-            "depression", "depressed", "feeling depressed", "hopelessness", "loss of interest", "anhedonia",
+            "depression", "depressed", "feeling depressed", "severe depression", "major depression",
+            "clinical depression", "anxiety", "severe anxiety", "anxious", "feeling anxious",
+            "panic attack", "constant worry", "hopelessness", "loss of interest", "anhedonia",
             "insomnia", "cannot sleep", "chronic sleeplessness", "sleep disorder", "nightmares",
             "extreme stress", "burnout", "work stress", "mood swings", "bipolar disorder",
             "obsessive compulsive", "ocd", "hallucinations", "paranoia", "schizophrenia",
             "post traumatic stress", "ptsd", "eating disorder", "anorexia", "bulimia", "adhd",
-            "concentration difficulty", "brain fog psychiatric", "social anxiety", "counseling"
+            "concentration difficulty", "brain fog psychiatric", "social anxiety", "counseling", "therapy"
         ],
         "description": "Evaluation of psychiatric health, clinical depression, anxiety disorders, and insomnia."
     },
@@ -437,16 +443,29 @@ class MedicalTriageEngine:
                 max_similarity = similarity
                 best_dept = dept
 
-        # 3. Decision Logic: Priority to exact clinical keyword match
-        if best_exact_match and max_similarity < 0.6:
-            predicted_dept = best_exact_match["department"]
+        # Collect distinct departments from matched symptoms
+        matched_dept_map: Dict[str, Dict[str, Any]] = {}
+        for s in matched_symptoms:
+            dept = s["department"]
+            if dept not in matched_dept_map:
+                matched_dept_map[dept] = {
+                    "department": dept,
+                    "primarySymptom": s["name"],
+                    "matchedKeyword": s["matchedKeyword"],
+                    "severity": s["severity"],
+                }
+
+        matched_depts = list(matched_dept_map.values())
+        severity_rank = {"Emergency": 4, "High": 3, "Medium": 2, "Low": 1}
+        matched_depts.sort(key=lambda x: severity_rank.get(x["severity"], 0), reverse=True)
+
+        # 3. Decision Logic: Priority to exact clinical keyword matches & multi-department triage
+        if matched_depts:
+            predicted_dept = matched_depts[0]["department"]
             confidence = 0.95
         elif max_similarity >= 0.15:
             predicted_dept = best_dept
             confidence = min(0.98, max_similarity)
-        elif best_exact_match:
-            predicted_dept = best_exact_match["department"]
-            confidence = 0.85
         else:
             predicted_dept = "General Medicine"
             confidence = 0.50
@@ -469,6 +488,8 @@ class MedicalTriageEngine:
             "symptoms": matched_symptoms,
             "severity": severity,
             "isEmergency": is_emergency,
+            "isMultiSpecialty": len(matched_depts) > 1,
+            "matchedDepartments": matched_depts,
             "primarySymptom": matched_symptoms[0]["name"] if matched_symptoms else "General Health Consultation",
         }
 

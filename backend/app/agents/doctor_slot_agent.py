@@ -126,16 +126,30 @@ def doctor_slot_node(state: AgentState) -> AgentState:
         locality_pref = extract_locality_preference(user_msg)
 
     # 1. Controlled Backend Tool Call: search_doctors via provider_service
-    doctors_found = []
-    if locality_pref:
-        doctors_found = provider_service.search_by_location(locality=locality_pref, department=target_dept)
+    multi_depts = state.get("multi_departments") or []
+    target_depts = [d["department"] for d in multi_depts] if multi_depts else [target_dept]
 
-    if not doctors_found:
-        doctors_found = provider_service.search_by_department(department=target_dept)
+    unique_depts = []
+    for d in target_depts:
+        if d and d not in unique_depts and d != "General Medicine":
+            unique_depts.append(d)
+    if not unique_depts:
+        unique_depts = [target_dept]
+
+    doctors_found = []
+    for dept_to_search in unique_depts:
+        dept_docs = []
+        if locality_pref:
+            dept_docs = provider_service.search_by_location(locality=locality_pref, department=dept_to_search)
+        if not dept_docs:
+            dept_docs = provider_service.search_by_department(department=dept_to_search)
+        # Include top verified specialists for each matched department
+        limit = 2 if len(unique_depts) > 1 else 4
+        doctors_found.extend(dept_docs[:limit])
 
     # Fallback to general search if department had zero doctors
     if not doctors_found:
-        doctors_found = provider_service.search_doctors(query=None)
+        doctors_found = provider_service.search_doctors(query=None)[:4]
 
     current_timestamp = datetime.utcnow().strftime("%d %b %Y, %I:%M %p")
     provider_name = provider_service.provider.provider_name

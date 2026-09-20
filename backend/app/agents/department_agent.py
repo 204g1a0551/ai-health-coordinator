@@ -152,27 +152,43 @@ def determine_department(user_msg: str, symptoms: List[Dict[str, Optional[str]]]
             "reason": "No symptoms or department preferences were specified."
         }
 
-    # Match against department rules in priority order
+    # 1. Primary check: Medical Big Data Triage Engine (multi-symptom & multi-specialty awareness)
+    triage_pred = medical_triage_engine.predict(combined_text)
+    if triage_pred.get("isMultiSpecialty"):
+        matched_depts = triage_pred.get("matchedDepartments", [])
+        dept_names = [d["department"] for d in matched_depts]
+        return {
+            "department": triage_pred["department"],
+            "reason": f"Identified symptoms spanning {len(dept_names)} specialties: {', '.join(dept_names)}.",
+            "is_multi_specialty": True,
+            "multi_departments": matched_depts,
+        }
+
+    if triage_pred.get("department") and triage_pred["department"] != "General Medicine":
+        return {
+            "department": triage_pred["department"],
+            "reason": f"Routed consultation based on clinical symptoms for {triage_pred['department']}.",
+            "is_multi_specialty": False,
+            "multi_departments": triage_pred.get("matchedDepartments", []),
+        }
+
+    # 2. Match against explicit department rules
     for dept_name, patterns, reason in DEPARTMENT_RULES:
         for pattern in patterns:
             if re.search(pattern, combined_text):
                 return {
                     "department": dept_name,
-                    "reason": reason
+                    "reason": reason,
+                    "is_multi_specialty": False,
+                    "multi_departments": [{"department": dept_name, "matchedKeyword": pattern}],
                 }
-
-    # Match against trained Medical Big Data Triage Engine
-    triage_pred = medical_triage_engine.predict(combined_text)
-    if triage_pred.get("department") and triage_pred["department"] != "General Medicine":
-        return {
-            "department": triage_pred["department"],
-            "reason": f"Routed consultation based on clinical symptoms for {triage_pred['department']}."
-        }
 
     # If no specific patterns matched
     return {
         "department": "Needs clarification",
-        "reason": "Please provide more details about your symptoms or the type of consultation you need."
+        "reason": "Please provide more details about your symptoms or the type of consultation you need.",
+        "is_multi_specialty": False,
+        "multi_departments": [],
     }
 
 
@@ -187,6 +203,7 @@ def department_node(state: AgentState) -> AgentState:
     dept_result = determine_department(user_msg, symptoms)
     dept_name = dept_result["department"]
     dept_reason = dept_result["reason"]
+    multi_depts = dept_result.get("multi_departments", [])
 
     actions = list(state.get("actions", []))
 
@@ -196,7 +213,8 @@ def department_node(state: AgentState) -> AgentState:
             "type": "UPDATE_DEPARTMENT",
             "payload": {
                 "department": dept_name,
-                "reason": dept_reason
+                "reason": dept_reason,
+                "multi_departments": multi_depts,
             }
         })
 
@@ -204,5 +222,6 @@ def department_node(state: AgentState) -> AgentState:
         **state,
         "suggested_department": dept_name,
         "department_reason": dept_reason,
+        "multi_departments": multi_depts,
         "actions": actions,
     }

@@ -265,8 +265,57 @@ def final_response_node(state: AgentState) -> AgentState:
     dept = state.get("suggested_department")
     ds_res = state.get("doctor_slot_results") or {}
     docs = ds_res.get("doctors", [])
+    multi_depts = state.get("multi_departments") or []
 
-    if dept and dept != "Needs clarification":
+    if len(multi_depts) > 1 and docs:
+        dept_docs: Dict[str, List[Dict[str, Any]]] = {}
+        for d in docs:
+            dept_docs.setdefault(d.get("department", "Specialty"), []).append(d)
+
+        icons = {
+            "Gynecology": "🌸",
+            "Psychiatry": "🧠",
+            "Orthopedics": "🦴",
+            "Cardiology": "❤️",
+            "Gastroenterology": "🩺",
+            "Pulmonology": "🫁",
+            "Neurology": "⚡",
+            "Dermatology": "🧴",
+            "ENT": "👂",
+            "Dental": "🦷",
+            "Ophthalmology": "👁️",
+            "Hematology": "🩸",
+            "Endocrinology": "🧬",
+            "Nephrology": "💧",
+            "Pediatrics": "👶",
+            "General Medicine": "🏥",
+        }
+
+        sections = []
+        for md in multi_depts:
+            m_dept = md.get("department")
+            if not m_dept or m_dept == "General Medicine":
+                continue
+            m_kw = md.get("matchedKeyword", "")
+            icon = icons.get(m_dept, "•")
+            lines = [f"{icon} **{m_dept}**" + (f" (for *{m_kw}*):" if m_kw else ":")]
+            m_docs = dept_docs.get(m_dept, [])[:2]
+            if m_docs:
+                for d in m_docs:
+                    slots_str = ", ".join(d["slots"][:3]) if d.get("slots") else "Contact clinic for slots"
+                    lines.append(f"  • **{d['name']}** ({d.get('hospital', 'Bengaluru Hospital')}) — Available slots: **{slots_str}**")
+            else:
+                lines.append(f"  • Verified {m_dept} specialists are on duty.")
+            sections.append("\n".join(lines))
+
+        final_msg = (
+            f"I noticed your inquiry covers **{len(sections)} different healthcare specialties**:\n\n"
+            + "\n\n".join(sections)
+            + "\n\nWould you like me to book one of these slots for you, or which condition would you like to prioritize first?"
+        )
+        if symptoms or any(k in user_msg for k in ["diagnos", "do i have", "disease"]):
+            final_msg += clinical_disclaimer
+    elif dept and dept != "Needs clarification":
         if docs:
             doc_lines = []
             for d in docs[:3]:

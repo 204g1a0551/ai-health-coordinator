@@ -34,6 +34,7 @@ class AgentState(TypedDict):
     clarification_question: Optional[str]
     actions: List[Dict[str, Any]]
     pharmacy_results: Optional[Dict[str, Any]]
+    multi_departments: Optional[List[Dict[str, Any]]]
     primary_ui_action: Optional[str]
     primary_ui_data: Optional[Dict[str, Any]]
     final_response: str
