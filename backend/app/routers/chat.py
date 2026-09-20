@@ -30,6 +30,7 @@ async def handle_chat_message(request: ChatRequest) -> ChatResponse:
     initial_state = {
         "user_message": user_text,
         "session_id": session_id,
+        "user_coordinates": request.coordinates,
         "route": "",
         "symptoms": [],
         "actions": [],

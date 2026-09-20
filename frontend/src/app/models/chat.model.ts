@@ -9,6 +9,7 @@ export interface ChatMessage {
 export interface ChatRequest {
   message: string;
   sessionId: string;
+  coordinates?: { lat: number; lng: number };
 }
 
 export interface ChatResponse {

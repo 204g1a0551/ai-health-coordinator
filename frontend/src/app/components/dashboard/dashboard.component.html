@@ -68,7 +68,12 @@
     <!-- 4. Doctors -->
     <section class="dash-card">
       <div class="card-title-row">
-        <h3 class="card-title">4. Doctors</h3>
+        <div class="title-with-loc">
+          <h3 class="card-title">4. Doctors</h3>
+          @if (state().nearbyLocation) {
+            <span class="nearby-loc-badge">📍 Near {{ state().nearbyLocation }}</span>
+          }
+        </div>
         @if (state().providerInfo?.timestamp || (state().doctors.length > 0 && state().doctors[0].timestamp)) {
           <span class="card-sync-time">
             Synced: {{ state().providerInfo?.timestamp || state().doctors[0].timestamp }}
@@ -101,6 +106,9 @@
               }
 
               <div class="doctor-meta-row">
+                @if (doctor.distance_km !== undefined) {
+                  <span class="meta-badge distance">🚗 {{ doctor.distance_km }} km</span>
+                }
                 @if (doctor.consultationFee) {
                   <span class="meta-badge fee">{{ doctor.consultationFee }}</span>
                 }

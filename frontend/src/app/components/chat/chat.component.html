@@ -42,11 +42,26 @@
   </div>
 
   <div class="chat-input-container">
+    <div class="chat-quick-suggestions">
+      <button type="button" class="chip-btn" (click)="sendPreset('Doctors near Koramangala')" [disabled]="isSending()">
+        📍 Koramangala
+      </button>
+      <button type="button" class="chip-btn" (click)="sendPreset('General physicians near Indiranagar')" [disabled]="isSending()">
+        📍 Indiranagar GP
+      </button>
+      <button type="button" class="chip-btn" (click)="sendPreset('ENT doctors near Whitefield')" [disabled]="isSending()">
+        📍 Whitefield ENT
+      </button>
+      <button type="button" class="chip-btn loc-chip" (click)="searchNearMe()" [disabled]="isSending()" title="Use browser location permission">
+        🎯 Near Me
+      </button>
+    </div>
+
     <div class="input-row">
       <input
         type="text"
         class="chat-input"
-        placeholder="Type a message (e.g. 'I have fever and headache')..."
+        placeholder="Type a message (e.g. 'Doctors near Koramangala')..."
         [(ngModel)]="userInput"
         (keydown)="onKeyDown($event)"
         [disabled]="isSending()"

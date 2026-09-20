@@ -27,6 +27,7 @@ export interface Doctor {
   consultationType?: string;
   experience?: string;
   rating?: number;
+  distance_km?: number;
   dataSource?: string;
   timestamp?: string;
 }
@@ -68,6 +69,7 @@ export interface DashboardState {
   availableSlots: TimeSlot[];
   appointmentSummary: AppointmentSummary;
   providerInfo?: ProviderInfo;
+  nearbyLocation?: string;
 }
 
 export interface UIAction {

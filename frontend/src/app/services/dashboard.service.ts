@@ -148,6 +148,25 @@ export class DashboardService {
   }
 
   /**
+   * Dynamically display nearby doctors returned by SHOW_NEARBY_DOCTORS action
+   */
+  showNearbyDoctors(payload: { location: string; doctors: Doctor[]; department?: string }): void {
+    const doctors = payload.doctors || [];
+    const ds = doctors.length > 0 ? doctors[0].dataSource : undefined;
+    this.state.update((s) => ({
+      ...s,
+      doctors,
+      nearbyLocation: payload.location,
+      suggestedDepartment: {
+        name: payload.department && payload.department !== 'All Departments'
+          ? payload.department
+          : s.suggestedDepartment.name,
+      },
+      providerInfo: ds ? { dataSource: ds, locality: payload.location } : s.providerInfo,
+    }));
+  }
+
+  /**
    * Dynamically display available time slots returned by SHOW_SLOTS action
    */
   showSlots(slots: TimeSlot[], date?: string, dataSource?: string, timestamp?: string): void {
@@ -253,6 +272,12 @@ export class DashboardService {
 
         case 'UPDATE_DOCTORS_AND_SLOTS':
           this.updateDoctorsAndSlots(payload);
+          break;
+
+        case 'SHOW_NEARBY_DOCTORS':
+          if (payload.doctors) {
+            this.showNearbyDoctors(payload);
+          }
           break;
 
         default:

@@ -158,12 +158,31 @@
   border-bottom: 1px solid #f1f5f9;
   margin-bottom: 10px;
   padding-bottom: 6px;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.title-with-loc {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .card-title-row .card-title {
   margin: 0;
   border-bottom: none;
   padding-bottom: 0;
+}
+
+.nearby-loc-badge {
+  font-size: 0.68rem;
+  color: #1d4ed8;
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  padding: 1px 7px;
+  border-radius: 9999px;
+  font-weight: 600;
 }
 
 .card-sync-time {
@@ -247,6 +266,13 @@
   padding: 1px 6px;
   border-radius: 4px;
   font-weight: 500;
+}
+
+.meta-badge.distance {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+  font-weight: 600;
+  border: 1px solid #bfdbfe;
 }
 
 .meta-badge.fee {

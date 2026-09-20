@@ -37,6 +37,32 @@ export class ChatComponent {
     });
   }
 
+  sendPreset(prompt: string): void {
+    if (this.isSending()) return;
+    this.chatService.sendMessage(prompt).subscribe({
+      next: () => this.scrollToBottom(),
+      error: () => this.scrollToBottom(),
+    });
+  }
+
+  searchNearMe(): void {
+    if (this.isSending()) return;
+    this.chatService.requestLocation()
+      .then((coords) => {
+        this.chatService.sendMessage('Doctors near me', coords).subscribe({
+          next: () => this.scrollToBottom(),
+          error: () => this.scrollToBottom(),
+        });
+      })
+      .catch(() => {
+        // Fallback to sending prompt without coords, prompting user politely
+        this.chatService.sendMessage('Doctors near me').subscribe({
+          next: () => this.scrollToBottom(),
+          error: () => this.scrollToBottom(),
+        });
+      });
+  }
+
   onKeyDown(event: KeyboardEvent): void {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();

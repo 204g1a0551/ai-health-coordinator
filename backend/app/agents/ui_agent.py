@@ -12,6 +12,8 @@ ALLOWED_ACTIONS = {
     "CANCEL_APPOINTMENT",
     "UPDATE_PATIENT",
     "CLEAR_APPOINTMENT",
+    "SHOW_NEARBY_DOCTORS",
+    "REQUEST_LOCATION_PERMISSION",
 }
 
 # Dangerous patterns to reject from LLM / payload injection
@@ -83,7 +85,7 @@ def ui_action_node(state: AgentState) -> AgentState:
     seen_action_types = set()
 
     def add_action(act_name: str, payload: Dict[str, Any]):
-        if act_name in {"UPDATE_DEPARTMENT", "CLEAR_APPOINTMENT", "CANCEL_APPOINTMENT", "UPDATE_SYMPTOMS", "SHOW_DOCTORS", "SHOW_SLOTS", "BOOK_APPOINTMENT"}:
+        if act_name in {"UPDATE_DEPARTMENT", "CLEAR_APPOINTMENT", "CANCEL_APPOINTMENT", "UPDATE_SYMPTOMS", "SHOW_DOCTORS", "SHOW_SLOTS", "BOOK_APPOINTMENT", "SHOW_NEARBY_DOCTORS", "REQUEST_LOCATION_PERMISSION"}:
             if act_name in seen_action_types:
                 return
         sig = f"{act_name}:{str(payload)}"
@@ -157,6 +159,16 @@ def ui_action_node(state: AgentState) -> AgentState:
             add_action("CANCEL_APPOINTMENT", {"status": "Cancelled"})
         elif r_type == "CLEAR_APPOINTMENT":
             add_action("CLEAR_APPOINTMENT", {})
+
+    # 6. Process Location Actions (SHOW_NEARBY_DOCTORS, REQUEST_LOCATION_PERMISSION)
+    for raw in raw_actions:
+        r_type = raw.get("type") or raw.get("action")
+        if r_type == "SHOW_NEARBY_DOCTORS":
+            p = raw.get("payload", {})
+            add_action("SHOW_NEARBY_DOCTORS", p)
+        elif r_type == "REQUEST_LOCATION_PERMISSION":
+            p = raw.get("payload", {})
+            add_action("REQUEST_LOCATION_PERMISSION", p)
 
     # Check for explicit clear appointment phrases
     if any(k in user_msg for k in ["clear appointment", "reset appointment", "clear summary"]):

@@ -250,6 +250,25 @@ class RedisService:
         expire = ttl or redis_settings.cache_ttl
         self._client.set(key, json.dumps(data), ex=expire)
 
+    # ----------------------------------------------------------------------
+    # 8. Generic Cache Methods
+    # ----------------------------------------------------------------------
+    def get_cached_data(self, key: str) -> Optional[Any]:
+        """Retrieves generic cached data by key."""
+        raw = self._client.get(key)
+        if raw:
+            try:
+                return json.loads(raw)
+            except Exception:
+                return None
+        return None
+
+    def set_cached_data(self, key: str, data: Any, ttl_seconds: Optional[int] = None) -> None:
+        """Stores generic cached data with TTL."""
+        expire = ttl_seconds or redis_settings.cache_ttl
+        self._client.set(key, json.dumps(data), ex=expire)
+
 
 # Global singleton instance
 redis_service = RedisService()
+

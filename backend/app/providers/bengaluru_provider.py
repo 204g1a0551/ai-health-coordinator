@@ -325,8 +325,14 @@ class BengaluruSeededProvider(BaseHealthcareProvider):
             if query and query.lower() not in doc["name"].lower():
                 continue
             # Match department
-            if department and department.lower() not in doc["department"].lower():
-                continue
+            if department:
+                dept_clean = department.lower().strip()
+                doc_dept_clean = doc["department"].lower().strip()
+                if dept_clean == "ent":
+                    if doc_dept_clean != "ent":
+                        continue
+                elif dept_clean not in doc_dept_clean and doc_dept_clean not in dept_clean:
+                    continue
             # Match locality
             if locality and locality.lower() not in doc["locality"].lower() and locality.lower() not in doc["address"].lower():
                 continue

@@ -62,11 +62,25 @@ PATIENT_INFO_PATTERNS = [
 ]
 
 
+LOCATION_QUERY_PATTERNS = [
+    r"\bnear\s+[a-zA-Z]+",
+    r"\bnear\s+me\b",
+    r"\bnearby\b",
+    r"\bclosest\s+(?:to\s+me|doctor|hospital|clinic)?\b",
+    r"\baround\s+[a-zA-Z]+",
+    r"\bdoctors?\s+near\b",
+    r"\bphysicians?\s+near\b",
+    r"\bnearest\b",
+    r"\bfind\s+doctors?\s+near\b",
+]
+
+
 def supervisor_node(state: AgentState) -> AgentState:
     """
     Supervisor Agent:
     Evaluates user's intent and dynamically determines the multi-agent pipeline:
     - 'patient_info_agent': demographic/contact management
+    - 'location_agent': location-aware / radius-based nearby doctor discovery
     - 'symptom_agent': clinical symptoms (routes -> department -> doctor/slot -> ui_agent)
     - 'doctor_slot_agent': booking specific doctors/slots (routes -> appointment_agent -> ui_agent)
     - 'appointment_agent': direct cancellation, status, or clearing
@@ -78,21 +92,25 @@ def supervisor_node(state: AgentState) -> AgentState:
     is_patient_info = any(re.search(pat, user_msg) for pat in PATIENT_INFO_PATTERNS)
     is_booking_action = any(re.search(pat, user_msg) for pat in BOOKING_ACTION_PATTERNS)
     is_direct_appointment = any(re.search(pat, user_msg) for pat in DIRECT_APPOINTMENT_PATTERNS)
+    is_location_query = any(re.search(pat, user_msg) for pat in LOCATION_QUERY_PATTERNS)
     has_symptoms = any(re.search(kw, user_msg) for kw in SYMPTOM_KEYWORDS)
     is_browsing_slots = any(re.search(kw, user_msg) for kw in SLOT_BROWSE_KEYWORDS)
     has_dept = any(re.search(kw, user_msg) for kw in DEPARTMENT_KEYWORDS)
 
     if is_patient_info:
         route = "patient_info_agent"
-    elif has_symptoms:
-        # Example 1: Symptoms -> Department -> Doctor/Slot -> UI Action
-        route = "symptom_agent"
     elif is_booking_action:
         # Example 2: Booking -> Doctor/Slot -> Appointment -> UI Action
         route = "doctor_slot_agent"
     elif is_direct_appointment:
         # Example 3: Cancel/Clear/Show -> Appointment -> UI Action
         route = "appointment_agent"
+    elif is_location_query:
+        # Phase 13: Location-aware nearby search -> Location Agent -> UI Action
+        route = "location_agent"
+    elif has_symptoms:
+        # Example 1: Symptoms -> Department -> Doctor/Slot -> UI Action
+        route = "symptom_agent"
     elif is_browsing_slots or ("general physician" in user_msg):
         route = "doctor_slot_agent"
     elif has_dept:

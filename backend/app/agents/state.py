@@ -27,5 +27,9 @@ class AgentState(TypedDict):
     doctor_slot_results: Optional[Dict[str, Any]]
     appointment_action_result: Optional[Dict[str, Any]]
     patient_info: Optional[Dict[str, Any]]
+    location_query: Optional[str]
+    user_coordinates: Optional[Dict[str, float]]
+    nearby_doctors_result: Optional[Dict[str, Any]]
     actions: List[Dict[str, Any]]
     final_response: str
+

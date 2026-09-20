@@ -30,9 +30,31 @@ export class ChatService {
   readonly errorMessage = signal<string | null>(null);
 
   /**
+   * Request browser location permission safely
+   */
+  requestLocation(): Promise<{ lat: number; lng: number }> {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error('Geolocation is not supported by your browser'));
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          resolve({
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+          });
+        },
+        (err) => reject(err),
+        { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
+      );
+    });
+  }
+
+  /**
    * Sends user message to FastAPI backend and appends assistant response to history
    */
-  sendMessage(userText: string): Observable<ChatResponse> {
+  sendMessage(userText: string, coordinates?: { lat: number; lng: number }): Observable<ChatResponse> {
     const trimmed = userText.trim();
     if (!trimmed) {
       return throwError(() => new Error('Message cannot be empty'));
@@ -53,6 +75,7 @@ export class ChatService {
     const payload: ChatRequest = {
       message: trimmed,
       sessionId: this.sessionId,
+      coordinates,
     };
 
     return this.http.post<ChatResponse>(this.chatApiUrl, payload).pipe(
