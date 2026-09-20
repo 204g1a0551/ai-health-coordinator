@@ -45,13 +45,13 @@ class LLMService:
         if api_key:
             try:
                 from langchain_google_genai import ChatGoogleGenerativeAI
-                # Use gemini-3.6-flash which is supported by the current Google Generative Language API
+                # gemini-2.0-flash is the current fast model
                 self._llm = ChatGoogleGenerativeAI(
-                    model=os.getenv("GEMINI_MODEL", "gemini-3.6-flash"),
+                    model=os.getenv("GEMINI_MODEL", "gemini-2.0-flash"),
                     google_api_key=api_key,
                     temperature=0.0,
                     max_retries=1,
-                    timeout=10,
+                    request_timeout=15,
                 )
             except Exception:
                 self._llm = None
@@ -79,6 +79,7 @@ class LLMService:
         # 1. Attempt live LLM structured extraction if configured
         if self._llm:
             try:
+                import concurrent.futures
                 prompt = (
                     "You are an AI Healthcare Intent & Entity Extraction Assistant. "
                     "Extract structured intents and entities from the user's message according to the schema. "
@@ -89,7 +90,9 @@ class LLMService:
                     "set needs_clarification=True and provide clarification_question."
                 )
                 structured_llm = self._llm.with_structured_output(ParsedUserIntent)
-                result = structured_llm.invoke(prompt)
+                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                    future = executor.submit(structured_llm.invoke, prompt)
+                    result = future.result(timeout=20)
                 if result:
                     self._persist_extracted_context(session_id, result)
                     return result
