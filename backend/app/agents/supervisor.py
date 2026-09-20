@@ -35,11 +35,28 @@ DEPARTMENT_KEYWORDS = [
     r"\bdental\b", r"\bdentist\b", r"\bclinic\b", r"\bdepartment\b",
 ]
 
+PATIENT_INFO_PATTERNS = [
+    r"\b(set|change|update|edit)\s+(?:my\s+)?name\b",
+    r"\bmy\s+name\s+is\b",
+    r"\bcall\s+me\s+[a-zA-Z]+\b",
+    r"\b(set|change|update|edit)\s+(?:my\s+)?phone\b",
+    r"\b(set|change|update|edit)\s+(?:my\s+)?number\b",
+    r"\bphone\s+number\b",
+    r"\b(set|change|update|edit)\s+(?:my\s+)?age\b",
+    r"\b(?:i\s+am|i'm)\s+\d{1,3}\s*(?:years?\s*old|yrs?\s*old)?\b",
+    r"\b(set|change|update|edit)\s+(?:my\s+)?preferred\s+department\b",
+    r"\bpreferred\s+department\b",
+    r"\b(show|view|get|display|check)\s+(?:my\s+)?patient\s+info(?:rmation)?\b",
+    r"\bpatient\s+info(?:rmation)?\b",
+    r"\b(show|view)\s+(?:my\s+)?(?:profile|details)\b",
+]
+
 
 def supervisor_node(state: AgentState) -> AgentState:
     """
     Supervisor Agent:
     Evaluates user's intent and decides routing:
+    - 'patient_info_agent': managing demographic/contact info (name, age, phone, preferred department)
     - 'appointment_agent': booking specific doctor/time, cancellation, rescheduling
     - 'symptom_agent': describing symptoms
     - 'doctor_slot_agent': browsing doctors and open slots
@@ -48,12 +65,15 @@ def supervisor_node(state: AgentState) -> AgentState:
     """
     user_msg = state.get("user_message", "").strip().lower()
 
+    is_patient_info = any(re.search(pat, user_msg) for pat in PATIENT_INFO_PATTERNS)
     is_appointment_action = any(re.search(pat, user_msg) for pat in APPOINTMENT_ACTION_PATTERNS)
     has_symptoms = any(re.search(kw, user_msg) for kw in SYMPTOM_KEYWORDS)
     is_browsing_slots = any(re.search(kw, user_msg) for kw in SLOT_BROWSE_KEYWORDS)
     has_dept = any(re.search(kw, user_msg) for kw in DEPARTMENT_KEYWORDS)
 
-    if is_appointment_action:
+    if is_patient_info:
+        route = "patient_info_agent"
+    elif is_appointment_action:
         route = "appointment_agent"
     elif has_symptoms:
         route = "symptom_agent"

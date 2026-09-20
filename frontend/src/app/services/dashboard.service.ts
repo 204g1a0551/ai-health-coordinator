@@ -1,5 +1,5 @@
 import { Injectable, signal } from '@angular/core';
-import { DashboardState, Symptom, Doctor, TimeSlot } from '../models/dashboard.model';
+import { DashboardState, PatientInfo, Symptom, Doctor, TimeSlot } from '../models/dashboard.model';
 
 export const INITIAL_DASHBOARD_STATE: DashboardState = {
   patient: {
@@ -127,13 +127,32 @@ export class DashboardService {
   }
 
   /**
+   * Dynamically update patient info from Patient Info Agent structured output
+   */
+  updatePatient(data: Partial<PatientInfo> & { preferred_department?: string }): void {
+    this.state.update((s) => ({
+      ...s,
+      patient: {
+        ...s.patient,
+        ...data,
+        preferredDepartment: data.preferred_department || data.preferredDepartment || s.patient.preferredDepartment,
+      },
+    }));
+  }
+
+  /**
    * Process structured UI actions returned by the backend coordinator
    */
   applyActions(actions: any[]): void {
     if (!actions || !Array.isArray(actions)) return;
 
     for (const action of actions) {
-      if (action.type === 'UPDATE_SYMPTOMS' && action.payload?.symptoms) {
+      if (action.type === 'UPDATE_PATIENT' || action.action === 'UPDATE_PATIENT') {
+        const payloadData = action.data || action.payload?.data || action.payload;
+        if (payloadData) {
+          this.updatePatient(payloadData);
+        }
+      } else if (action.type === 'UPDATE_SYMPTOMS' && action.payload?.symptoms) {
         this.updateSymptoms(action.payload.symptoms);
       } else if (action.type === 'UPDATE_DEPARTMENT' && action.payload?.department) {
         this.updateDepartment(action.payload.department);

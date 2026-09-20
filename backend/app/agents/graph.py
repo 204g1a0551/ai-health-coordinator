@@ -11,17 +11,19 @@ from app.agents.symptom_agent import symptom_node
 from app.agents.department_agent import department_node
 from app.agents.doctor_slot_agent import doctor_slot_node
 from app.agents.appointment_agent import appointment_node
+from app.agents.patient_info_agent import patient_info_node
 
 
 def build_health_coordinator_graph():
     """
     Constructs and compiles the full LangGraph coordinator:
-    Supervisor -> { Appointment Agent, Symptom Agent, Doctor/Slot Agent, Department Agent, Final Response }
+    Supervisor -> { Patient Info Agent, Appointment Agent, Symptom Agent, Doctor/Slot Agent, Department Agent, Final Response }
     """
     builder = StateGraph(AgentState)
 
     # Add agent nodes
     builder.add_node("supervisor", supervisor_node)
+    builder.add_node("patient_info_agent", patient_info_node)
     builder.add_node("symptom_agent", symptom_node)
     builder.add_node("department_agent", department_node)
     builder.add_node("doctor_slot_agent", doctor_slot_node)
@@ -36,6 +38,7 @@ def build_health_coordinator_graph():
         "supervisor",
         should_route_from_supervisor,
         {
+            "patient_info_agent": "patient_info_agent",
             "appointment_agent": "appointment_agent",
             "symptom_agent": "symptom_agent",
             "department_agent": "department_agent",
@@ -63,6 +66,9 @@ def build_health_coordinator_graph():
             "final_response": "final_response",
         },
     )
+
+    # Routing from Patient Info Agent
+    builder.add_edge("patient_info_agent", "final_response")
 
     # Routing from Doctor/Slot Agent
     builder.add_edge("doctor_slot_agent", "final_response")

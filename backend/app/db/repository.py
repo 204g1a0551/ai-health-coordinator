@@ -54,6 +54,16 @@ def init_db():
         )
     """)
 
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS patients (
+            session_id TEXT PRIMARY KEY,
+            name TEXT DEFAULT 'Sarah Connor',
+            age INTEGER DEFAULT 32,
+            phone TEXT DEFAULT '+1 (555) 019-2834',
+            preferred_department TEXT DEFAULT ''
+        )
+    """)
+
     # Seed data if empty
     cursor.execute("SELECT COUNT(*) FROM doctors")
     count = cursor.fetchone()[0]
@@ -388,3 +398,61 @@ def get_active_appointment(session_id: str) -> Optional[Dict[str, Any]]:
             "status": row["status"]
         }
     return None
+
+
+def get_patient_info(session_id: str) -> Dict[str, Any]:
+    """Retrieve basic demographic patient info for demo session."""
+    init_db()
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT name, age, phone, preferred_department FROM patients WHERE session_id = ?",
+        (session_id,)
+    )
+    row = cursor.fetchone()
+    if not row:
+        default_patient = ("Sarah Connor", 32, "+1 (555) 019-2834", "")
+        cursor.execute(
+            """INSERT OR REPLACE INTO patients
+               (session_id, name, age, phone, preferred_department)
+               VALUES (?, ?, ?, ?, ?)""",
+            (session_id, *default_patient)
+        )
+        conn.commit()
+        conn.close()
+        return {
+            "name": default_patient[0],
+            "age": default_patient[1],
+            "phone": default_patient[2],
+            "preferred_department": default_patient[3],
+        }
+
+    conn.close()
+    return dict(row)
+
+
+def update_patient_info(session_id: str, updates: Dict[str, Any]) -> Dict[str, Any]:
+    """Update patient basic info for session."""
+    current = get_patient_info(session_id)
+    new_name = updates.get("name", current.get("name"))
+    new_age = updates.get("age", current.get("age"))
+    new_phone = updates.get("phone", current.get("phone"))
+    new_dept = updates.get("preferred_department", current.get("preferred_department"))
+
+    init_db()
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT OR REPLACE INTO patients (session_id, name, age, phone, preferred_department)
+        VALUES (?, ?, ?, ?, ?)
+    """, (session_id, new_name, new_age, new_phone, new_dept))
+    conn.commit()
+    conn.close()
+
+    return {
+        "name": new_name,
+        "age": new_age,
+        "phone": new_phone,
+        "preferred_department": new_dept
+    }

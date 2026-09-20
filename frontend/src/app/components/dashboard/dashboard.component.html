@@ -20,6 +20,12 @@
           <span class="field-label">Phone</span>
           <span class="field-value">{{ state().patient.phone || '--' }}</span>
         </div>
+        @if (state().patient.preferredDepartment) {
+          <div class="field-item full-width">
+            <span class="field-label">Preferred Department</span>
+            <span class="field-value">{{ state().patient.preferredDepartment }}</span>
+          </div>
+        }
       </div>
     </section>
 

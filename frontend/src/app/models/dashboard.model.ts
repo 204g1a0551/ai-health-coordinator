@@ -2,6 +2,7 @@ export interface PatientInfo {
   name: string;
   age?: number | string;
   phone?: string;
+  preferredDepartment?: string;
 }
 
 export interface Symptom {
