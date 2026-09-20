@@ -18,7 +18,10 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:4200",
         "http://127.0.0.1:4200",
-        "*",  # Local dev fallback
+        "https://*.railway.app",
+        "https://*.vercel.app",
+        "https://*.up.railway.app",
+        "*",  # covers custom domains too
     ],
     allow_credentials=True,
     allow_methods=["*"],
