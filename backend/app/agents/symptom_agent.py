@@ -1,6 +1,7 @@
 import re
 from typing import List, Optional, Dict, Any
 from app.agents.state import AgentState, SymptomItem, AgentAction
+from app.services.medical_triage_engine import medical_triage_engine
 
 # Standard dictionary mapping common symptom phrases to canonical symptom names
 SYMPTOM_PATTERNS = [
@@ -92,11 +93,18 @@ def extract_symptoms(text: str) -> List[SymptomItem]:
     text_lower = text.lower()
     detected_symptoms: List[str] = []
 
-    # Detect symptoms
+    # Detect symptoms via rules
     for pattern, canonical_name in SYMPTOM_PATTERNS:
         if re.search(pattern, text_lower):
             if canonical_name not in detected_symptoms:
                 detected_symptoms.append(canonical_name)
+
+    # Detect deep clinical symptoms and lab abnormalities via trained medical triage engine
+    triage = medical_triage_engine.predict(text)
+    for sym in triage.get("symptoms", []):
+        sym_name = sym["name"]
+        if sym_name not in detected_symptoms:
+            detected_symptoms.append(sym_name)
 
     global_duration = extract_duration(text)
 

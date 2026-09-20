@@ -16,13 +16,22 @@ PERIOD_PATTERNS = [
 
 # Aliases for department matching from appointment phrasing
 DEPT_ALIASES = [
-    (r"\bgeneral\s+physician\b|\bphysician\b|\bgeneral\s+doctor\b|\bgp\b", "General Medicine"),
-    (r"\bdermatolog(y|ist)\b|\bskin\s+doctor\b", "Dermatology"),
-    (r"\bent\b|\bear\s+nose\s+throat\b", "ENT"),
-    (r"\borthopedic(s|ian)?\b|\bbone\s+doctor\b", "Orthopedics"),
-    (r"\bpediatric(s|ian)?\b|\bchild\s+doctor\b", "Pediatrics"),
-    (r"\bophthalmolog(y|ist)\b|\beye\s+doctor\b", "Ophthalmology"),
-    (r"\bdental\b|\bdentist\b", "Dental"),
+    (r"\bhematolog(y|ist)\b|\bplatelet(s)?\b|\bblood\s+doctor\b|\bthrombocytopen(ia|ic)\b|\banemia\b|\bblood\s+specialist\b", "Hematology"),
+    (r"\bendocrinolog(y|ist)\b|\bdiabet(es|ic|ologist)\b|\bthyroid\b|\bhormone\s+doctor\b", "Endocrinology"),
+    (r"\bnephrolog(y|ist)\b|\bkidney\s+doctor\b|\bkidney\s+specialist\b|\brenal\b|\bdialysis\b", "Nephrology"),
+    (r"\bcardiolog(y|ist)\b|\bheart\b|\bcardiac\b", "Cardiology"),
+    (r"\bgastroenterolog(y|ist)\b|\bgastro\b|\bstomach\b|\babdominal\b|\bdigestive\b|\bbelly\b|\bacid\s+reflux\b|\bheartburn\b|\bgerd\b", "Gastroenterology"),
+    (r"\bpulmonolog(y|ist)\b|\blung(s)?\b|\bchest\s+physician\b|\brespiratory\b|\basthma\b|\bwheez\b|\bbreath\b", "Pulmonology"),
+    (r"\bneurolog(y|ist)\b|\bneuro\b|\bbrain\b|\bmigraine\b|\bseizure\b|\bvertigo\b", "Neurology"),
+    (r"\bgynecolog(y|ist)\b|\bobstetric(s|ian)?\b|\blady\s+doctor\b|\bmaternity\b|\bpregnan\b|\bperiod\b|\bpcos\b", "Gynecology"),
+    (r"\bpsychiatr(y|ist)\b|\bmental\s+health\b|\bcounselor\b|\bpsycholog(y|ist)\b|\bdepress\b|\banxiety\b|\binsomnia\b", "Psychiatry"),
+    (r"\bdermatolog(y|ist)\b|\bskin\s+doctor\b|\brash\b|\bskin\b|\bacne\b|\beczema\b", "Dermatology"),
+    (r"\bent\b|\bear\s+nose\s+throat\b|\bear(s)?\b|\bthroat\b|\bsinus\b", "ENT"),
+    (r"\borthopedic(s|ian)?\b|\bbone\s+doctor\b|\bjoint\b|\bknee\b|\bspine\b|\bback\s+pain\b|\bortho\b", "Orthopedics"),
+    (r"\bpediatric(s|ian)?\b|\bchild\s+doctor\b|\bpediatrician\b|\bkid\b|\bbaby\b|\binfant\b", "Pediatrics"),
+    (r"\bophthalmolog(y|ist)\b|\beye\s+doctor\b|\bvision\b|\beye(s)?\b", "Ophthalmology"),
+    (r"\bdental\b|\bdentist\b|\bteeth\b|\btooth\b|\btoothache\b|\bgum\b", "Dental"),
+    (r"\bgeneral\s+physician\b|\bphysician\b|\bgeneral\s+doctor\b|\bgp\b|\bgeneral\s+medicine\b|\binternal\s+medicine\b", "General Medicine"),
 ]
 
 # Bengaluru localities and neighborhood patterns
@@ -98,8 +107,15 @@ def doctor_slot_node(state: AgentState) -> AgentState:
     user_msg = state.get("user_message", "")
     parsed_intent = state.get("parsed_intent") or {}
 
-    # Read from parsed_intent first (if LLM extracted it), fallback to regex
-    target_dept = parsed_intent.get("department") or resolve_department_for_booking(state)
+    # Prioritize suggested_department from symptom/department agent if available
+    suggested = state.get("suggested_department")
+    if suggested and suggested != "Needs clarification":
+        target_dept = suggested
+    elif parsed_intent.get("department") and parsed_intent["department"] != "General Medicine":
+        target_dept = parsed_intent["department"]
+    else:
+        target_dept = resolve_department_for_booking(state)
+
     period_pref = parsed_intent.get("time") or extract_period_preference(user_msg)
     date_pref = parsed_intent.get("date") or extract_date_preference(user_msg)
 
@@ -182,6 +198,7 @@ def doctor_slot_node(state: AgentState) -> AgentState:
             "rating": d.get("rating", 4.8),
             "dataSource": provider_name,
             "timestamp": current_timestamp,
+            "slots": slot_times,
         })
 
         for s in slots:
@@ -222,6 +239,20 @@ def doctor_slot_node(state: AgentState) -> AgentState:
     if flat_doctor_cards and flat_slots:
         actions.append({
             "type": "UPDATE_DOCTORS_AND_SLOTS",
+            "action": "SHOW_DOCTORS",
+            "payload": {
+                "department": target_dept,
+                "locality": locality_pref,
+                "date": date_pref,
+                "doctors": flat_doctor_cards,
+                "slots": flat_slots,
+                "dataSource": provider_name,
+                "timestamp": current_timestamp,
+            }
+        })
+        actions.append({
+            "type": "SHOW_DOCTORS",
+            "action": "SHOW_DOCTORS",
             "payload": {
                 "department": target_dept,
                 "locality": locality_pref,

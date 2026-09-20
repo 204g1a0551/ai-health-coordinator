@@ -1,9 +1,35 @@
 import re
 from typing import Dict, Any, List, Optional
 from app.agents.state import AgentState
+from app.services.medical_triage_engine import medical_triage_engine
 
 # Department routing rules mapping keywords & symptoms to appropriate departments
 DEPARTMENT_RULES = [
+    (
+        "Hematology",
+        [
+            r"\bplatelet(s)?\b", r"\bthrombocytopen(ia|ic)\b", r"\bplatelet\s+count\b",
+            r"\banemia\b", r"\blow\s+hemoglobin\b", r"\bpurpura\b", r"\bpetechiae\b",
+            r"\bblood\s+clot(ting)?\b", r"\bleukemia\b", r"\bhematolog(y|ist)\b", r"\bcbc\s+report\b"
+        ],
+        "The user’s request can be routed to Hematology for evaluation of platelet counts and blood disorders."
+    ),
+    (
+        "Endocrinology",
+        [
+            r"\bdiabet(es|ic)\b", r"\bblood\s+sugar\b", r"\bhba1c\b", r"\bthyroid\b",
+            r"\btsh\b", r"\bhypothyroid(ism)?\b", r"\bhyperthyroid(ism)?\b", r"\bendocrinolog(y|ist)\b"
+        ],
+        "The user’s request can be routed to Endocrinology for diabetes, thyroid, and metabolic evaluation."
+    ),
+    (
+        "Nephrology",
+        [
+            r"\bcreatinine\b", r"\bkidney(s)?\b", r"\bkidney\s+stone(s)?\b", r"\bflank\s+pain\b",
+            r"\bnephrolog(y|ist)\b", r"\bdialysis\b", r"\bhematuria\b", r"\bproteinuria\b", r"\burine\s+infection\b"
+        ],
+        "The user’s request can be routed to Nephrology for kidney and renal function evaluation."
+    ),
     (
         "Cardiology",
         [
@@ -134,6 +160,14 @@ def determine_department(user_msg: str, symptoms: List[Dict[str, Optional[str]]]
                     "department": dept_name,
                     "reason": reason
                 }
+
+    # Match against trained Medical Big Data Triage Engine
+    triage_pred = medical_triage_engine.predict(combined_text)
+    if triage_pred.get("department") and triage_pred["department"] != "General Medicine":
+        return {
+            "department": triage_pred["department"],
+            "reason": f"Routed consultation based on clinical symptoms for {triage_pred['department']}."
+        }
 
     # If no specific patterns matched
     return {

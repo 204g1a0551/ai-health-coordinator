@@ -262,22 +262,36 @@ def ui_action_node(state: AgentState) -> AgentState:
             }
 
     # --------------------------------------------------------------------------
-    # 6. Doctor Search / Directory ("Show doctors", "Find a general physician")
+    # 6. Doctor Search / Directory / Specialist Recommendations with Live Slots
     # --------------------------------------------------------------------------
     elif (
         intent == "SEARCH_DOCTOR"
         or any(k in user_msg for k in ["show doctors", "find doctors", "list doctors", "physicians in", "specialist in"])
-        or (any(a.get("action") == "SHOW_DOCTORS" or a.get("type") == "SHOW_DOCTORS" for a in raw_actions) and not symptoms)
+        or any(a.get("action") == "SHOW_DOCTORS" or a.get("type") in ["SHOW_DOCTORS", "UPDATE_DOCTORS_AND_SLOTS"] for a in raw_actions)
     ):
         primary_action = "SHOW_DOCTORS"
-        docs_found = provider_service.search_by_department(department=dept)
-        if not docs_found:
-            docs_found = provider_service.search_doctors()
-        primary_data = {
-            "department": dept,
-            "doctors": docs_found,
-            "dataSource": "Bengaluru Health Grid (Verified Provider)",
-        }
+        doc_act = next(
+            (a for a in raw_actions if a.get("action") == "SHOW_DOCTORS" or a.get("type") in ["SHOW_DOCTORS", "UPDATE_DOCTORS_AND_SLOTS"]),
+            None
+        )
+        if doc_act:
+            p = doc_act.get("payload") or doc_act.get("data") or {}
+            primary_data = {
+                "department": p.get("department", dept),
+                "doctors": p.get("doctors", []),
+                "slots": p.get("slots", []),
+                "symptoms": symptoms,
+                "dataSource": p.get("dataSource", "Bengaluru Health Grid (Verified Provider)"),
+            }
+        else:
+            docs_found = provider_service.search_by_department(department=dept)
+            if not docs_found:
+                docs_found = provider_service.search_doctors()
+            primary_data = {
+                "department": dept,
+                "doctors": docs_found,
+                "dataSource": "Bengaluru Health Grid (Verified Provider)",
+            }
 
     # --------------------------------------------------------------------------
     # 7. Department Suggestion Inquiry ("Which department should I visit?")

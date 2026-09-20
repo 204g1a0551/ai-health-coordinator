@@ -99,45 +99,74 @@ def init_db():
         )
     """)
 
-    # Seed data if empty
-    cursor.execute("SELECT COUNT(*) FROM doctors")
-    count = cursor.fetchone()[0]
-    if count == 0:
-        seed_data(cursor)
-    else:
-        # Check if 6:00 PM slot exists for Dr. Ravi, if not add it
-        cursor.execute("SELECT COUNT(*) FROM appointment_slots WHERE doctor_id='doc-ravi' AND time='6:00 PM'")
-        if cursor.fetchone()[0] == 0:
-            cursor.execute("""
-                INSERT INTO appointment_slots
-                (id, doctor_id, doctor_name, department, date, time, period, is_available)
-                VALUES ('slot-r-6', 'doc-ravi', 'Dr. Ravi Kumar', 'General Medicine', 'Tomorrow, Oct 24', '6:00 PM', 'evening', 1)
-            """)
+    # Seed or sync doctors and slots
+    seed_data(cursor)
 
     conn.commit()
     conn.close()
 
 
 def seed_data(cursor: sqlite3.Cursor):
-    """Seed sample doctors and time slots matching the requirements."""
+    """Seed comprehensive verified doctors and time slots across all 13 medical categories."""
     doctors = [
+        # General Medicine
         ("doc-ravi", "Dr. Ravi Kumar", "General Medicine", "Available"),
         ("doc-priya", "Dr. Priya Sharma", "General Medicine", "Available"),
-        ("doc-arjun", "Dr. Arjun Reddy", "ENT", "Available"),
-        ("doc-sneha", "Dr. Sneha Rao", "Dermatology", "Available"),
-        ("doc-meera", "Dr. Meera Iyer", "Pediatrics", "Available"),
+        ("doc-rajesh", "Dr. Rajesh Nair", "General Medicine", "Available"),
+        # Cardiology
+        ("doc-anand", "Dr. Anand Shenoy", "Cardiology", "Available"),
+        ("doc-deepak", "Dr. Deepak Krishnamurthy", "Cardiology", "Available"),
+        # Gastroenterology
+        ("doc-rajat", "Dr. Rajat Goel", "Gastroenterology", "Available"),
+        ("doc-shalini", "Dr. Shalini Verma", "Gastroenterology", "Available"),
+        # Neurology
+        ("doc-suresh", "Dr. Suresh Rao", "Neurology", "Available"),
+        ("doc-pradeep", "Dr. Pradeep Kumar", "Neurology", "Available"),
+        # Pulmonology
+        ("doc-harish", "Dr. Harish Mallapura", "Pulmonology", "Available"),
+        ("doc-aravind", "Dr. Aravind S", "Pulmonology", "Available"),
+        # Gynecology
+        ("doc-nandini", "Dr. Nandini Devi", "Gynecology", "Available"),
+        ("doc-shweta", "Dr. Shweta Bhardwaj", "Gynecology", "Available"),
+        # Psychiatry
+        ("doc-ashok", "Dr. Ashok Patel", "Psychiatry", "Available"),
+        ("doc-ananya", "Dr. Ananya Sen", "Psychiatry", "Available"),
+        # Orthopedics
         ("doc-vikram", "Dr. Vikram Seth", "Orthopedics", "Available"),
-        ("doc-alok", "Dr. Alok Verma", "Dental", "Available"),
+        ("doc-manoj", "Dr. Manoj Chawla", "Orthopedics", "Available"),
+        # Dermatology
+        ("doc-sneha", "Dr. Sneha Rao", "Dermatology", "Available"),
+        ("doc-pooja", "Dr. Pooja Hegde", "Dermatology", "Available"),
+        # ENT
+        ("doc-arjun", "Dr. Arjun Reddy", "ENT", "Available"),
+        ("doc-vijay", "Dr. Vijay Krishna", "ENT", "Available"),
+        # Ophthalmology
         ("doc-kavita", "Dr. Kavita Menon", "Ophthalmology", "Available"),
+        ("doc-aditya", "Dr. Aditya Murthy", "Ophthalmology", "Available"),
+        # Dental
+        ("doc-alok", "Dr. Alok Verma", "Dental", "Available"),
+        ("doc-ritu", "Dr. Ritu Mittal", "Dental", "Available"),
+        # Pediatrics
+        ("doc-meera", "Dr. Meera Iyer", "Pediatrics", "Available"),
+        ("doc-karthik", "Dr. Karthik Somanna", "Pediatrics", "Available"),
+        # Hematology (Platelets, Anemia, Blood Disorders)
+        ("doc-sandeep", "Dr. Sandeep Batra", "Hematology", "Available"),
+        ("doc-radhika", "Dr. Radhika Joshi", "Hematology", "Available"),
+        # Endocrinology (Diabetes, Thyroid, Metabolism)
+        ("doc-mahesh", "Dr. Mahesh Reddy", "Endocrinology", "Available"),
+        ("doc-sunita", "Dr. Sunita Rao", "Endocrinology", "Available"),
+        # Nephrology (Kidneys, Creatinine, Urinary)
+        ("doc-mohan", "Dr. Mohan Kumar", "Nephrology", "Available"),
+        ("doc-vidya", "Dr. Vidya Shankar", "Nephrology", "Available"),
     ]
 
     cursor.executemany(
-        "INSERT INTO doctors (id, name, department, available_status) VALUES (?, ?, ?, ?)",
+        "INSERT OR REPLACE INTO doctors (id, name, department, available_status) VALUES (?, ?, ?, ?)",
         doctors
     )
 
     slots = [
-        # Dr. Ravi Kumar
+        # Dr. Ravi Kumar (General Medicine)
         ("slot-r-1", "doc-ravi", "Dr. Ravi Kumar", "General Medicine", "Tomorrow, Oct 24", "09:30 AM", "morning", 1),
         ("slot-r-2", "doc-ravi", "Dr. Ravi Kumar", "General Medicine", "Tomorrow, Oct 24", "11:30 AM", "morning", 1),
         ("slot-r-3", "doc-ravi", "Dr. Ravi Kumar", "General Medicine", "Tomorrow, Oct 24", "02:30 PM", "afternoon", 1),
@@ -145,24 +174,169 @@ def seed_data(cursor: sqlite3.Cursor):
         ("slot-r-6", "doc-ravi", "Dr. Ravi Kumar", "General Medicine", "Tomorrow, Oct 24", "6:00 PM", "evening", 1),
         ("slot-r-5", "doc-ravi", "Dr. Ravi Kumar", "General Medicine", "Tomorrow, Oct 24", "6:30 PM", "evening", 1),
 
-        # Dr. Priya Sharma
+        # Dr. Priya Sharma (General Medicine)
         ("slot-p-1", "doc-priya", "Dr. Priya Sharma", "General Medicine", "Tomorrow, Oct 24", "10:00 AM", "morning", 1),
         ("slot-p-2", "doc-priya", "Dr. Priya Sharma", "General Medicine", "Tomorrow, Oct 24", "03:00 PM", "afternoon", 1),
         ("slot-p-3", "doc-priya", "Dr. Priya Sharma", "General Medicine", "Tomorrow, Oct 24", "6:00 PM", "evening", 1),
+
+        # Dr. Rajesh Nair (General Medicine)
+        ("slot-rn-1", "doc-rajesh", "Dr. Rajesh Nair", "General Medicine", "Tomorrow, Oct 24", "10:30 AM", "morning", 1),
+        ("slot-rn-2", "doc-rajesh", "Dr. Rajesh Nair", "General Medicine", "Tomorrow, Oct 24", "4:30 PM", "evening", 1),
+        ("slot-rn-3", "doc-rajesh", "Dr. Rajesh Nair", "General Medicine", "Tomorrow, Oct 24", "6:30 PM", "evening", 1),
+
+        # Dr. Anand Shenoy (Cardiology)
+        ("slot-an-1", "doc-anand", "Dr. Anand Shenoy", "Cardiology", "Tomorrow, Oct 24", "09:00 AM", "morning", 1),
+        ("slot-an-2", "doc-anand", "Dr. Anand Shenoy", "Cardiology", "Tomorrow, Oct 24", "11:00 AM", "morning", 1),
+        ("slot-an-3", "doc-anand", "Dr. Anand Shenoy", "Cardiology", "Tomorrow, Oct 24", "05:00 PM", "evening", 1),
+
+        # Dr. Deepak Krishnamurthy (Cardiology)
+        ("slot-dp-1", "doc-deepak", "Dr. Deepak Krishnamurthy", "Cardiology", "Tomorrow, Oct 24", "10:00 AM", "morning", 1),
+        ("slot-dp-2", "doc-deepak", "Dr. Deepak Krishnamurthy", "Cardiology", "Tomorrow, Oct 24", "04:00 PM", "afternoon", 1),
+        ("slot-dp-3", "doc-deepak", "Dr. Deepak Krishnamurthy", "Cardiology", "Tomorrow, Oct 24", "06:00 PM", "evening", 1),
+
+        # Dr. Rajat Goel (Gastroenterology)
+        ("slot-rj-1", "doc-rajat", "Dr. Rajat Goel", "Gastroenterology", "Tomorrow, Oct 24", "10:30 AM", "morning", 1),
+        ("slot-rj-2", "doc-rajat", "Dr. Rajat Goel", "Gastroenterology", "Tomorrow, Oct 24", "02:30 PM", "afternoon", 1),
+        ("slot-rj-3", "doc-rajat", "Dr. Rajat Goel", "Gastroenterology", "Tomorrow, Oct 24", "05:30 PM", "evening", 1),
+
+        # Dr. Shalini Verma (Gastroenterology)
+        ("slot-sh-1", "doc-shalini", "Dr. Shalini Verma", "Gastroenterology", "Tomorrow, Oct 24", "11:00 AM", "morning", 1),
+        ("slot-sh-2", "doc-shalini", "Dr. Shalini Verma", "Gastroenterology", "Tomorrow, Oct 24", "04:00 PM", "afternoon", 1),
+        ("slot-sh-3", "doc-shalini", "Dr. Shalini Verma", "Gastroenterology", "Tomorrow, Oct 24", "06:30 PM", "evening", 1),
+
+        # Dr. Suresh Rao (Neurology)
+        ("slot-sr-1", "doc-suresh", "Dr. Suresh Rao", "Neurology", "Tomorrow, Oct 24", "11:30 AM", "morning", 1),
+        ("slot-sr-2", "doc-suresh", "Dr. Suresh Rao", "Neurology", "Tomorrow, Oct 24", "03:30 PM", "afternoon", 1),
+        ("slot-sr-3", "doc-suresh", "Dr. Suresh Rao", "Neurology", "Tomorrow, Oct 24", "05:30 PM", "evening", 1),
+
+        # Dr. Pradeep Kumar (Neurology)
+        ("slot-pk-1", "doc-pradeep", "Dr. Pradeep Kumar", "Neurology", "Tomorrow, Oct 24", "10:00 AM", "morning", 1),
+        ("slot-pk-2", "doc-pradeep", "Dr. Pradeep Kumar", "Neurology", "Tomorrow, Oct 24", "02:30 PM", "afternoon", 1),
+        ("slot-pk-3", "doc-pradeep", "Dr. Pradeep Kumar", "Neurology", "Tomorrow, Oct 24", "06:00 PM", "evening", 1),
+
+        # Dr. Harish Mallapura (Pulmonology)
+        ("slot-hr-1", "doc-harish", "Dr. Harish Mallapura", "Pulmonology", "Tomorrow, Oct 24", "09:30 AM", "morning", 1),
+        ("slot-hr-2", "doc-harish", "Dr. Harish Mallapura", "Pulmonology", "Tomorrow, Oct 24", "02:00 PM", "afternoon", 1),
+        ("slot-hr-3", "doc-harish", "Dr. Harish Mallapura", "Pulmonology", "Tomorrow, Oct 24", "04:30 PM", "evening", 1),
+
+        # Dr. Aravind S (Pulmonology)
+        ("slot-av-1", "doc-aravind", "Dr. Aravind S", "Pulmonology", "Tomorrow, Oct 24", "11:00 AM", "morning", 1),
+        ("slot-av-2", "doc-aravind", "Dr. Aravind S", "Pulmonology", "Tomorrow, Oct 24", "03:30 PM", "afternoon", 1),
+        ("slot-av-3", "doc-aravind", "Dr. Aravind S", "Pulmonology", "Tomorrow, Oct 24", "06:00 PM", "evening", 1),
+
+        # Dr. Nandini Devi (Gynecology)
+        ("slot-nd-1", "doc-nandini", "Dr. Nandini Devi", "Gynecology", "Tomorrow, Oct 24", "10:00 AM", "morning", 1),
+        ("slot-nd-2", "doc-nandini", "Dr. Nandini Devi", "Gynecology", "Tomorrow, Oct 24", "01:30 PM", "afternoon", 1),
+        ("slot-nd-3", "doc-nandini", "Dr. Nandini Devi", "Gynecology", "Tomorrow, Oct 24", "05:00 PM", "evening", 1),
+
+        # Dr. Shweta Bhardwaj (Gynecology)
+        ("slot-sw-1", "doc-shweta", "Dr. Shweta Bhardwaj", "Gynecology", "Tomorrow, Oct 24", "11:30 AM", "morning", 1),
+        ("slot-sw-2", "doc-shweta", "Dr. Shweta Bhardwaj", "Gynecology", "Tomorrow, Oct 24", "03:00 PM", "afternoon", 1),
+        ("slot-sw-3", "doc-shweta", "Dr. Shweta Bhardwaj", "Gynecology", "Tomorrow, Oct 24", "06:30 PM", "evening", 1),
+
+        # Dr. Ashok Patel (Psychiatry)
+        ("slot-as-1", "doc-ashok", "Dr. Ashok Patel", "Psychiatry", "Tomorrow, Oct 24", "10:30 AM", "morning", 1),
+        ("slot-as-2", "doc-ashok", "Dr. Ashok Patel", "Psychiatry", "Tomorrow, Oct 24", "03:00 PM", "afternoon", 1),
+        ("slot-as-3", "doc-ashok", "Dr. Ashok Patel", "Psychiatry", "Tomorrow, Oct 24", "05:30 PM", "evening", 1),
+
+        # Dr. Ananya Sen (Psychiatry)
+        ("slot-ay-1", "doc-ananya", "Dr. Ananya Sen", "Psychiatry", "Tomorrow, Oct 24", "11:00 AM", "morning", 1),
+        ("slot-ay-2", "doc-ananya", "Dr. Ananya Sen", "Psychiatry", "Tomorrow, Oct 24", "04:00 PM", "afternoon", 1),
+        ("slot-ay-3", "doc-ananya", "Dr. Ananya Sen", "Psychiatry", "Tomorrow, Oct 24", "06:00 PM", "evening", 1),
 
         # Dr. Arjun Reddy (ENT)
         ("slot-a-1", "doc-arjun", "Dr. Arjun Reddy", "ENT", "Tomorrow, Oct 24", "10:30 AM", "morning", 1),
         ("slot-a-2", "doc-arjun", "Dr. Arjun Reddy", "ENT", "Tomorrow, Oct 24", "04:30 PM", "afternoon", 1),
         ("slot-a-3", "doc-arjun", "Dr. Arjun Reddy", "ENT", "Tomorrow, Oct 24", "6:00 PM", "evening", 1),
 
+        # Dr. Vijay Krishna (ENT)
+        ("slot-vj-1", "doc-vijay", "Dr. Vijay Krishna", "ENT", "Tomorrow, Oct 24", "09:30 AM", "morning", 1),
+        ("slot-vj-2", "doc-vijay", "Dr. Vijay Krishna", "ENT", "Tomorrow, Oct 24", "03:00 PM", "afternoon", 1),
+        ("slot-vj-3", "doc-vijay", "Dr. Vijay Krishna", "ENT", "Tomorrow, Oct 24", "05:30 PM", "evening", 1),
+
         # Dr. Sneha Rao (Dermatology)
         ("slot-s-1", "doc-sneha", "Dr. Sneha Rao", "Dermatology", "Tomorrow, Oct 24", "11:00 AM", "morning", 1),
         ("slot-s-2", "doc-sneha", "Dr. Sneha Rao", "Dermatology", "Tomorrow, Oct 24", "03:30 PM", "afternoon", 1),
         ("slot-s-3", "doc-sneha", "Dr. Sneha Rao", "Dermatology", "Tomorrow, Oct 24", "5:00 PM", "evening", 1),
+
+        # Dr. Pooja Hegde (Dermatology)
+        ("slot-pj-1", "doc-pooja", "Dr. Pooja Hegde", "Dermatology", "Tomorrow, Oct 24", "10:00 AM", "morning", 1),
+        ("slot-pj-2", "doc-pooja", "Dr. Pooja Hegde", "Dermatology", "Tomorrow, Oct 24", "02:30 PM", "afternoon", 1),
+        ("slot-pj-3", "doc-pooja", "Dr. Pooja Hegde", "Dermatology", "Tomorrow, Oct 24", "06:00 PM", "evening", 1),
+
+        # Dr. Meera Iyer (Pediatrics)
+        ("slot-m-1", "doc-meera", "Dr. Meera Iyer", "Pediatrics", "Tomorrow, Oct 24", "10:00 AM", "morning", 1),
+        ("slot-m-2", "doc-meera", "Dr. Meera Iyer", "Pediatrics", "Tomorrow, Oct 24", "02:30 PM", "afternoon", 1),
+        ("slot-m-3", "doc-meera", "Dr. Meera Iyer", "Pediatrics", "Tomorrow, Oct 24", "05:00 PM", "evening", 1),
+
+        # Dr. Karthik Somanna (Pediatrics)
+        ("slot-kt-1", "doc-karthik", "Dr. Karthik Somanna", "Pediatrics", "Tomorrow, Oct 24", "11:00 AM", "morning", 1),
+        ("slot-kt-2", "doc-karthik", "Dr. Karthik Somanna", "Pediatrics", "Tomorrow, Oct 24", "03:30 PM", "afternoon", 1),
+        ("slot-kt-3", "doc-karthik", "Dr. Karthik Somanna", "Pediatrics", "Tomorrow, Oct 24", "06:30 PM", "evening", 1),
+
+        # Dr. Vikram Seth (Orthopedics)
+        ("slot-v-1", "doc-vikram", "Dr. Vikram Seth", "Orthopedics", "Tomorrow, Oct 24", "11:30 AM", "morning", 1),
+        ("slot-v-2", "doc-vikram", "Dr. Vikram Seth", "Orthopedics", "Tomorrow, Oct 24", "04:00 PM", "afternoon", 1),
+        ("slot-v-3", "doc-vikram", "Dr. Vikram Seth", "Orthopedics", "Tomorrow, Oct 24", "06:00 PM", "evening", 1),
+
+        # Dr. Manoj Chawla (Orthopedics)
+        ("slot-mc-1", "doc-manoj", "Dr. Manoj Chawla", "Orthopedics", "Tomorrow, Oct 24", "10:00 AM", "morning", 1),
+        ("slot-mc-2", "doc-manoj", "Dr. Manoj Chawla", "Orthopedics", "Tomorrow, Oct 24", "02:00 PM", "afternoon", 1),
+        ("slot-mc-3", "doc-manoj", "Dr. Manoj Chawla", "Orthopedics", "Tomorrow, Oct 24", "05:00 PM", "evening", 1),
+
+        # Dr. Alok Verma (Dental)
+        ("slot-d-1", "doc-alok", "Dr. Alok Verma", "Dental", "Tomorrow, Oct 24", "09:00 AM", "morning", 1),
+        ("slot-d-2", "doc-alok", "Dr. Alok Verma", "Dental", "Tomorrow, Oct 24", "02:00 PM", "afternoon", 1),
+        ("slot-d-3", "doc-alok", "Dr. Alok Verma", "Dental", "Tomorrow, Oct 24", "06:00 PM", "evening", 1),
+
+        # Dr. Ritu Mittal (Dental)
+        ("slot-rt-1", "doc-ritu", "Dr. Ritu Mittal", "Dental", "Tomorrow, Oct 24", "11:30 AM", "morning", 1),
+        ("slot-rt-2", "doc-ritu", "Dr. Ritu Mittal", "Dental", "Tomorrow, Oct 24", "04:30 PM", "afternoon", 1),
+        ("slot-rt-3", "doc-ritu", "Dr. Ritu Mittal", "Dental", "Tomorrow, Oct 24", "07:00 PM", "evening", 1),
+
+        # Dr. Kavita Menon (Ophthalmology)
+        ("slot-k-1", "doc-kavita", "Dr. Kavita Menon", "Ophthalmology", "Tomorrow, Oct 24", "11:00 AM", "morning", 1),
+        ("slot-k-2", "doc-kavita", "Dr. Kavita Menon", "Ophthalmology", "Tomorrow, Oct 24", "03:00 PM", "afternoon", 1),
+        ("slot-k-3", "doc-kavita", "Dr. Kavita Menon", "Ophthalmology", "Tomorrow, Oct 24", "5:30 PM", "evening", 1),
+
+        # Dr. Aditya Murthy (Ophthalmology)
+        ("slot-ad-1", "doc-aditya", "Dr. Aditya Murthy", "Ophthalmology", "Tomorrow, Oct 24", "10:00 AM", "morning", 1),
+        ("slot-ad-2", "doc-aditya", "Dr. Aditya Murthy", "Ophthalmology", "Tomorrow, Oct 24", "02:00 PM", "afternoon", 1),
+        ("slot-ad-3", "doc-aditya", "Dr. Aditya Murthy", "Ophthalmology", "Tomorrow, Oct 24", "06:00 PM", "evening", 1),
+
+        # Dr. Sandeep Batra (Hematology)
+        ("slot-sb-1", "doc-sandeep", "Dr. Sandeep Batra", "Hematology", "Tomorrow, Oct 24", "10:00 AM", "morning", 1),
+        ("slot-sb-2", "doc-sandeep", "Dr. Sandeep Batra", "Hematology", "Tomorrow, Oct 24", "02:30 PM", "afternoon", 1),
+        ("slot-sb-3", "doc-sandeep", "Dr. Sandeep Batra", "Hematology", "Tomorrow, Oct 24", "05:30 PM", "evening", 1),
+
+        # Dr. Radhika Joshi (Hematology)
+        ("slot-rd-1", "doc-radhika", "Dr. Radhika Joshi", "Hematology", "Tomorrow, Oct 24", "11:30 AM", "morning", 1),
+        ("slot-rd-2", "doc-radhika", "Dr. Radhika Joshi", "Hematology", "Tomorrow, Oct 24", "03:30 PM", "afternoon", 1),
+        ("slot-rd-3", "doc-radhika", "Dr. Radhika Joshi", "Hematology", "Tomorrow, Oct 24", "06:30 PM", "evening", 1),
+
+        # Dr. Mahesh Reddy (Endocrinology)
+        ("slot-mh-1", "doc-mahesh", "Dr. Mahesh Reddy", "Endocrinology", "Tomorrow, Oct 24", "09:30 AM", "morning", 1),
+        ("slot-mh-2", "doc-mahesh", "Dr. Mahesh Reddy", "Endocrinology", "Tomorrow, Oct 24", "03:00 PM", "afternoon", 1),
+        ("slot-mh-3", "doc-mahesh", "Dr. Mahesh Reddy", "Endocrinology", "Tomorrow, Oct 24", "05:00 PM", "evening", 1),
+
+        # Dr. Sunita Rao (Endocrinology)
+        ("slot-sn-1", "doc-sunita", "Dr. Sunita Rao", "Endocrinology", "Tomorrow, Oct 24", "11:00 AM", "morning", 1),
+        ("slot-sn-2", "doc-sunita", "Dr. Sunita Rao", "Endocrinology", "Tomorrow, Oct 24", "02:00 PM", "afternoon", 1),
+        ("slot-sn-3", "doc-sunita", "Dr. Sunita Rao", "Endocrinology", "Tomorrow, Oct 24", "06:00 PM", "evening", 1),
+
+        # Dr. Mohan Kumar (Nephrology)
+        ("slot-mn-1", "doc-mohan", "Dr. Mohan Kumar", "Nephrology", "Tomorrow, Oct 24", "10:30 AM", "morning", 1),
+        ("slot-mn-2", "doc-mohan", "Dr. Mohan Kumar", "Nephrology", "Tomorrow, Oct 24", "01:30 PM", "afternoon", 1),
+        ("slot-mn-3", "doc-mohan", "Dr. Mohan Kumar", "Nephrology", "Tomorrow, Oct 24", "05:30 PM", "evening", 1),
+
+        # Dr. Vidya Shankar (Nephrology)
+        ("slot-vs-1", "doc-vidya", "Dr. Vidya Shankar", "Nephrology", "Tomorrow, Oct 24", "09:00 AM", "morning", 1),
+        ("slot-vs-2", "doc-vidya", "Dr. Vidya Shankar", "Nephrology", "Tomorrow, Oct 24", "04:00 PM", "afternoon", 1),
+        ("slot-vs-3", "doc-vidya", "Dr. Vidya Shankar", "Nephrology", "Tomorrow, Oct 24", "06:30 PM", "evening", 1),
     ]
 
     cursor.executemany(
-        """INSERT INTO appointment_slots
+        """INSERT OR IGNORE INTO appointment_slots
            (id, doctor_id, doctor_name, department, date, time, period, is_available)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
         slots
@@ -178,10 +352,16 @@ def query_doctors_and_slots(
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    cursor.execute(
-        "SELECT id, name, department, available_status FROM doctors WHERE LOWER(department) LIKE LOWER(?)",
-        (f"%{department.strip()}%",)
-    )
+    dept_clean = department.strip()
+    if dept_clean.upper() == "ENT":
+        cursor.execute(
+            "SELECT id, name, department, available_status FROM doctors WHERE UPPER(department) = 'ENT'"
+        )
+    else:
+        cursor.execute(
+            "SELECT id, name, department, available_status FROM doctors WHERE LOWER(department) LIKE LOWER(?)",
+            (f"%{dept_clean}%",)
+        )
     doctor_rows = cursor.fetchall()
 
     result = []

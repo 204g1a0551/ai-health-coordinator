@@ -17,6 +17,7 @@
       <app-doctor-list
         [data]="uiState.state().currentData"
         (selectDoctor)="onSelectDoctor($event)"
+        (selectSlot)="onSlotSelected($event)"
       />
     }
 

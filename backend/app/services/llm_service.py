@@ -4,6 +4,7 @@ import json
 from typing import Dict, Any, List, Optional
 from app.models.llm_intent import ParsedUserIntent, ExtractedSymptom
 from app.services.redis_service import redis_service
+from app.services.medical_triage_engine import medical_triage_engine
 
 CLINICAL_DISCLAIMER = (
     "Note: This assistant coordinates consultations and does not provide "
@@ -76,8 +77,8 @@ class LLMService:
         """
         context = self.get_conversation_context(session_id)
 
-        # 1. Attempt live LLM structured extraction if configured
-        if self._llm:
+        # 1. Attempt live LLM structured extraction if configured and not explicitly opted out
+        if self._llm and os.getenv("USE_LOCAL_NLU") != "1":
             try:
                 import concurrent.futures
                 prompt = (
@@ -92,7 +93,7 @@ class LLMService:
                 structured_llm = self._llm.with_structured_output(ParsedUserIntent)
                 with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
                     future = executor.submit(structured_llm.invoke, prompt)
-                    result = future.result(timeout=20)
+                    result = future.result(timeout=4)
                 if result:
                     self._persist_extracted_context(session_id, result)
                     return result
@@ -268,111 +269,24 @@ class LLMService:
         # 5. Detect Symptoms (e.g. "I’ve had a headache for two days.")
         # ------------------------------------------------------------------
         # ------------------------------------------------------------------
-        # 5. Emergency Red-Flag Interceptor (Heart Attack, Stroke, Severe Trauma)
+        # 5. Medical Big Data Triage Engine & Symptoms Analysis
         # ------------------------------------------------------------------
-        is_cardiac_emergency = bool(re.search(r"\b(?:heart\s*attack|cardiac\s+arrest|myocardial\s+infarction|severe\s+chest\s+pain|chest\s+tightness|chest\s+pressure)\b", lower))
-        is_stroke_emergency = bool(re.search(r"\b(?:stroke|face\s+droop|arm\s+weakness|paralysis)\b", lower))
-        is_acute_emergency = bool(re.search(r"\b(?:unconscious|not\s+breathing|choking|heavy\s+bleeding|severe\s+bleeding|poisoning|anaphylaxis)\b", lower))
+        triage_pred = medical_triage_engine.predict(text)
+        if triage_pred.get("symptoms") or triage_pred.get("isEmergency"):
+            dur_m = re.search(r"\b(?:for|since|past)\s+(\d+\s+(?:days?|hours?|weeks?|months?))\b", lower)
+            extracted_dur = dur_m.group(1) if dur_m else None
 
-        if is_cardiac_emergency or is_stroke_emergency or is_acute_emergency:
-            emergency_dept = "Cardiology" if is_cardiac_emergency else ("Neurology" if is_stroke_emergency else "Emergency Medicine")
-            emergency_sym = "Heart Attack / Acute Chest Pain" if is_cardiac_emergency else ("Stroke / Neurological Emergency" if is_stroke_emergency else "Acute Emergency")
-            return ParsedUserIntent(
-                intent="EXTRACT_SYMPTOMS",
-                symptoms=[ExtractedSymptom(name=emergency_sym, duration="Immediate")],
-                department=emergency_dept,
-            )
-
-        # ------------------------------------------------------------------
-        # 5.1. Detect Symptoms (e.g. "I’ve had a headache for two days.")
-        # ------------------------------------------------------------------
-        symptom_keywords = {
-            "heart attack": "Heart Attack",
-            "heartattack": "Heart Attack",
-            "chest pain": "Chest Pain",
-            "chest tightness": "Chest Pain",
-            "palpitation": "Heart Palpitations",
-            "palpitations": "Heart Palpitations",
-            "racing heart": "Heart Palpitations",
-            "shortness of breath": "Shortness of Breath",
-            "difficulty breathing": "Shortness of Breath",
-            "breathless": "Shortness of Breath",
-            "asthma": "Asthma",
-            "wheezing": "Wheezing",
-            "stomach pain": "Stomach Ache",
-            "stomach ache": "Stomach Ache",
-            "abdominal pain": "Stomach Ache",
-            "belly pain": "Stomach Ache",
-            "acid reflux": "Acid Reflux",
-            "heartburn": "Acid Reflux",
-            "gerd": "Acid Reflux",
-            "indigestion": "Indigestion",
-            "migraine": "Migraine",
-            "headache": "Headache",
-            "fever": "Fever",
-            "cough": "Cough",
-            "sore throat": "Sore Throat",
-            "throat pain": "Sore Throat",
-            "earache": "Earache",
-            "ear pain": "Ear Pain",
-            "rash": "Skin Rash",
-            "skin rash": "Skin Rash",
-            "acne": "Acne",
-            "toothache": "Toothache",
-            "teeth pain": "Teeth Pain",
-            "back pain": "Back Pain",
-            "joint pain": "Joint Pain",
-            "knee pain": "Knee Pain",
-            "eye pain": "Eye Pain",
-            "red eye": "Red Eye",
-            "blurry vision": "Blurry Vision",
-            "nausea": "Nausea",
-            "vomiting": "Vomiting",
-            "dizziness": "Dizziness",
-            "fatigue": "Fatigue",
-            "body ache": "Body Ache",
-            "anxiety": "Anxiety",
-            "depression": "Depression",
-        }
-
-        found_symptoms: List[ExtractedSymptom] = []
-        dur_m = re.search(r"\b(?:for|since|past)\s+(\d+\s+(?:days?|hours?|weeks?|months?))\b", lower)
-        extracted_dur = dur_m.group(1) if dur_m else None
-
-        for kw, name in symptom_keywords.items():
-            if re.search(rf"\b{kw}\b", lower):
-                found_symptoms.append(ExtractedSymptom(name=name, duration=extracted_dur))
-
-        if found_symptoms:
-            symptom_names_lower = [s.name.lower() for s in found_symptoms]
-            dept = "General Medicine"
-
-            # Route to accurate specialist department
-            if any(k in symptom_names_lower for k in ["heart attack", "chest pain", "heart palpitations"]):
-                dept = "Cardiology"
-            elif any(k in symptom_names_lower for k in ["shortness of breath", "asthma", "wheezing"]):
-                dept = "Pulmonology"
-            elif any(k in symptom_names_lower for k in ["stomach ache", "acid reflux", "indigestion"]):
-                dept = "Gastroenterology"
-            elif any(k in symptom_names_lower for k in ["migraine"]):
-                dept = "Neurology"
-            elif any(k in symptom_names_lower for k in ["earache", "ear pain", "sore throat"]):
-                dept = "ENT"
-            elif any(k in symptom_names_lower for k in ["skin rash", "rash", "acne"]):
-                dept = "Dermatology"
-            elif any(k in symptom_names_lower for k in ["toothache", "teeth pain"]):
-                dept = "Dental"
-            elif any(k in symptom_names_lower for k in ["eye pain", "red eye", "blurry vision"]):
-                dept = "Ophthalmology"
-            elif any(k in symptom_names_lower for k in ["back pain", "joint pain", "knee pain"]):
-                dept = "Orthopedics"
-            elif any(k in symptom_names_lower for k in ["anxiety", "depression"]):
-                dept = "Psychiatry"
+            found_symptoms: List[ExtractedSymptom] = [
+                ExtractedSymptom(name=s["name"], duration=extracted_dur)
+                for s in triage_pred["symptoms"]
+            ]
+            if not found_symptoms and triage_pred.get("primarySymptom"):
+                found_symptoms = [ExtractedSymptom(name=triage_pred["primarySymptom"], duration=extracted_dur)]
 
             return ParsedUserIntent(
                 intent="EXTRACT_SYMPTOMS",
                 symptoms=found_symptoms,
-                department=dept,
+                department=triage_pred["department"],
             )
 
         # ------------------------------------------------------------------

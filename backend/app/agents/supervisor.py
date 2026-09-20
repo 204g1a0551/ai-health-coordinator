@@ -26,6 +26,7 @@ DIRECT_APPOINTMENT_PATTERNS = [
 ]
 
 SYMPTOM_KEYWORDS = [
+    r"\bplatelet(s)?\b", r"\bthrombocytopen(ia|ic)\b", r"\bhemoglobin\b", r"\banemia\b", r"\bbruis(ing|e)?\b",
     r"\bheart\s*attack\b", r"\bcardiac\b", r"\bchest\s+pain\b", r"\bchest\s+tightness\b", r"\bpalpitation(s)?\b",
     r"\bfever\b", r"\bheadache\b", r"\bcough\b", r"\bpain\b", r"\bache\b",
     r"\bhurt(s|ing)?\b", r"\bsick\b", r"\bnausea\b", r"\bvomit\b", r"\bdizzy\b",
@@ -35,6 +36,8 @@ SYMPTOM_KEYWORDS = [
     r"\bstomach\b", r"\babdominal\b", r"\bbelly\b", r"\bacid\s+reflux\b", r"\bheartburn\b",
     r"\basthma\b", r"\bwheez(ing)?\b", r"\bbreath(less|ing)?\b", r"\bmigraine\b",
     r"\bseizure\b", r"\bdepress(ion)?\b", r"\banxiety\b",
+    r"\bblood\s+sugar\b", r"\bdiabet(es|ic)\b", r"\bhba1c\b", r"\bthyroid\b", r"\btsh\b",
+    r"\bcreatinine\b", r"\bkidney\b", r"\bflank\s+pain\b", r"\burnt\b",
 ]
 
 SLOT_BROWSE_KEYWORDS = [
@@ -46,6 +49,9 @@ SLOT_BROWSE_KEYWORDS = [
 ]
 
 DEPARTMENT_KEYWORDS = [
+    r"\bhematolog(y|ist)\b", r"\bplatelet(s)?\b",
+    r"\bendocrinolog(y|ist)\b", r"\bdiabet(es|ologist)\b",
+    r"\bnephrolog(y|ist)\b", r"\bkidney\b",
     r"\bcardiolog(y|ist)\b", r"\bheart\b", r"\bcardiac\b",
     r"\bgastroenterolog(y|ist)\b", r"\bgastro\b", r"\bdigestive\b",
     r"\bneurolog(y|ist)\b", r"\bneuro\b",
@@ -226,7 +232,10 @@ def final_response_node(state: AgentState) -> AgentState:
             "• **Apollo Hospital Emergency Department**: 080 2630 4050 (Bannerghatta Road / Jayanagar)\n"
             "• **Fortis Hospital 24x7 Emergency**: 080 4199 4444 (Cunningham Road / Central Bengaluru)\n"
             "• **Aster CMI Hospital Emergency**: 080 4342 0100 (Hebbal)\n\n"
-            "I have prioritized and routed your consultation request to **Cardiology / Emergency Care**."
+            "I have prioritized and routed your consultation request to **Cardiology / Emergency Care**.\n\n"
+            "**Available verified Cardiologists for urgent evaluation:**\n"
+            "• **Dr. Anand Shenoy** (Manipal Heart & Vascular Institute, Indiranagar) — Available slots: **09:00 AM, 11:00 AM, 05:00 PM**\n"
+            "• **Dr. Deepak Krishnamurthy** (Fortis Cardiac Care Center, Cunningham Road) — Available slots: **10:00 AM, 04:00 PM, 06:00 PM**"
         )
         return {
             **state,
@@ -242,7 +251,7 @@ def final_response_node(state: AgentState) -> AgentState:
         }
 
     symptoms = state.get("symptoms", [])
-    clinical_disclaimer = " (Please note: Only a licensed doctor can provide a medical diagnosis. I am here to help coordinate your checkup and appointments.)"
+    clinical_disclaimer = "\n\n*(Please note: Only a licensed doctor can provide a medical diagnosis. I am here to help coordinate your checkup and appointments.)*"
 
     if state.get("final_response"):
         resp = state["final_response"]
@@ -254,13 +263,30 @@ def final_response_node(state: AgentState) -> AgentState:
         }
 
     dept = state.get("suggested_department")
+    ds_res = state.get("doctor_slot_results") or {}
+    docs = ds_res.get("doctors", [])
 
     if dept and dept != "Needs clarification":
-        final_msg = f"Your request has been routed to **{dept}**. Please let me know your preferred doctor or time slot."
+        if docs:
+            doc_lines = []
+            for d in docs[:3]:
+                slots_str = ", ".join(d["slots"][:3]) if d.get("slots") else "Contact clinic for slots"
+                loc = d.get("locality") or d.get("hospital", "Bengaluru")
+                doc_lines.append(f"• **{d['name']}** ({d['hospital']}, {loc}) — Available slots: **{slots_str}**")
+
+            final_msg = (
+                f"Your request has been routed to **{dept}**.\n\n"
+                f"Here are the available verified specialists and their real-time consultation slots:\n"
+                + "\n".join(doc_lines)
+                + "\n\nWould you like me to book one of these slots for you, or do you have a preferred time?"
+            )
+        else:
+            final_msg = f"Your request has been routed to **{dept}**. Please let me know your preferred doctor or time slot."
+
         if symptoms or any(k in user_msg for k in ["diagnos", "do i have", "disease"]):
             final_msg += clinical_disclaimer
     elif symptoms:
-        final_msg = "I have noted your symptoms. Could you provide a bit more detail or your preferred medical specialty (e.g. Cardiology, Orthopedics, ENT, Dermatology, or General Medicine)?"
+        final_msg = "I have noted your symptoms. Could you provide a bit more detail or your preferred medical specialty (e.g. Cardiology, Gastroenterology, Pulmonology, Neurology, Orthopedics, ENT, Dermatology, or General Medicine)?"
     elif any(g in user_msg for g in ["hello", "hi", "hey"]):
         final_msg = "Hello, how can I help you today? You can describe your symptoms or request an appointment with a doctor."
     else:

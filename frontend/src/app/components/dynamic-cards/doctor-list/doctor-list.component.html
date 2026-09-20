@@ -48,6 +48,24 @@
                 <span class="doc-tag rating">★ {{ doc.rating }}</span>
               }
             </div>
+
+            @if (doc.slots && doc.slots.length > 0) {
+              <div class="doc-slots-row">
+                <span class="slots-label">Live Slots:</span>
+                <div class="slots-chips">
+                  @for (time of doc.slots; track time) {
+                    <button
+                      type="button"
+                      class="card-slot-btn"
+                      (click)="onSlotClick(doc.name, time, $event)"
+                      title="Click to instantly book this slot"
+                    >
+                      ⚡ {{ time }}
+                    </button>
+                  }
+                </div>
+              </div>
+            }
           </div>
         }
       </div>
