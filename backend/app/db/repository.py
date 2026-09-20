@@ -83,6 +83,22 @@ def init_db():
         )
     """)
 
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS medical_documents (
+            id TEXT PRIMARY KEY,
+            user_id TEXT,
+            file_name TEXT NOT NULL,
+            file_size INTEGER NOT NULL,
+            file_path TEXT NOT NULL,
+            mime_type TEXT DEFAULT 'application/pdf',
+            document_type TEXT NOT NULL,
+            processing_status TEXT NOT NULL,
+            extracted_data TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
     # Seed data if empty
     cursor.execute("SELECT COUNT(*) FROM doctors")
     count = cursor.fetchone()[0]
@@ -658,4 +674,98 @@ def get_user_by_id(user_id: str) -> Optional[Dict[str, Any]]:
     if row:
         return dict(row)
     return None
+
+
+# ── Medical Document Repository Methods ────────────────────────────────────────
+
+def create_medical_document(doc: Dict[str, Any]) -> Dict[str, Any]:
+    """Persists medical document metadata and extracted structured analysis."""
+    import json
+    init_db()
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    extracted_json = json.dumps(doc.get("extracted_data", {})) if isinstance(doc.get("extracted_data"), (dict, list)) else (doc.get("extracted_data") or "{}")
+
+    cursor.execute("""
+        INSERT INTO medical_documents (
+            id, user_id, file_name, file_size, file_path, mime_type,
+            document_type, processing_status, extracted_data, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    """, (
+        doc["id"],
+        doc.get("user_id"),
+        doc["file_name"],
+        doc["file_size"],
+        doc["file_path"],
+        doc.get("mime_type", "application/pdf"),
+        doc.get("document_type", "OTHER"),
+        doc.get("processing_status", "COMPLETED"),
+        extracted_json,
+    ))
+    conn.commit()
+    conn.close()
+    return get_medical_document(doc["id"])
+
+
+def get_medical_document(doc_id: str) -> Optional[Dict[str, Any]]:
+    """Fetches a medical document record by its ID."""
+    import json
+    init_db()
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM medical_documents WHERE id = ?", (doc_id,))
+    row = cursor.fetchone()
+    conn.close()
+
+    if not row:
+        return None
+
+    record = dict(row)
+    if record.get("extracted_data") and isinstance(record["extracted_data"], str):
+        try:
+            record["extracted_data"] = json.loads(record["extracted_data"])
+        except Exception:
+            pass
+    return record
+
+
+def list_medical_documents(user_id: Optional[str] = None) -> List[Dict[str, Any]]:
+    """Retrieves all medical documents, optionally filtered by user_id."""
+    import json
+    init_db()
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    if user_id:
+        cursor.execute("SELECT * FROM medical_documents WHERE user_id = ? ORDER BY created_at DESC", (user_id,))
+    else:
+        cursor.execute("SELECT * FROM medical_documents ORDER BY created_at DESC")
+    rows = cursor.fetchall()
+    conn.close()
+
+    results = []
+    for r in rows:
+        item = dict(r)
+        if item.get("extracted_data") and isinstance(item["extracted_data"], str):
+            try:
+                item["extracted_data"] = json.loads(item["extracted_data"])
+            except Exception:
+                pass
+        results.append(item)
+    return results
+
+
+def delete_medical_document(doc_id: str) -> bool:
+    """Deletes a medical document record by ID."""
+    init_db()
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM medical_documents WHERE id = ?", (doc_id,))
+    affected = cursor.rowcount
+    conn.commit()
+    conn.close()
+    return affected > 0
+
 

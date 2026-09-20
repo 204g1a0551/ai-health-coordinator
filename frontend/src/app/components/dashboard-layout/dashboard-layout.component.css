@@ -200,3 +200,48 @@
     display: none;
   }
 }
+
+/* Header Navigation Tabs */
+.header-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.nav-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 7px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: #64748b;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.nav-tab:hover {
+  color: #0f172a;
+}
+
+.nav-tab.active {
+  background: #ffffff;
+  color: #0284c7;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.tab-icon {
+  font-size: 0.95rem;
+}
+
+/* Full Width Main for Documents Page */
+.documents-full-main {
+  flex: 1;
+  overflow-y: auto;
+  background-color: #f8fafc;
+}

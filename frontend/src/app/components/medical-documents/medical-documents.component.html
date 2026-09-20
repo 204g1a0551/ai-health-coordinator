@@ -1,0 +1,504 @@
+<div class="documents-container">
+  <!-- Page Header -->
+  <div class="documents-header">
+    <div class="header-left">
+      <div class="title-with-badge">
+        <span class="header-icon">📑</span>
+        <div>
+          <h2 class="page-title">Medical Documents</h2>
+          <p class="page-subtitle">
+            Upload clinical prescriptions, consultation summaries, lab reports, bills, or policies for grounded AI extraction.
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="header-right">
+      <a routerLink="/dashboard" class="back-dashboard-btn">
+        <span>← Back to Clinical Chat</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Main Split Layout: Left Upload & History, Right Extracted Results -->
+  <div class="documents-grid">
+    <!-- Left Column: Upload Box + Supported Types + History -->
+    <div class="left-pane">
+      <!-- Drag & Drop Upload Card -->
+      <div
+        class="upload-card"
+        [class.drag-over]="isDragOver()"
+        (dragover)="onDragOver($event)"
+        (dragleave)="onDragLeave($event)"
+        (drop)="onDrop($event)"
+      >
+        <div class="upload-card-header">
+          <span class="upload-card-title">Medical Documents</span>
+        </div>
+
+        <div class="upload-dropzone">
+          <div class="dropzone-icon">
+            <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="12" y1="18" x2="12" y2="12"></line>
+              <line x1="9" y1="15" x2="15" y2="15"></line>
+            </svg>
+          </div>
+
+          <p class="dropzone-main-text">Drag &amp; Drop PDF Here</p>
+          <span class="dropzone-or">or</span>
+
+          <input
+            #fileInput
+            type="file"
+            accept=".pdf,application/pdf"
+            (change)="onFileSelected($event)"
+            hidden
+          />
+
+          <button
+            type="button"
+            class="choose-btn"
+            [disabled]="docService.isUploading()"
+            (click)="fileInput.click()"
+          >
+            [ Choose PDF ]
+          </button>
+
+          <div class="supported-tag">
+            <span>Supported: PDF</span>
+          </div>
+        </div>
+
+        <!-- Validation Error Message -->
+        @if (validationError()) {
+          <div class="error-banner">
+            <span class="error-icon">⚠️</span>
+            <span>{{ validationError() }}</span>
+          </div>
+        }
+
+        <!-- Upload Service Error -->
+        @if (docService.uploadError()) {
+          <div class="error-banner">
+            <span class="error-icon">❌</span>
+            <span>{{ docService.uploadError() }}</span>
+          </div>
+        }
+      </div>
+
+      <!-- Supported Document Types Pills -->
+      <div class="supported-docs-section">
+        <h4 class="section-title">Supported Document Categories</h4>
+        <div class="supported-grid">
+          @for (cat of supportedCategories; track cat.type) {
+            <div class="supported-item">
+              <span class="cat-icon">{{ cat.icon }}</span>
+              <div class="cat-text">
+                <span class="cat-name">{{ cat.type }}</span>
+                <span class="cat-desc">{{ cat.desc }}</span>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Upload History -->
+      <div class="history-section">
+        <div class="history-header">
+          <h4 class="section-title">Uploaded Records ({{ docService.documents().length }})</h4>
+          <button type="button" class="refresh-btn" (click)="docService.refreshDocuments()" title="Refresh list">
+            🔄 Refresh
+          </button>
+        </div>
+
+        @if (docService.documents().length > 0) {
+          <div class="history-list">
+            @for (doc of docService.documents(); track doc.id) {
+              <div
+                class="history-card"
+                [class.active]="docService.activeDocument()?.id === doc.id"
+                (click)="selectDocument(doc)"
+              >
+                <div class="doc-icon-wrap">
+                  <span class="pdf-badge">PDF</span>
+                </div>
+                <div class="doc-meta">
+                  <div class="doc-title-row">
+                    <span class="doc-filename" [title]="doc.file_name">{{ doc.file_name }}</span>
+                    <span class="doc-type-pill" [ngClass]="getDocumentTypeBadgeClass(doc.document_type)">
+                      {{ formatDocumentTypeName(doc.document_type) }}
+                    </span>
+                  </div>
+                  <div class="doc-info-row">
+                    @if (doc.doctor_or_hospital) {
+                      <span class="info-item">👨‍⚕️ {{ doc.doctor_or_hospital }}</span>
+                    }
+                    @if (doc.document_date) {
+                      <span class="info-item">📅 {{ doc.document_date }}</span>
+                    }
+                    @if (doc.medicines_count > 0) {
+                      <span class="info-item med-count">💊 {{ doc.medicines_count }} Meds</span>
+                    }
+                    <span class="info-item size">{{ formatFileSize(doc.file_size) }}</span>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="empty-history">
+            <span class="empty-icon">📁</span>
+            <p>No documents uploaded yet. Upload a prescription or policy PDF above to see extracted records.</p>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Right Column: Processing Status & Extracted Document Details -->
+    <div class="right-pane">
+      <!-- Live Processing Indicator -->
+      @if (docService.isUploading()) {
+        <div class="processing-card">
+          <div class="processing-spinner-row">
+            <div class="spinner"></div>
+            <div>
+              <h3 class="processing-title">Document Agent Processing PDF</h3>
+              <p class="processing-subtitle">
+                Validating format, extracting pages, detecting document type, and identifying medicines &amp; clauses...
+              </p>
+            </div>
+          </div>
+
+          <div class="pipeline-steps">
+            <div class="step-item done">
+              <span class="step-icon">✓</span>
+              <span>1. Validating File Type &amp; Size</span>
+            </div>
+            <div class="step-item in-progress">
+              <span class="step-icon">⚡</span>
+              <span>2. Secure Storage &amp; Text Extraction</span>
+            </div>
+            <div class="step-item pending">
+              <span class="step-icon">⏳</span>
+              <span>3. Document Agent Grounded Analysis</span>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Document Agent Extracted Result Viewer -->
+      @if (docService.activeDocument(); as activeDoc) {
+        <div class="analysis-container">
+          <!-- Document Banner -->
+          <div class="analysis-header-card">
+            <div class="badge-and-title">
+              <div class="type-badge-large" [ngClass]="getDocumentTypeBadgeClass(activeDoc.extracted_data?.document_type || 'OTHER')">
+                {{ formatDocumentTypeName(activeDoc.extracted_data?.document_type || 'DOCUMENT') }}
+              </div>
+              <h3 class="doc-view-title">{{ activeDoc.file_name }}</h3>
+              <span class="file-size-tag">{{ formatFileSize(activeDoc.file_size) }} • Stored Securely</span>
+            </div>
+
+            <div class="action-buttons">
+              <a
+                [href]="docService.getDownloadUrl(activeDoc.id)"
+                target="_blank"
+                class="download-btn"
+                title="Download original PDF"
+              >
+                📥 Download PDF
+              </a>
+              <button
+                type="button"
+                class="delete-btn"
+                (click)="deleteActiveDocument(activeDoc.id)"
+                title="Delete document"
+              >
+                🗑️
+              </button>
+            </div>
+          </div>
+
+          <!-- Mandatory Medical Notice -->
+          <div class="medical-disclaimer-alert">
+            <div class="alert-icon">🛡️</div>
+            <div class="alert-body">
+              <strong>Clinical Extraction Notice</strong>
+              <p>
+                The information below represents content extracted directly from the uploaded document for clinical coordination and tracking purposes. It does <strong>not</strong> constitute independent medical advice, diagnosis, or prescription generation.
+              </p>
+            </div>
+          </div>
+
+          <!-- Pipeline Processing Stages (if available) -->
+          @if (activeDoc.stages && activeDoc.stages.length > 0) {
+            <div class="stages-card">
+              <span class="stages-card-title">Processing Pipeline Status</span>
+              <div class="stages-timeline">
+                @for (s of activeDoc.stages; track s.stage) {
+                  <div class="timeline-step">
+                    <span class="timeline-dot"></span>
+                    <div class="timeline-content">
+                      <span class="stage-name">{{ s.stage }}</span>
+                      <span class="stage-msg">{{ s.message }}</span>
+                      <span class="stage-time">{{ s.timestamp }}</span>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Extracted Data Sections -->
+          @if (activeDoc.extracted_data; as data) {
+            <!-- 1. Doctor & Hospital Info -->
+            @if (data.doctor_hospital?.doctor_name || data.doctor_hospital?.hospital_name) {
+              <div class="extracted-card">
+                <div class="card-head">
+                  <span class="head-icon">👨‍⚕️</span>
+                  <h4>Consulting Provider &amp; Facility</h4>
+                </div>
+                <div class="provider-grid">
+                  @if (data.doctor_hospital?.doctor_name) {
+                    <div class="provider-item">
+                      <span class="item-label">Doctor Name</span>
+                      <span class="item-val bold">{{ data.doctor_hospital?.doctor_name }}</span>
+                    </div>
+                  }
+                  @if (data.doctor_hospital?.department) {
+                    <div class="provider-item">
+                      <span class="item-label">Department / Specialty</span>
+                      <span class="item-val dept">{{ data.doctor_hospital?.department }}</span>
+                    </div>
+                  }
+                  @if (data.doctor_hospital?.hospital_name) {
+                    <div class="provider-item">
+                      <span class="item-label">Healthcare Facility</span>
+                      <span class="item-val">{{ data.doctor_hospital?.hospital_name }}</span>
+                    </div>
+                  }
+                  @if (data.doctor_hospital?.qualifications) {
+                    <div class="provider-item">
+                      <span class="item-label">Qualifications</span>
+                      <span class="item-val">{{ data.doctor_hospital?.qualifications }}</span>
+                    </div>
+                  }
+                  @if (data.doctor_hospital?.registration_no) {
+                    <div class="provider-item">
+                      <span class="item-label">Registration No.</span>
+                      <span class="item-val mono">{{ data.doctor_hospital?.registration_no }}</span>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- 2. Document Dates & Patient Info -->
+            <div class="meta-two-col">
+              @if (data.dates?.document_date || data.dates?.consultation_date || data.dates?.valid_until) {
+                <div class="extracted-card half">
+                  <div class="card-head">
+                    <span class="head-icon">📅</span>
+                    <h4>Identified Dates</h4>
+                  </div>
+                  <div class="meta-list">
+                    @if (data.dates?.document_date) {
+                      <div class="meta-row">
+                        <span class="meta-k">Document Date</span>
+                        <span class="meta-v">{{ data.dates?.document_date }}</span>
+                      </div>
+                    }
+                    @if (data.dates?.consultation_date) {
+                      <div class="meta-row">
+                        <span class="meta-k">Consultation Date</span>
+                        <span class="meta-v">{{ data.dates?.consultation_date }}</span>
+                      </div>
+                    }
+                    @if (data.dates?.valid_until) {
+                      <div class="meta-row">
+                        <span class="meta-k">Valid Until / Follow-up</span>
+                        <span class="meta-v highlight">{{ data.dates?.valid_until }}</span>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+
+              @if (data.patient_name || data.total_amount) {
+                <div class="extracted-card half">
+                  <div class="card-head">
+                    <span class="head-icon">👤</span>
+                    <h4>Patient &amp; Financials</h4>
+                  </div>
+                  <div class="meta-list">
+                    @if (data.patient_name) {
+                      <div class="meta-row">
+                        <span class="meta-k">Patient Name</span>
+                        <span class="meta-v">{{ data.patient_name }}</span>
+                      </div>
+                    }
+                    @if (data.total_amount) {
+                      <div class="meta-row">
+                        <span class="meta-k">Total Billed Amount</span>
+                        <span class="meta-v amount">{{ data.total_amount }}</span>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+
+            <!-- 3. Explicitly Prescribed Medicines -->
+            @if (data.medicines && data.medicines.length > 0) {
+              <div class="extracted-card">
+                <div class="card-head">
+                  <span class="head-icon">💊</span>
+                  <h4>Explicitly Prescribed Medicines ({{ data.medicines.length }})</h4>
+                </div>
+                <div class="medicines-table-wrap">
+                  <table class="med-table">
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>Medicine Name</th>
+                        <th>Dosage</th>
+                        <th>Frequency</th>
+                        <th>Duration</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (med of data.medicines; track med.name; let i = $index) {
+                        <tr>
+                          <td class="idx-col">{{ i + 1 }}</td>
+                          <td class="med-name-col">
+                            <strong>{{ med.name }}</strong>
+                          </td>
+                          <td>
+                            <span class="dose-tag">{{ med.dosage || 'As written' }}</span>
+                          </td>
+                          <td>
+                            <span class="freq-tag">{{ med.frequency || 'As prescribed' }}</span>
+                          </td>
+                          <td>
+                            <span class="dur-tag">{{ med.duration || '—' }}</span>
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            } @else if (data.document_type === 'PRESCRIPTION') {
+              <div class="extracted-card empty-med-notice">
+                <span>ℹ️ No medication lines could be identified with high confidence from this prescription.</span>
+              </div>
+            }
+
+            <!-- 4. Insurance / Reimbursement Clauses -->
+            @if (data.policy_reimbursement) {
+              <div class="extracted-card policy-card">
+                <div class="card-head">
+                  <span class="head-icon">🛡️</span>
+                  <h4>Insurance &amp; Reimbursement Coverage</h4>
+                </div>
+
+                <div class="policy-stats-grid">
+                  <div class="pstat-item">
+                    <span class="pstat-label">Sum Insured / Coverage</span>
+                    <span class="pstat-val coverage">{{ data.policy_reimbursement.coverage_amount || 'Per Schedule' }}</span>
+                  </div>
+                  @if (data.policy_reimbursement.claim_submission_deadline) {
+                    <div class="pstat-item">
+                      <span class="pstat-label">Claim Submission Window</span>
+                      <span class="pstat-val">{{ data.policy_reimbursement.claim_submission_deadline }}</span>
+                    </div>
+                  }
+                  @if (data.policy_reimbursement.co_pay_percentage) {
+                    <div class="pstat-item">
+                      <span class="pstat-label">Co-Payment</span>
+                      <span class="pstat-val copay">{{ data.policy_reimbursement.co_pay_percentage }}</span>
+                    </div>
+                  }
+                </div>
+
+                <!-- Clauses List -->
+                @if (data.policy_reimbursement.clauses && data.policy_reimbursement.clauses.length > 0) {
+                  <div class="clauses-container">
+                    <span class="sub-heading">Identified Clauses &amp; Benefits</span>
+                    <div class="clauses-list">
+                      @for (clause of data.policy_reimbursement.clauses; track clause.title) {
+                        <div class="clause-item">
+                          <div class="clause-title-row">
+                            <span class="clause-title">📋 {{ clause.title }}</span>
+                            @if (clause.category) {
+                              <span class="clause-category">{{ clause.category }}</span>
+                            }
+                          </div>
+                          <p class="clause-desc">{{ clause.description }}</p>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+
+                <!-- Eligible Expenses -->
+                @if (data.policy_reimbursement.eligible_expenses.length > 0) {
+                  <div class="eligible-list-box">
+                    <span class="sub-heading">Eligible Medical Expenses</span>
+                    <ul class="check-list">
+                      @for (exp of data.policy_reimbursement.eligible_expenses; track exp) {
+                        <li>✓ {{ exp }}</li>
+                      }
+                    </ul>
+                  </div>
+                }
+              </div>
+            }
+
+            <!-- 5. Clinical Summary / Diagnosis -->
+            @if (data.clinical_notes_summary || (data.diagnosis_findings && data.diagnosis_findings.length > 0)) {
+              <div class="extracted-card">
+                <div class="card-head">
+                  <span class="head-icon">🩺</span>
+                  <h4>Clinical Summary &amp; Findings</h4>
+                </div>
+                @if (data.diagnosis_findings && data.diagnosis_findings.length > 0) {
+                  <div class="findings-chips">
+                    @for (item of data.diagnosis_findings; track item) {
+                      <span class="finding-chip">🔍 {{ item }}</span>
+                    }
+                  </div>
+                }
+                @if (data.clinical_notes_summary) {
+                  <p class="summary-text">{{ data.clinical_notes_summary }}</p>
+                }
+              </div>
+            }
+
+            <!-- 6. Raw Extracted Text Excerpt (Collapsible) -->
+            <div class="raw-text-wrapper">
+              <button type="button" class="toggle-raw-btn" (click)="toggleRawText()">
+                {{ showRawText() ? '▲ Hide Extracted Text' : '▼ View Extracted Text Excerpt' }}
+              </button>
+              @if (showRawText()) {
+                <div class="raw-text-box">
+                  <pre>{{ data.raw_text_snippet || 'No excerpt available.' }}</pre>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      } @else if (!docService.isUploading()) {
+        <!-- Empty State Prompt -->
+        <div class="empty-viewer-card">
+          <div class="empty-viewer-graphic">📄</div>
+          <h3 class="empty-viewer-title">No Document Selected</h3>
+          <p class="empty-viewer-desc">
+            Drag &amp; drop a medical PDF on the left or choose a record from your upload history to inspect extracted medicines, providers, and policy clauses.
+          </p>
+        </div>
+      }
+    </div>
+  </div>
+</div>

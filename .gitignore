@@ -12,6 +12,8 @@ npm-debug.log*
 backend/venv/
 .env
 .pytest_cache/
+backend/storage/
+*.db
 
 # IDE / OS
 .DS_Store

@@ -10,6 +10,18 @@
         </div>
       </div>
 
+      <!-- Navigation Links -->
+      <nav class="header-nav">
+        <a routerLink="/dashboard" class="nav-tab" [class.active]="!isDocumentsPage">
+          <span class="tab-icon">🩺</span>
+          <span>Coordinator &amp; Chat</span>
+        </a>
+        <a routerLink="/documents" class="nav-tab" [class.active]="isDocumentsPage">
+          <span class="tab-icon">📑</span>
+          <span>Medical Documents</span>
+        </a>
+      </nav>
+
       <div class="header-meta">
         <!-- Live status -->
         <div class="status-indicator">
@@ -43,14 +55,20 @@
     </div>
   </header>
 
-  <!-- Two-Column Clinical Dashboard Layout -->
-  <main class="main-content">
-    <section class="left-column">
-      <app-dashboard></app-dashboard>
-    </section>
+  <!-- View Content: Either Two-Column Coordinator or Medical Documents Page -->
+  @if (isDocumentsPage) {
+    <main class="documents-full-main">
+      <app-medical-documents></app-medical-documents>
+    </main>
+  } @else {
+    <main class="main-content">
+      <section class="left-column">
+        <app-dashboard></app-dashboard>
+      </section>
 
-    <section class="right-column">
-      <app-chat></app-chat>
-    </section>
-  </main>
+      <section class="right-column">
+        <app-chat></app-chat>
+      </section>
+    </main>
+  }
 </div>
