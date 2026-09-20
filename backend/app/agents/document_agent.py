@@ -628,6 +628,27 @@ def document_agent_node(state: AgentState) -> AgentState:
         return bill_verification_agent_node(state)
 
     # --------------------------------------------------------------------------
+    # 0.6 Drug-Drug Interaction (DDI) Queries
+    # --------------------------------------------------------------------------
+    from app.agents.ddi_agent import ddi_checker_agent_node
+    is_ddi_query = (
+        parsed_intent in ["CHECK_DRUG_INTERACTIONS", "SHOW_DRUG_INTERACTIONS", "INTERACTION_DETAILS", "SHOW_INTERACTION_DETAILS", "SHOW_MEDICATION_LIST", "MEDICATION_LIST"]
+        or "drug interaction" in user_lower
+        or "medicine interaction" in user_lower
+        or "drug-drug" in user_lower
+        or "can i take these together" in user_lower
+        or "take together" in user_lower
+        or "interact with" in user_lower
+        or "potential interaction" in user_lower
+        or "interaction details" in user_lower
+        or "consolidated medicines" in user_lower
+        or "medication list" in user_lower
+        or "all my medicines" in user_lower
+    )
+    if is_ddi_query:
+        return ddi_checker_agent_node(state)
+
+    # --------------------------------------------------------------------------
     # 1. Document Upload Request ("Upload this prescription", "Upload document")
     # --------------------------------------------------------------------------
     if any(k in user_lower for k in ["upload this prescription", "upload prescription", "upload document", "upload my document", "upload medical report", "upload pdf", "choose pdf"]):

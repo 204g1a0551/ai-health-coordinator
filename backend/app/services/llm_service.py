@@ -429,6 +429,18 @@ class LLMService:
         if re.search(r"\bmissing\s+from\s+(?:the\s+)?bill\b", lower):
             return ParsedUserIntent(intent="COMPARE_BILL")
 
+        # ------------------------------------------------------------------
+        # 8.46 Drug-Drug Interaction (DDI) Checker Intents
+        # ------------------------------------------------------------------
+        if re.search(r"\b(?:interaction\s+details?|how\s+do\s+they\s+interact|interaction\s+mechanism)\b", lower):
+            return ParsedUserIntent(intent="SHOW_INTERACTION_DETAILS")
+
+        if re.search(r"\b(?:medication\s+list|all\s+my\s+medicines?|consolidated\s+medicines?|active\s+medications?)\b", lower):
+            return ParsedUserIntent(intent="SHOW_MEDICATION_LIST")
+
+        if re.search(r"\b(?:drug\s+interactions?|medicine\s+interactions?|drug-drug\s+interactions?|can\s+i\s+take\s+(?:these|them)\s+together|take\s+together|combine\s+medicines?|check\s+(?:drug\s+)?interactions?)\b", lower):
+            return ParsedUserIntent(intent="SHOW_DRUG_INTERACTIONS")
+
         if re.search(r"\b(?:where\s+can\s+i\s+(?:buy|get|find)|where\s+to\s+buy)\s+(?:these\s+)?medicines?\b|\b(?:pharmacies?|medical\s+stores?)\s+near\b|\bnearby\s+pharmac", lower):
             return ParsedUserIntent(intent="SEARCH_PHARMACY")
 

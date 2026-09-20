@@ -42,6 +42,11 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   {
+    path: 'drug-interactions',
+    component: DashboardLayoutComponent,
+    canActivate: [authGuard],
+  },
+  {
     path: 'appointments',
     component: DashboardLayoutComponent,
     canActivate: [authGuard],

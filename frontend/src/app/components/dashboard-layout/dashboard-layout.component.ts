@@ -8,6 +8,7 @@ import { MedicalDocumentsComponent } from '../medical-documents/medical-document
 import { InsuranceReimbursementComponent } from '../insurance-reimbursement/insurance-reimbursement.component';
 import { LabReportsComponent } from '../lab-reports/lab-reports.component';
 import { BillVerificationComponent } from '../bill-verification/bill-verification.component';
+import { DrugInteractionPageComponent } from '../drug-interaction-page/drug-interaction-page.component';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
@@ -22,6 +23,7 @@ import { AuthService } from '../../services/auth.service';
     InsuranceReimbursementComponent,
     LabReportsComponent,
     BillVerificationComponent,
+    DrugInteractionPageComponent,
   ],
   templateUrl: './dashboard-layout.component.html',
   styleUrl: './dashboard-layout.component.css',
@@ -34,6 +36,7 @@ export class DashboardLayoutComponent {
   isInsurancePage = false;
   isLabReportsPage = false;
   isBillVerificationPage = false;
+  isDrugInteractionsPage = false;
 
   constructor() {
     this.checkRoute(this.router.url);
@@ -49,6 +52,7 @@ export class DashboardLayoutComponent {
     this.isInsurancePage = url.includes('/insurance');
     this.isLabReportsPage = url.includes('/lab-reports');
     this.isBillVerificationPage = url.includes('/bill-verification');
+    this.isDrugInteractionsPage = url.includes('/drug-interactions');
   }
 
   onLogout(): void {

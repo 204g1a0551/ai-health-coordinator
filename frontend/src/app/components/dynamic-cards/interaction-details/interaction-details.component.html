@@ -1,0 +1,63 @@
+<div class="details-card">
+  <div class="details-header">
+    <span class="card-icon">🔬</span>
+    <div>
+      <h3>Drug Interaction Details &amp; Mechanisms</h3>
+      <span class="sub">Authoritative Pharmacological Evidence</span>
+    </div>
+  </div>
+
+  @if (interactions.length > 0) {
+    <div class="details-list">
+      @for (item of interactions; track item.medicine_a.normalized_name + item.medicine_b.normalized_name) {
+        <div class="detail-box">
+          <div class="box-header">
+            <h4 class="pair-title">{{ item.medicine_a.normalized_name | titlecase }} + {{ item.medicine_b.normalized_name | titlecase }}</h4>
+            <span class="sev-badge">{{ item.severity }}</span>
+          </div>
+
+          <div class="info-grid">
+            <div class="grid-item">
+              <span class="label">Mechanism:</span>
+              <span class="val">{{ item.description }}</span>
+            </div>
+            <div class="grid-item">
+              <span class="label">Clinical Effect:</span>
+              <span class="val">{{ item.clinical_effect }}</span>
+            </div>
+            <div class="grid-item">
+              <span class="label">Prescription Origin:</span>
+              <span class="val">
+                {{ item.medicine_a.raw_name }} ({{ item.medicine_a.source_document_name || 'Rx 1' }}) &amp;
+                {{ item.medicine_b.raw_name }} ({{ item.medicine_b.source_document_name || 'Rx 2' }})
+              </span>
+            </div>
+            <div class="grid-item">
+              <span class="label">Authoritative Source:</span>
+              <span class="val source-val">{{ item.source }}</span>
+            </div>
+          </div>
+
+          <div class="box-warning">
+            <span class="warn-lbl">Prescriber Alert:</span>
+            <span>{{ item.warning }}</span>
+          </div>
+        </div>
+      }
+    </div>
+  } @else {
+    <div class="unverified-state">
+      <h4>Interaction information could not be verified from the configured source.</h4>
+      <p>Absence of a record does not guarantee that no interaction exists. Always consult your prescribing physician.</p>
+    </div>
+  }
+
+  <div class="action-footer">
+    <button class="action-btn" (click)="askAbout('Show drug interactions')">
+      ⬅ Back to Interaction Summary
+    </button>
+    <button class="action-btn" (click)="askAbout('Show medication list')">
+      📋 View Medication List
+    </button>
+  </div>
+</div>

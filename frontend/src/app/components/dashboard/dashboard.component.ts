@@ -27,6 +27,9 @@ import { EmergencyAlertComponent } from '../emergency-alert/emergency-alert.comp
 import { BillComparisonComponent } from '../dynamic-cards/bill-comparison/bill-comparison.component';
 import { BillDetailsComponent } from '../dynamic-cards/bill-details/bill-details.component';
 import { VerificationEvidenceComponent } from '../dynamic-cards/verification-evidence/verification-evidence.component';
+import { DDIInteractionComponent } from '../dynamic-cards/ddi-interaction/ddi-interaction.component';
+import { InteractionDetailsComponent } from '../dynamic-cards/interaction-details/interaction-details.component';
+import { MedicationListComponent } from '../dynamic-cards/medication-list/medication-list.component';
 
 @Component({
   selector: 'app-dashboard',
@@ -57,6 +60,9 @@ import { VerificationEvidenceComponent } from '../dynamic-cards/verification-evi
     BillComparisonComponent,
     BillDetailsComponent,
     VerificationEvidenceComponent,
+    DDIInteractionComponent,
+    InteractionDetailsComponent,
+    MedicationListComponent,
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css',

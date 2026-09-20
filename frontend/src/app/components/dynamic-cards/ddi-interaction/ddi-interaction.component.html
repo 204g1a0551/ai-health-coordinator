@@ -1,0 +1,125 @@
+<div class="ddi-card">
+  <div class="ddi-header">
+    <div class="header-left">
+      <span class="card-icon">💊</span>
+      <div>
+        <h3>Drug-Drug Interaction Checker</h3>
+        <span class="subtitle">Multi-Prescription Clinical Cross-Analysis</span>
+      </div>
+    </div>
+    @if (analysis) {
+      <div class="header-stats">
+        <span class="stat-badge" [class.has-danger]="interactions.length > 0">
+          {{ interactions.length }} Potential Interaction{{ interactions.length === 1 ? '' : 's' }}
+        </span>
+        <span class="stat-pill">{{ analysis.total_medications }} Active Meds</span>
+      </div>
+    }
+  </div>
+
+  @if (analysis) {
+    <!-- Interactions List -->
+    @if (interactions.length > 0) {
+      <div class="interactions-list">
+        @for (item of interactions; track item.medicine_a.normalized_name + item.medicine_b.normalized_name) {
+          <div class="interaction-item" [ngClass]="getSeverityBadgeClass(item.severity)">
+            <div class="item-top">
+              <div class="meds-pair">
+                <span class="med-name">{{ item.medicine_a.brand_name || item.medicine_a.normalized_name }}</span>
+                <span class="plus-sign">+</span>
+                <span class="med-name">{{ item.medicine_b.brand_name || item.medicine_b.normalized_name }}</span>
+              </div>
+              <span class="severity-tag" [ngClass]="getSeverityBadgeClass(item.severity)">
+                {{ item.severity }} SEVERITY
+              </span>
+            </div>
+
+            <!-- Generic Active Ingredient Subtext -->
+            <div class="generic-sub">
+              <span>Generic: {{ item.medicine_a.normalized_name }}</span>
+              <span class="dot">•</span>
+              <span>{{ item.medicine_b.normalized_name }}</span>
+              @if (item.medicine_a.source_document_name && item.medicine_b.source_document_name) {
+                <span class="doc-origin">
+                  [{{ item.medicine_a.source_department || item.medicine_a.source_document_name }} + {{ item.medicine_b.source_department || item.medicine_b.source_document_name }}]
+                </span>
+              }
+            </div>
+
+            <div class="description-box">
+              <p class="desc-text">{{ item.description }}</p>
+              <div class="warning-alert">
+                <span class="warn-icon">⚠️</span>
+                <span>{{ item.warning }}</span>
+              </div>
+            </div>
+
+            <div class="item-footer">
+              <span class="source-tag">Source: {{ item.source }}</span>
+              <div class="recommendation-notice">
+                <span class="rec-icon">🩺</span>
+                <span class="rec-text">{{ item.recommendation }}</span>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    } @else {
+      <div class="no-interactions-notice">
+        <div class="notice-icon">✓</div>
+        <div class="notice-content">
+          <h4>No verified interactions detected</h4>
+          <p>
+            Interaction information could not be verified from the configured source for this specific medication combination.
+            Please note: The absence of a detected interaction in this database does not guarantee that no interaction exists.
+          </p>
+        </div>
+      </div>
+    }
+
+    <!-- Duplicate Medications Warning if any -->
+    @if (analysis.duplicate_medications && analysis.duplicate_medications.length > 0) {
+      <div class="duplicate-card">
+        <div class="dup-header">
+          <span class="dup-icon">⚠️</span>
+          <h4>Duplicate Medication Detected</h4>
+        </div>
+        <p class="dup-desc">The following active ingredient was prescribed across multiple documents:</p>
+        <div class="dup-chips">
+          @for (dup of analysis.duplicate_medications; track dup.normalized_name) {
+            <div class="dup-pill">
+              <strong>{{ dup.normalized_name }}</strong> (prescribed {{ dup.occurrence_count }} times)
+            </div>
+          }
+        </div>
+        <span class="dup-hint">Please consult your doctor to ensure you are not duplicating doses.</span>
+      </div>
+    }
+
+    <!-- Quick Action Chips -->
+    <div class="action-chips">
+      <button class="chip-btn" (click)="askAbout('Show interaction details')">
+        🔬 Interaction Mechanisms &amp; Citations
+      </button>
+      <button class="chip-btn" (click)="askAbout('Show medication list')">
+        📋 View All Prescribed Medicines
+      </button>
+      <button class="chip-btn" (click)="askAbout('Are there any duplicate medicines?')">
+        📑 Check Duplicate Medications
+      </button>
+    </div>
+
+    <!-- Mandatory Clinical Safety Disclaimer -->
+    <div class="safety-disclaimer">
+      <span class="disc-icon">ℹ️</span>
+      <p class="disc-text">
+        <strong>Mandatory Clinical Notice:</strong> Do not tell yourself or others to stop taking a prescribed medicine,
+        change dosages, or substitute medications without direct consultation with your prescribing physician or pharmacist.
+      </p>
+    </div>
+  } @else {
+    <div class="empty-state">
+      <p>No active prescription analysis available. Upload your prescriptions to check for potential drug-drug interactions.</p>
+    </div>
+  }
+</div>

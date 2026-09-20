@@ -126,6 +126,15 @@
     @case ('SHOW_VERIFICATION_EVIDENCE') {
       <app-verification-evidence [data]="uiState.state().currentData" (actionClicked)="onPromptSelected($event)" />
     }
+    @case ('SHOW_DRUG_INTERACTIONS') {
+      <app-ddi-interaction [data]="uiState.state().currentData" (actionClicked)="onPromptSelected($event)" />
+    }
+    @case ('SHOW_INTERACTION_DETAILS') {
+      <app-interaction-details [data]="uiState.state().currentData" (actionClicked)="onPromptSelected($event)" />
+    }
+    @case ('SHOW_MEDICATION_LIST') {
+      <app-medication-list [data]="uiState.state().currentData" (actionClicked)="onPromptSelected($event)" />
+    }
 
     @case ('SHOW_APPOINTMENT') {
       <app-appointment [data]="uiState.state().currentData" />

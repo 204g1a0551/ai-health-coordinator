@@ -1,0 +1,178 @@
+<div class="ddi-page-container">
+  <div class="page-header">
+    <div class="header-icon">💊</div>
+    <div>
+      <h2>Drug-Drug Interaction Checker</h2>
+      <p class="header-desc">
+        Cross-analyze medications from multiple prescriptions (Cardiology, Orthopedics, General Medicine)
+        against authoritative RxNorm and clinical pharmacology interaction databases.
+      </p>
+    </div>
+  </div>
+
+  <!-- Manual Medicine Pair Quick Checker -->
+  <div class="section-box pair-checker-box">
+    <h3>🔍 Quick Medicine Pair Checker</h3>
+    <p class="sub-desc">Check interaction between any two prescribed or over-the-counter medicines:</p>
+    <div class="pair-inputs">
+      <input type="text" [(ngModel)]="medA" placeholder="Medicine A (e.g. Ecosprin, Aspirin, Warfarin)" class="med-input" />
+      <span class="plus">+</span>
+      <input type="text" [(ngModel)]="medB" placeholder="Medicine B (e.g. Plavix, Clopidogrel, Ibuprofen)" class="med-input" />
+      <button class="check-btn" (click)="checkSinglePair()" [disabled]="checkingPair || !medA.trim() || !medB.trim()">
+        {{ checkingPair ? 'Checking...' : 'Check Interaction' }}
+      </button>
+    </div>
+
+    @if (pairResult) {
+      <div class="pair-result-box" [ngClass]="getSeverityClass(pairResult.severity)">
+        <div class="result-top">
+          <span class="result-pair">
+            {{ pairResult.medicine_a.normalized_name | titlecase }} + {{ pairResult.medicine_b.normalized_name | titlecase }}
+          </span>
+          <span class="result-sev-badge" [ngClass]="getSeverityClass(pairResult.severity)">
+            {{ pairResult.severity }}
+          </span>
+        </div>
+        <p class="result-desc">{{ pairResult.description }}</p>
+        @if (pairResult.warning) {
+          <div class="result-warn">
+            <strong>Warning:</strong> {{ pairResult.warning }}
+          </div>
+        }
+        <div class="result-meta">
+          <span>Source: {{ pairResult.source }}</span>
+          <span>{{ pairResult.recommendation }}</span>
+        </div>
+      </div>
+    }
+  </div>
+
+  @if (loading) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Analyzing cross-prescription medications and checking authoritative database...</p>
+    </div>
+  } @else if (analysis) {
+    <!-- Overview Stats -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <span class="stat-num">{{ analysis.total_medications }}</span>
+        <span class="stat-lbl">Active Medications</span>
+      </div>
+      <div class="stat-card" [class.danger-stat]="analysis.interactions_found > 0">
+        <span class="stat-num">{{ analysis.interactions_found }}</span>
+        <span class="stat-lbl">Potential Interactions</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-num">{{ analysis.duplicate_medications.length }}</span>
+        <span class="stat-lbl">Duplicate Ingedients</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-num">{{ analysis.analyzed_documents.length }}</span>
+        <span class="stat-lbl">Source Prescriptions</span>
+      </div>
+    </div>
+
+    <!-- Verified Interactions Section -->
+    <div class="section-box">
+      <h3>⚠️ Detected Drug-Drug Interactions</h3>
+      @if (analysis.interactions.length > 0) {
+        <div class="interactions-grid">
+          @for (item of analysis.interactions; track item.medicine_a.normalized_name + item.medicine_b.normalized_name) {
+            <div class="interaction-card" [ngClass]="getSeverityClass(item.severity)">
+              <div class="card-top">
+                <span class="pair-names">
+                  {{ item.medicine_a.brand_name || item.medicine_a.normalized_name }} +
+                  {{ item.medicine_b.brand_name || item.medicine_b.normalized_name }}
+                </span>
+                <span class="sev-pill" [ngClass]="getSeverityClass(item.severity)">
+                  {{ item.severity }}
+                </span>
+              </div>
+              <div class="generics-line">
+                Generic: {{ item.medicine_a.normalized_name }} • {{ item.medicine_b.normalized_name }}
+              </div>
+              <p class="card-desc">{{ item.description }}</p>
+              <div class="alert-box">
+                <span class="alert-icon">⚠️</span>
+                <span>{{ item.warning }}</span>
+              </div>
+              <div class="card-bottom">
+                <span class="card-source">{{ item.source }}</span>
+                <span class="card-rec">{{ item.recommendation }}</span>
+              </div>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="clean-box">
+          <span class="clean-icon">✓</span>
+          <p>
+            Interaction information could not be verified from the configured source for current medications.
+            Remember that this does not guarantee the complete absence of clinical risk. Always consult your doctor.
+          </p>
+        </div>
+      }
+    </div>
+
+    <!-- Multi-Prescription Medications Table -->
+    <div class="section-box">
+      <h3>📋 Standardized Active Medication Inventory</h3>
+      <div class="table-scroll">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Active Ingredient</th>
+              <th>Prescribed Brand / Strength</th>
+              <th>RxNorm CUI</th>
+              <th>Origin Document / Department</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (m of analysis.medications; track m.normalized_name) {
+              <tr>
+                <td><strong>{{ m.normalized_name | titlecase }}</strong></td>
+                <td>{{ m.brand_name || m.raw_name }}</td>
+                <td>
+                  @if (m.rxnorm_id) {
+                    <span class="cui-tag">CUI {{ m.rxnorm_id }}</span>
+                  } @else {
+                    <span class="unlisted">Unlisted</span>
+                  }
+                </td>
+                <td>{{ m.source_department || m.source_document_name }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Q&A Box -->
+    <div class="section-box qa-box">
+      <h3>💬 Ask Interaction Questions</h3>
+      <div class="qa-input-row">
+        <input type="text" [(ngModel)]="question" (keyup.enter)="askQuestion()" placeholder="e.g. Can I take Ecosprin with Clopidogrel?" class="qa-input" />
+        <button class="qa-btn" (click)="askQuestion()" [disabled]="qaLoading || !question.trim()">
+          {{ qaLoading ? 'Thinking...' : 'Ask DDI Agent' }}
+        </button>
+      </div>
+
+      @for (item of qaHistory; track item.q) {
+        <div class="qa-bubble">
+          <div class="q-row"><strong>Q:</strong> {{ item.q }}</div>
+          <div class="a-row">{{ item.a }}</div>
+        </div>
+      }
+    </div>
+
+    <!-- Safety Banner -->
+    <div class="safety-banner">
+      <span class="banner-icon">🛡️</span>
+      <div>
+        <strong>Patient Safety Mandatory Rules:</strong>
+        Never stop taking a prescribed medicine, alter dosage, or substitute medication without your prescribing doctor's explicit direction.
+      </div>
+    </div>
+  }
+</div>

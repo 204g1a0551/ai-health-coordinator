@@ -129,6 +129,14 @@ BILL_VERIFICATION_PATTERNS = [
     r"\bcompare\s+(?:my\s+)?(?:prescription|medicines?)\s+(?:with\s+)?(?:the\s+)?bill\b",
 ]
 
+DDI_PATTERNS = [
+    r"\b(?:drug\s+interactions?|medicine\s+interactions?|drug-drug\s+interactions?)\b",
+    r"\b(?:can\s+i\s+take\s+(?:these|them)\s+together|take\s+together|combine\s+medicines?)\b",
+    r"\b(?:interact\s+with|potential\s+interactions?|interaction\s+details?)\b",
+    r"\b(?:consolidated\s+medicines?|medication\s+list|all\s+my\s+medicines?)\b",
+    r"\bcheck\s+(?:drug\s+)?interactions?\b",
+]
+
 
 DOCUMENT_PATTERNS = [
     r"\bupload\s+(?:this\s+)?(?:prescription|document|medical\s+report|bill|pdf)\b",
@@ -173,6 +181,7 @@ def supervisor_node(state: AgentState) -> AgentState:
         "SEARCH_PHARMACY", "SEARCH_MEDICINE", "DOCUMENT_SUMMARY", "GET_MEDICINES", "GET_MEDICINE_INFO",
         "LAB_REPORT", "LAB_RESULTS", "LAB_EVIDENCE",
         "VERIFY_BILL", "COMPARE_BILL", "BILL_COMPARISON", "BILL_DETAILS", "VERIFICATION_EVIDENCE",
+        "CHECK_DRUG_INTERACTIONS", "SHOW_DRUG_INTERACTIONS", "INTERACTION_DETAILS", "SHOW_INTERACTION_DETAILS", "SHOW_MEDICATION_LIST", "MEDICATION_LIST",
     ]:
         route = "document_agent"
     elif intent == "UPDATE_PATIENT":
@@ -191,6 +200,7 @@ def supervisor_node(state: AgentState) -> AgentState:
         # Fallback to pattern matching
         is_lab_query = any(re.search(pat, user_msg) for pat in LAB_PATTERNS)
         is_bill_query = any(re.search(pat, user_msg) for pat in BILL_VERIFICATION_PATTERNS)
+        is_ddi_query = any(re.search(pat, user_msg) for pat in DDI_PATTERNS)
         is_document_query = any(re.search(pat, user_msg) for pat in DOCUMENT_PATTERNS)
         is_insurance_query = any(re.search(pat, user_msg) for pat in INSURANCE_PATTERNS)
         is_pharmacy_query = any(re.search(pat, user_msg) for pat in PHARMACY_PATTERNS)
@@ -202,7 +212,7 @@ def supervisor_node(state: AgentState) -> AgentState:
         is_browsing_slots = any(re.search(kw, user_msg) for kw in SLOT_BROWSE_KEYWORDS)
         has_dept = any(re.search(kw, user_msg) for kw in DEPARTMENT_KEYWORDS)
 
-        if is_lab_query or is_bill_query or is_document_query or is_insurance_query or is_pharmacy_query:
+        if is_lab_query or is_bill_query or is_ddi_query or is_document_query or is_insurance_query or is_pharmacy_query:
             route = "document_agent"
         elif is_patient_info:
             route = "patient_info_agent"

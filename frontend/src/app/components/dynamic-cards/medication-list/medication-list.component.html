@@ -1,0 +1,68 @@
+<div class="med-list-card">
+  <div class="card-header">
+    <span class="card-icon">📋</span>
+    <div>
+      <h3>Active Consolidated Medications</h3>
+      <span class="sub">Cross-Prescription Standardized Inventory</span>
+    </div>
+  </div>
+
+  @if (duplicates && duplicates.length > 0) {
+    <div class="dup-alert-box">
+      <span class="alert-icon">⚠️</span>
+      <div>
+        <strong>Attention:</strong> Multiple prescriptions contain overlapping active ingredients.
+      </div>
+    </div>
+  }
+
+  @if (medications.length > 0) {
+    <div class="meds-table-wrapper">
+      <table class="meds-table">
+        <thead>
+          <tr>
+            <th>Active Substance</th>
+            <th>Brand / Prescribed</th>
+            <th>RxNorm ID</th>
+            <th>Department / Source</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (m of medications; track m.normalized_name) {
+            <tr>
+              <td class="generic-cell">
+                <strong>{{ m.normalized_name | titlecase }}</strong>
+              </td>
+              <td>
+                <span>{{ m.brand_name || m.raw_name }}</span>
+                @if (m.dosage) {
+                  <span class="dose-tag">{{ m.dosage }}</span>
+                }
+              </td>
+              <td>
+                @if (m.rxnorm_id) {
+                  <span class="rxcui-badge">CUI {{ m.rxnorm_id }}</span>
+                } @else {
+                  <span class="na-badge">Unlisted</span>
+                }
+              </td>
+              <td class="doc-cell">
+                <span>{{ m.source_department || m.source_document_name || 'Prescription' }}</span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else {
+    <div class="empty-notice">
+      No medications extracted yet.
+    </div>
+  }
+
+  <div class="footer-buttons">
+    <button class="action-btn" (click)="askAbout('Show drug interactions')">
+      💊 Run Drug Interaction Check
+    </button>
+  </div>
+</div>

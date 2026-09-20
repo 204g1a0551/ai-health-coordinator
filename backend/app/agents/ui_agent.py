@@ -35,6 +35,10 @@ ALLOWED_ACTIONS = {
     "SHOW_BILL_COMPARISON",
     "SHOW_BILL_DETAILS",
     "SHOW_VERIFICATION_EVIDENCE",
+    # Drug-Drug Interaction (DDI) Predefined Actions
+    "SHOW_DRUG_INTERACTIONS",
+    "SHOW_INTERACTION_DETAILS",
+    "SHOW_MEDICATION_LIST",
     # Legacy / alias compatibility
     "UPDATE_SYMPTOMS",
     "UPDATE_DEPARTMENT",
@@ -116,11 +120,12 @@ def ui_action_node(state: AgentState) -> AgentState:
     primary_data: Dict[str, Any] = {}
 
     # --------------------------------------------------------------------------
-    # 0. Direct Lab / Bill Verification Action passthrough
+    # 0. Direct Lab / Bill Verification / DDI Action passthrough
     # --------------------------------------------------------------------------
     if state.get("primary_ui_action") in [
         "SHOW_LAB_REPORT", "SHOW_LAB_RESULTS", "SHOW_LAB_EVIDENCE",
         "SHOW_BILL_COMPARISON", "SHOW_BILL_DETAILS", "SHOW_VERIFICATION_EVIDENCE",
+        "SHOW_DRUG_INTERACTIONS", "SHOW_INTERACTION_DETAILS", "SHOW_MEDICATION_LIST",
     ]:
         primary_action = state["primary_ui_action"]
         primary_data = state.get("primary_ui_data", {})
@@ -249,6 +254,24 @@ def ui_action_node(state: AgentState) -> AgentState:
     elif any(a.get("action") == "SHOW_VERIFICATION_EVIDENCE" or a.get("type") == "SHOW_VERIFICATION_EVIDENCE" for a in raw_actions):
         primary_action = "SHOW_VERIFICATION_EVIDENCE"
         act = next((a for a in raw_actions if a.get("action") == "SHOW_VERIFICATION_EVIDENCE" or a.get("type") == "SHOW_VERIFICATION_EVIDENCE"), None)
+        primary_data = act.get("payload") or act.get("data") or {}
+
+    # --------------------------------------------------------------------------
+    # 1.11 Drug-Drug Interaction (DDI) Predefined Actions
+    # --------------------------------------------------------------------------
+    elif any(a.get("action") == "SHOW_DRUG_INTERACTIONS" or a.get("type") == "SHOW_DRUG_INTERACTIONS" for a in raw_actions):
+        primary_action = "SHOW_DRUG_INTERACTIONS"
+        act = next((a for a in raw_actions if a.get("action") == "SHOW_DRUG_INTERACTIONS" or a.get("type") == "SHOW_DRUG_INTERACTIONS"), None)
+        primary_data = act.get("payload") or act.get("data") or {}
+
+    elif any(a.get("action") == "SHOW_INTERACTION_DETAILS" or a.get("type") == "SHOW_INTERACTION_DETAILS" for a in raw_actions):
+        primary_action = "SHOW_INTERACTION_DETAILS"
+        act = next((a for a in raw_actions if a.get("action") == "SHOW_INTERACTION_DETAILS" or a.get("type") == "SHOW_INTERACTION_DETAILS"), None)
+        primary_data = act.get("payload") or act.get("data") or {}
+
+    elif any(a.get("action") == "SHOW_MEDICATION_LIST" or a.get("type") == "SHOW_MEDICATION_LIST" for a in raw_actions):
+        primary_action = "SHOW_MEDICATION_LIST"
+        act = next((a for a in raw_actions if a.get("action") == "SHOW_MEDICATION_LIST" or a.get("type") == "SHOW_MEDICATION_LIST"), None)
         primary_data = act.get("payload") or act.get("data") or {}
 
     # --------------------------------------------------------------------------

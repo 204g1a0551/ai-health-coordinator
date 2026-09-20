@@ -1,0 +1,147 @@
+.details-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  max-height: 75vh;
+  overflow-y: auto;
+}
+
+.details-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 12px;
+}
+
+.card-icon {
+  font-size: 26px;
+}
+
+.details-header h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  color: #1a202c;
+}
+
+.sub {
+  font-size: 0.78rem;
+  color: #718096;
+}
+
+.details-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.detail-box {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 16px;
+  background: #fdfdfd;
+}
+
+.box-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.pair-title {
+  margin: 0;
+  font-size: 1rem;
+  color: #2b6cb0;
+}
+
+.sev-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: #fed7d7;
+  color: #9b2c2c;
+}
+
+.info-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 0.85rem;
+}
+
+.grid-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.label {
+  font-weight: 600;
+  color: #718096;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
+.val {
+  color: #2d3748;
+  line-height: 1.4;
+}
+
+.source-val {
+  font-style: italic;
+  color: #4a5568;
+}
+
+.box-warning {
+  background: #fff5f5;
+  border-left: 3px solid #e53e3e;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 0.82rem;
+  color: #c53030;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.warn-lbl {
+  font-weight: 700;
+}
+
+.unverified-state {
+  text-align: center;
+  padding: 24px;
+  background: #f7fafc;
+  border-radius: 8px;
+  color: #718096;
+}
+
+.action-footer {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 14px;
+}
+
+.action-btn {
+  padding: 8px 14px;
+  background: #4285f4;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.action-btn:hover {
+  background: #3367d6;
+}
