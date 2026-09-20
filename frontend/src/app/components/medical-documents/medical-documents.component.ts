@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { DocumentService } from '../../services/document.service';
 import {
@@ -11,7 +12,7 @@ import {
 @Component({
   selector: 'app-medical-documents',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, FormsModule],
   templateUrl: './medical-documents.component.html',
   styleUrl: './medical-documents.component.css',
 })
@@ -22,6 +23,16 @@ export class MedicalDocumentsComponent implements OnInit {
   readonly selectedFile = signal<File | null>(null);
   readonly validationError = signal<string | null>(null);
   readonly showRawText = signal<boolean>(false);
+  readonly questionInput = signal<string>('');
+
+  // Prompt questions as specified in requirements
+  readonly suggestedQuestions = [
+    'What medicines are mentioned in this prescription?',
+    'What is the prescribed dosage?',
+    'What is the consultation date?',
+    'What does my insurance policy say about outpatient medicines?',
+    'Does my company policy mention pharmacy reimbursement?',
+  ];
 
   // Supported document categories
   readonly supportedCategories = [
@@ -111,6 +122,24 @@ export class MedicalDocumentsComponent implements OnInit {
     if (confirm('Are you sure you want to delete this medical document?')) {
       this.docService.deleteDocument(id).subscribe();
     }
+  }
+
+  onAskQuestion(customQuestion?: string): void {
+    const q = (customQuestion || this.questionInput()).trim();
+    if (!q) return;
+
+    this.questionInput.set(q);
+    const activeDocId = this.docService.activeDocument()?.id;
+    this.docService.askQuestion(q, activeDocId).subscribe();
+  }
+
+  onSelectPrompt(prompt: string): void {
+    this.questionInput.set(prompt);
+    this.onAskQuestion(prompt);
+  }
+
+  onClearAnswer(): void {
+    this.docService.clearAnswer();
   }
 
   toggleRawText(): void {

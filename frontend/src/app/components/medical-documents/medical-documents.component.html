@@ -247,8 +247,108 @@
                   </div>
                 }
               </div>
+          <!-- Document Intelligence & RAG Q&A Panel -->
+          <div class="extracted-card rag-qa-card">
+            <div class="card-head">
+              <span class="head-icon">🧠</span>
+              <div>
+                <h4>Document Intelligence &amp; RAG Q&amp;A</h4>
+                <p class="qa-subtitle">
+                  Ask natural-language questions grounded strictly in this document with verified page citations.
+                </p>
+              </div>
             </div>
-          }
+
+            <!-- Suggested Prompt Chips -->
+            <div class="suggested-prompts-row">
+              <span class="prompts-label">Quick Questions:</span>
+              <div class="prompt-chips">
+                @for (prompt of suggestedQuestions; track prompt) {
+                  <button
+                    type="button"
+                    class="prompt-chip"
+                    (click)="onSelectPrompt(prompt)"
+                    [disabled]="docService.isAnswering()"
+                  >
+                    💬 {{ prompt }}
+                  </button>
+                }
+              </div>
+            </div>
+
+            <!-- Question Input Form -->
+            <form class="qa-input-form" (ngSubmit)="onAskQuestion()">
+              <div class="input-with-button">
+                <input
+                  type="text"
+                  class="qa-input"
+                  placeholder="e.g. What medicines are mentioned in this prescription?"
+                  [ngModel]="questionInput()"
+                  (ngModelChange)="questionInput.set($event)"
+                  name="question"
+                  [disabled]="docService.isAnswering()"
+                />
+                <button
+                  type="submit"
+                  class="qa-submit-btn"
+                  [disabled]="docService.isAnswering() || !questionInput().trim()"
+                >
+                  @if (docService.isAnswering()) {
+                    <span class="btn-spinner"></span>
+                    <span>Retrieving...</span>
+                  } @else {
+                    <span>Ask AI →</span>
+                  }
+                </button>
+              </div>
+            </form>
+
+            <!-- Q&A Error Banner -->
+            @if (docService.qaError()) {
+              <div class="error-banner">
+                <span class="error-icon">⚠️</span>
+                <span>{{ docService.qaError() }}</span>
+              </div>
+            }
+
+            <!-- Answer Result Box -->
+            @if (docService.currentAnswer(); as ans) {
+              <div class="qa-answer-box" [class.not-found]="!ans.found_in_document">
+                <div class="answer-header-row">
+                  <span class="answer-badge" [class.badge-success]="ans.found_in_document" [class.badge-warning]="!ans.found_in_document">
+                    {{ ans.found_in_document ? '✓ Answer Grounded in Document' : 'ℹ️ Not Mentioned in Document' }}
+                  </span>
+                  <button type="button" class="close-ans-btn" (click)="onClearAnswer()" title="Dismiss answer">✕</button>
+                </div>
+
+                <p class="answer-question"><strong>Q:</strong> {{ ans.question }}</p>
+                <div class="answer-text">
+                  <pre>{{ ans.answer }}</pre>
+                </div>
+
+                <!-- Page Citations & Document References -->
+                @if (ans.references && ans.references.length > 0) {
+                  <div class="citations-section">
+                    <span class="citations-title">Verified Document References &amp; Page Numbers:</span>
+                    <div class="citations-list">
+                      @for (ref of ans.references; track ref.snippet) {
+                        <div class="citation-pill">
+                          <span class="page-tag">📄 Page {{ ref.page_number }}</span>
+                          <span class="citation-snippet">"{{ ref.snippet }}"</span>
+                          <span class="relevance-tag">{{ (ref.similarity_score * 100).toFixed(0) }}% match</span>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+
+                <div class="qa-disclaimer">
+                  <span class="disc-icon">🛡️</span>
+                  <span>{{ ans.disclaimer }}</span>
+                </div>
+              </div>
+            }
+          </div>
 
           <!-- Extracted Data Sections -->
           @if (activeDoc.extracted_data; as data) {

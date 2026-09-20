@@ -92,3 +92,29 @@ export interface DocumentListItem {
   processing_status: string;
   created_at: string;
 }
+
+export interface DocumentReference {
+  doc_id: string;
+  doc_name: string;
+  page_number: number;
+  snippet: string;
+  similarity_score: number;
+}
+
+export interface DocumentQuestionRequest {
+  doc_id?: string;
+  question: string;
+  session_id?: string;
+}
+
+export interface DocumentAnswerResponse {
+  question: string;
+  answer: string;
+  found_in_document: boolean;
+  document_id?: string;
+  document_name?: string;
+  document_type?: string;
+  references: DocumentReference[];
+  extracted_entities?: Record<string, any>;
+  disclaimer: string;
+}

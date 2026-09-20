@@ -5,6 +5,8 @@ import { environment } from '../../environments/environment';
 import {
   DocumentUploadResponse,
   DocumentListItem,
+  DocumentQuestionRequest,
+  DocumentAnswerResponse,
 } from '../models/document.model';
 
 @Injectable({
@@ -19,6 +21,11 @@ export class DocumentService {
   readonly activeDocument = signal<DocumentUploadResponse | null>(null);
   readonly isUploading = signal<boolean>(false);
   readonly uploadError = signal<string | null>(null);
+
+  // Reactive state for Document RAG Q&A
+  readonly isAnswering = signal<boolean>(false);
+  readonly currentAnswer = signal<DocumentAnswerResponse | null>(null);
+  readonly qaError = signal<string | null>(null);
 
   /**
    * Uploads medical PDF to backend document processing pipeline.
@@ -93,5 +100,37 @@ export class DocumentService {
    */
   getDownloadUrl(id: string): string {
     return `${this.apiUrl}/${id}/download`;
+  }
+
+  /**
+   * Submits a question to the Document Intelligence & RAG pipeline.
+   */
+  askQuestion(question: string, docId?: string): Observable<DocumentAnswerResponse> {
+    this.isAnswering.set(true);
+    this.qaError.set(null);
+
+    const payload: DocumentQuestionRequest = {
+      question: question.trim(),
+      doc_id: docId,
+    };
+
+    return this.http.post<DocumentAnswerResponse>(`${this.apiUrl}/qa`, payload).pipe(
+      tap({
+        next: (res) => {
+          this.isAnswering.set(false);
+          this.currentAnswer.set(res);
+        },
+        error: (err) => {
+          this.isAnswering.set(false);
+          const msg = err.error?.detail || err.message || 'Failed to get answer from document.';
+          this.qaError.set(msg);
+        },
+      })
+    );
+  }
+
+  clearAnswer(): void {
+    this.currentAnswer.set(null);
+    this.qaError.set(null);
   }
 }

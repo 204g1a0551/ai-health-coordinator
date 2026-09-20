@@ -76,29 +76,30 @@ class DocumentService:
 
         return doc_id, stored_path, safe_name
 
-    def extract_text_from_pdf(self, file_path: str) -> Tuple[str, int]:
+    def extract_pages_from_pdf(self, file_path: str) -> List[Tuple[int, str]]:
         """
-        Extracts textual content from PDF file using pypdf.
-        Returns extracted text and page count.
+        Extracts textual content from PDF file page-by-page.
+        Returns list of (page_number, page_text).
         """
         try:
             reader = PdfReader(file_path)
-            num_pages = len(reader.pages)
-            extracted_chunks = []
-
+            pages = []
             for idx, page in enumerate(reader.pages):
                 try:
                     page_text = page.extract_text() or ""
                     if page_text.strip():
-                        extracted_chunks.append(f"--- Page {idx + 1} ---\n{page_text}")
+                        pages.append((idx + 1, page_text.strip()))
                 except Exception as pe:
                     logger.warning(f"Could not extract page {idx + 1}: {pe}")
-
-            combined_text = "\n\n".join(extracted_chunks).strip()
-            return combined_text, num_pages
+            return pages
         except Exception as e:
             logger.error(f"PDF extraction error for {file_path}: {e}")
             raise ValueError(f"Failed to extract readable text from PDF: {str(e)}")
+
+    def extract_text_from_pdf(self, file_path: str) -> Tuple[str, int]:
+        pages = self.extract_pages_from_pdf(file_path)
+        combined_text = "\n\n".join(f"--- Page {p} ---\n{t}" for p, t in pages).strip()
+        return combined_text, len(pages)
 
     def process_document_upload(
         self,
@@ -110,11 +111,12 @@ class DocumentService:
         Complete processing pipeline for an uploaded PDF:
         1. Validate file type and size.
         2. Store document securely.
-        3. Extract text from the PDF.
+        3. Extract text from the PDF with page references.
         4. Detect document type.
         5. Show processing status milestones.
         6. Send extracted content to Document Agent.
-        7. Persist structured record.
+        7. Index document chunks into Vector Database for RAG.
+        8. Persist structured record.
         """
         stages: List[ProcessingStage] = []
         now_str = lambda: datetime.utcnow().strftime("%I:%M:%S %p")
@@ -138,7 +140,9 @@ class DocumentService:
         ))
 
         # Stage 3: PDF Text Extraction
-        raw_text, page_count = self.extract_text_from_pdf(stored_path)
+        pages = self.extract_pages_from_pdf(stored_path)
+        raw_text = "\n\n".join(f"--- Page {p} ---\n{t}" for p, t in pages).strip()
+        page_count = len(pages)
         stages.append(ProcessingStage(
             stage="TEXT_EXTRACTED",
             message=f"Extracted clinical text across {page_count} page(s) ({len(raw_text)} characters).",
@@ -146,8 +150,7 @@ class DocumentService:
             timestamp=now_str()
         ))
 
-        # Stage 4 & 5: Document Agent Processing
-        # (Document Agent identifies type and extracts medicines, doctor info, dates, policy clauses)
+        # Stage 4: Document Agent Processing
         stages.append(ProcessingStage(
             stage="ANALYZING",
             message="Document Agent analyzing document type, medicines, provider, and policy clauses...",
@@ -157,9 +160,18 @@ class DocumentService:
 
         extracted_data = document_agent.process_document(raw_text, safe_filename)
 
+        # Stage 5: Chunking & Vector DB Indexing for RAG Pipeline
+        from app.services.document_rag_service import document_rag_service
+        chunk_count = document_rag_service.index_document(
+            doc_id=doc_id,
+            doc_name=safe_filename,
+            doc_type=extracted_data.document_type.value,
+            pages=pages,
+        )
+
         stages.append(ProcessingStage(
             stage="COMPLETED",
-            message=f"Identified as {extracted_data.document_type.value}. Extracted {len(extracted_data.medicines)} medicine(s) and relevant clauses.",
+            message=f"Identified as {extracted_data.document_type.value}. Extracted {len(extracted_data.medicines)} medicine(s) and indexed {chunk_count} chunk(s) in Vector Store for Q&A.",
             status="completed",
             timestamp=now_str()
         ))
@@ -218,6 +230,8 @@ class DocumentService:
         return items
 
     def delete_document(self, doc_id: str) -> bool:
+        from app.services.document_rag_service import document_rag_service
+        document_rag_service.vector_store.delete_document_chunks(doc_id)
         doc = get_medical_document(doc_id)
         if doc and os.path.exists(doc.get("file_path", "")):
             try:

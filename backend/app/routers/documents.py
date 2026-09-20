@@ -8,9 +8,43 @@ from app.models.document import (
     DocumentListItem,
     ExtractedDocumentData,
 )
+from app.models.document_rag import (
+    DocumentQuestionRequest,
+    DocumentAnswerResponse,
+)
 from app.services.document_service import document_service
+from app.services.document_rag_service import document_rag_service
 
 router = APIRouter(prefix="/api/documents", tags=["Medical Documents"])
+
+
+@router.post("/qa", response_model=DocumentAnswerResponse)
+async def ask_document_question(request: DocumentQuestionRequest) -> DocumentAnswerResponse:
+    """
+    Document Intelligence & RAG pipeline endpoint.
+    Answers natural-language questions grounded strictly in the uploaded document:
+    - 'What medicines are mentioned in this prescription?'
+    - 'What is the prescribed dosage?'
+    - 'What is the consultation date?'
+    - 'What does my insurance policy say about outpatient medicines?'
+    - 'Does my company policy mention pharmacy reimbursement?'
+    Provides document references and page numbers for every answer.
+    Never fabricates information.
+    """
+    if not request.question or not request.question.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Question cannot be empty."
+        )
+
+    try:
+        return document_rag_service.answer_question(request)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error executing document RAG pipeline: {str(e)}"
+        )
+
 
 
 @router.post("/upload", response_model=DocumentUploadResponse)
