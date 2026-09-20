@@ -8,6 +8,9 @@ APPOINTMENT_ACTION_PATTERNS = [
     r"\bbook\s+[a-zA-Z]+\s+(?:tomorrow|today|at|\d)\b",
     r"\bbook\s+appointment\s+with\b",
     r"\bcancel\s+(?:my\s+)?appointment\b",
+    r"\bclear\s+(?:my\s+)?appointment\b",
+    r"\breset\s+(?:my\s+)?appointment\b",
+    r"\bclear\s+summary\b",
     r"\breschedule\b",
     r"\bmy\s+appointment\b",
     r"\bshow\s+appointment\b",
@@ -96,22 +99,22 @@ def should_route_from_supervisor(state: AgentState) -> str:
 
 
 def post_symptom_router(state: AgentState) -> str:
-    """After symptom extraction, route to department_agent if symptoms exist."""
+    """After symptom extraction, route to department_agent if symptoms exist, else ui_agent."""
     symptoms = state.get("symptoms", [])
     user_msg = state.get("user_message", "").lower()
     has_dept_query = any(re.search(kw, user_msg) for kw in DEPARTMENT_KEYWORDS)
 
     if symptoms or has_dept_query:
         return "department_agent"
-    return "final_response"
+    return "ui_agent"
 
 
 def post_department_router(state: AgentState) -> str:
-    """After department suggestion, route to doctor_slot_agent to find available options."""
+    """After department suggestion, route to doctor_slot_agent to find available options, else ui_agent."""
     dept = state.get("suggested_department")
     if dept and dept != "Needs clarification":
         return "doctor_slot_agent"
-    return "final_response"
+    return "ui_agent"
 
 
 def final_response_node(state: AgentState) -> AgentState:

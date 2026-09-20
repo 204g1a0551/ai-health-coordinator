@@ -127,6 +127,52 @@ export class DashboardService {
   }
 
   /**
+   * Dynamically display doctors returned by SHOW_DOCTORS action
+   */
+  showDoctors(doctors: Doctor[], department?: string): void {
+    this.state.update((s) => ({
+      ...s,
+      doctors,
+      suggestedDepartment: {
+        name: department || s.suggestedDepartment.name,
+      },
+    }));
+  }
+
+  /**
+   * Dynamically display available time slots returned by SHOW_SLOTS action
+   */
+  showSlots(slots: TimeSlot[], date?: string): void {
+    this.state.update((s) => ({
+      ...s,
+      availableSlots: slots,
+      appointmentSummary: {
+        ...s.appointmentSummary,
+        date: date || s.appointmentSummary.date,
+        doctor: slots.length > 0 ? slots[0].doctor : s.appointmentSummary.doctor,
+        time: slots.length > 0 ? slots[0].time : s.appointmentSummary.time,
+        status: s.appointmentSummary.status === 'Confirmed' ? 'Confirmed' : (slots.length > 0 ? 'Available to Confirm' : s.appointmentSummary.status),
+      },
+    }));
+  }
+
+  /**
+   * Clear active appointment summary
+   */
+  clearAppointment(): void {
+    this.state.update((s) => ({
+      ...s,
+      appointmentSummary: {
+        doctor: '',
+        department: '',
+        date: '',
+        time: '',
+        status: 'None',
+      },
+    }));
+  }
+
+  /**
    * Dynamically update patient info from Patient Info Agent structured output
    */
   updatePatient(data: Partial<PatientInfo> & { preferred_department?: string }): void {
@@ -141,27 +187,66 @@ export class DashboardService {
   }
 
   /**
-   * Process structured UI actions returned by the backend coordinator
+   * Process structured UI actions returned by the backend coordinator.
+   * Strictly processes only predefined controlled action types; rejects arbitrary commands.
    */
   applyActions(actions: any[]): void {
     if (!actions || !Array.isArray(actions)) return;
 
-    for (const action of actions) {
-      if (action.type === 'UPDATE_PATIENT' || action.action === 'UPDATE_PATIENT') {
-        const payloadData = action.data || action.payload?.data || action.payload;
-        if (payloadData) {
-          this.updatePatient(payloadData);
-        }
-      } else if (action.type === 'UPDATE_SYMPTOMS' && action.payload?.symptoms) {
-        this.updateSymptoms(action.payload.symptoms);
-      } else if (action.type === 'UPDATE_DEPARTMENT' && action.payload?.department) {
-        this.updateDepartment(action.payload.department);
-      } else if (action.type === 'UPDATE_DOCTORS_AND_SLOTS' && action.payload) {
-        this.updateDoctorsAndSlots(action.payload);
-      } else if (action.type === 'BOOK_APPOINTMENT' && action.payload?.appointment) {
-        this.bookAppointment(action.payload.appointment);
-      } else if (action.type === 'CANCEL_APPOINTMENT') {
-        this.cancelAppointment();
+    for (const item of actions) {
+      const actType = item.action || item.type;
+      const payload = item.payload || item.data || {};
+
+      switch (actType) {
+        case 'UPDATE_SYMPTOMS':
+          if (payload.symptoms) {
+            this.updateSymptoms(payload.symptoms);
+          }
+          break;
+
+        case 'UPDATE_DEPARTMENT':
+          if (payload.department) {
+            this.updateDepartment(payload.department);
+          }
+          break;
+
+        case 'SHOW_DOCTORS':
+          if (payload.doctors) {
+            this.showDoctors(payload.doctors, payload.department);
+          }
+          break;
+
+        case 'SHOW_SLOTS':
+          if (payload.slots) {
+            this.showSlots(payload.slots, payload.date);
+          }
+          break;
+
+        case 'BOOK_APPOINTMENT':
+          if (payload.appointment) {
+            this.bookAppointment(payload.appointment);
+          }
+          break;
+
+        case 'CANCEL_APPOINTMENT':
+          this.cancelAppointment();
+          break;
+
+        case 'CLEAR_APPOINTMENT':
+          this.clearAppointment();
+          break;
+
+        case 'UPDATE_PATIENT':
+          this.updatePatient(payload);
+          break;
+
+        case 'UPDATE_DOCTORS_AND_SLOTS':
+          this.updateDoctorsAndSlots(payload);
+          break;
+
+        default:
+          // Ignore any unrecognized or arbitrary actions
+          break;
       }
     }
   }

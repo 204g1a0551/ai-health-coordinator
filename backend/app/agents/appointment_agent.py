@@ -51,6 +51,19 @@ def appointment_node(state: AgentState) -> AgentState:
 
     actions = list(state.get("actions", []))
 
+    # Case 0: Clear appointment summary
+    if any(k in lower_msg for k in ["clear appointment", "reset appointment", "clear summary"]):
+        actions.append({
+            "type": "CLEAR_APPOINTMENT",
+            "action": "CLEAR_APPOINTMENT",
+            "payload": {}
+        })
+        return {
+            **state,
+            "actions": actions,
+            "final_response": "The appointment summary has been cleared from your dashboard.",
+        }
+
     # Case 1: Cancel appointment
     if any(k in lower_msg for k in ["cancel", "delete", "drop appointment"]):
         cancel_res = cancel_appointment(session_id)

@@ -12,12 +12,13 @@ from app.agents.department_agent import department_node
 from app.agents.doctor_slot_agent import doctor_slot_node
 from app.agents.appointment_agent import appointment_node
 from app.agents.patient_info_agent import patient_info_node
+from app.agents.ui_agent import ui_action_node
 
 
 def build_health_coordinator_graph():
     """
     Constructs and compiles the full LangGraph coordinator:
-    Supervisor -> { Patient Info Agent, Appointment Agent, Symptom Agent, Doctor/Slot Agent, Department Agent, Final Response }
+    Supervisor -> Domain Agents -> UI Agent (Action Layer) -> Final Response -> END
     """
     builder = StateGraph(AgentState)
 
@@ -28,6 +29,7 @@ def build_health_coordinator_graph():
     builder.add_node("department_agent", department_node)
     builder.add_node("doctor_slot_agent", doctor_slot_node)
     builder.add_node("appointment_agent", appointment_node)
+    builder.add_node("ui_agent", ui_action_node)
     builder.add_node("final_response", final_response_node)
 
     # Set supervisor as entry point
@@ -53,7 +55,7 @@ def build_health_coordinator_graph():
         post_symptom_router,
         {
             "department_agent": "department_agent",
-            "final_response": "final_response",
+            "ui_agent": "ui_agent",
         },
     )
 
@@ -63,18 +65,17 @@ def build_health_coordinator_graph():
         post_department_router,
         {
             "doctor_slot_agent": "doctor_slot_agent",
-            "final_response": "final_response",
+            "ui_agent": "ui_agent",
         },
     )
 
-    # Routing from Patient Info Agent
-    builder.add_edge("patient_info_agent", "final_response")
+    # Routing from Domain Agents to UI Agent
+    builder.add_edge("patient_info_agent", "ui_agent")
+    builder.add_edge("doctor_slot_agent", "ui_agent")
+    builder.add_edge("appointment_agent", "ui_agent")
 
-    # Routing from Doctor/Slot Agent
-    builder.add_edge("doctor_slot_agent", "final_response")
-
-    # Routing from Appointment Agent
-    builder.add_edge("appointment_agent", "final_response")
+    # UI Action Layer routes to Final Response synthesis
+    builder.add_edge("ui_agent", "final_response")
 
     # Final Response to END
     builder.add_edge("final_response", END)

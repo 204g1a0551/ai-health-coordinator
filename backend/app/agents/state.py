@@ -6,6 +6,12 @@ class SymptomItem(TypedDict):
     duration: Optional[str]
 
 
+class UIAction(TypedDict):
+    action: str
+    payload: Dict[str, Any]
+    type: Optional[str]
+
+
 class AgentAction(TypedDict):
     type: str
     payload: Dict[str, Any]
@@ -21,5 +27,5 @@ class AgentState(TypedDict):
     doctor_slot_results: Optional[Dict[str, Any]]
     appointment_action_result: Optional[Dict[str, Any]]
     patient_info: Optional[Dict[str, Any]]
-    actions: List[AgentAction]
+    actions: List[Dict[str, Any]]
     final_response: str

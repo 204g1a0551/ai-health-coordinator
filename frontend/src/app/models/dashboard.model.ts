@@ -45,3 +45,9 @@ export interface DashboardState {
   availableSlots: TimeSlot[];
   appointmentSummary: AppointmentSummary;
 }
+
+export interface UIAction {
+  action: string;
+  payload: any;
+  type?: string;
+}
