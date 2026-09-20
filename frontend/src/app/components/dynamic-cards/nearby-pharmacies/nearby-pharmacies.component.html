@@ -1,0 +1,115 @@
+<div class="dynamic-card pharmacy-card">
+  <!-- Header -->
+  <div class="card-header-row">
+    <div class="card-top-badge">
+      <span class="pharm-icon">🏪</span>
+      <span>Nearby Pharmacies &amp; Medicine Info</span>
+    </div>
+    <span class="location-tag">📍 {{ location }}</span>
+  </div>
+
+  <!-- Medicines Extracted List -->
+  @if (medicines.length > 0) {
+    <div class="med-section">
+      <div class="section-title-row">
+        <span class="section-badge">💊 Prescribed Medicines</span>
+        <span class="count-tag">{{ medicines.length }} items</span>
+      </div>
+      <div class="med-chips-list">
+        @for (med of medicines; track med.medicine_name) {
+          <div class="med-chip-card">
+            <div class="chip-top">
+              <span class="chip-name">{{ med.medicine_name }}</span>
+              @if (med.prescription_required) {
+                <span class="rx-badge">Rx Required</span>
+              }
+            </div>
+            @if (med.therapeutic_class) {
+              <span class="chip-class">{{ med.therapeutic_class }}</span>
+            }
+            @if (med.public_summary) {
+              <p class="chip-desc">{{ med.public_summary }}</p>
+            }
+            @if (med.storage_instructions) {
+              <span class="chip-storage">🌡️ {{ med.storage_instructions }}</span>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  } @else if (medicineNames.length > 0) {
+    <div class="med-section">
+      <span class="section-badge">💊 Prescribed Medicines</span>
+      <div class="simple-med-list">
+        @for (m of medicineNames; track m) {
+          <span class="simple-pill">{{ m }}</span>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Nearby Pharmacies List -->
+  <div class="pharmacy-section">
+    <div class="section-title-row">
+      <span class="section-badge">🏪 Nearby Pharmacies &amp; Stores</span>
+      <span class="count-tag">{{ pharmacies.length }} verified stores</span>
+    </div>
+
+    <div class="pharmacy-list">
+      @for (pharm of pharmacies; track pharm.id) {
+        <div class="pharm-item">
+          <div class="pharm-avatar">
+            {{ pharm.is_24x7 ? '🌙' : '🏥' }}
+          </div>
+          <div class="pharm-info">
+            <div class="pharm-title-row">
+              <span class="pharm-name">{{ pharm.name }}</span>
+              @if (pharm.is_24x7) {
+                <span class="open24-badge">24x7 Open</span>
+              }
+              @if (pharm.delivery_available) {
+                <span class="delivery-badge">Home Delivery</span>
+              }
+            </div>
+
+            <p class="pharm-address">{{ pharm.address }}</p>
+
+            <div class="pharm-meta-row">
+              <span class="meta-detail">⏰ {{ pharm.timing }}</span>
+              <span class="meta-detail">📞 {{ pharm.phone }}</span>
+              @if (pharm.rating) {
+                <div class="star-row">
+                  @for (s of stars(pharm.rating); track $index) {
+                    <span class="star" [class.filled]="s === '★'">{{ s }}</span>
+                  }
+                  <span class="rating-val">{{ pharm.rating }}</span>
+                </div>
+              }
+            </div>
+          </div>
+
+          <div class="distance-badge" [ngClass]="distanceClass(pharm.distance_km)">
+            {{ distanceLabel(pharm.distance_km) }}
+          </div>
+        </div>
+      } @empty {
+        <div class="empty-state">
+          <span>No pharmacies registered in <strong>{{ location }}</strong>. Try another locality in Medical Documents.</span>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Safety Banner -->
+  <div class="safety-banner">
+    <span class="safety-icon">🛡️</span>
+    <span class="safety-text">{{ disclaimer }}</span>
+  </div>
+
+  <!-- Quick Action Link to Documents -->
+  <div class="footer-actions">
+    <a routerLink="/documents" class="view-doc-link">
+      <span>Inspect in Medical Documents →</span>
+    </a>
+  </div>
+</div>

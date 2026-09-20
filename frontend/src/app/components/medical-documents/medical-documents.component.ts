@@ -3,11 +3,17 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { DocumentService } from '../../services/document.service';
+import { PharmacyService } from '../../services/pharmacy.service';
 import {
   DocumentUploadResponse,
   DocumentListItem,
   DocumentType,
 } from '../../models/document.model';
+import {
+  MedicineInfo,
+  PharmacyStore,
+  MedicineSearchResponse,
+} from '../../models/pharmacy.model';
 
 @Component({
   selector: 'app-medical-documents',
@@ -18,12 +24,19 @@ import {
 })
 export class MedicalDocumentsComponent implements OnInit {
   protected readonly docService = inject(DocumentService);
+  protected readonly pharmacyService = inject(PharmacyService);
 
   readonly isDragOver = signal<boolean>(false);
   readonly selectedFile = signal<File | null>(null);
   readonly validationError = signal<string | null>(null);
   readonly showRawText = signal<boolean>(false);
   readonly questionInput = signal<string>('');
+
+  // Pharmacy & Medicine Search state
+  readonly selectedPharmacyLocality = signal<string>('Koramangala');
+  readonly customLocalityInput = signal<string>('');
+  readonly isLocating = signal<boolean>(false);
+  readonly locationNotice = signal<string | null>(null);
 
   // Prompt questions as specified in requirements
   readonly suggestedQuestions = [
@@ -180,4 +193,56 @@ export class MedicalDocumentsComponent implements OnInit {
       .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
       .join(' ');
   }
+
+  onSearchPharmacies(customLoc?: string): void {
+    const activeDocId = this.docService.activeDocument()?.id;
+    const locality = customLoc || this.customLocalityInput().trim() || this.selectedPharmacyLocality();
+    this.selectedPharmacyLocality.set(locality);
+    this.locationNotice.set(null);
+    this.pharmacyService.searchForDocument(activeDocId, locality).subscribe();
+  }
+
+  onSelectPharmacyLocality(loc: string): void {
+    this.selectedPharmacyLocality.set(loc);
+    this.customLocalityInput.set('');
+    this.onSearchPharmacies(loc);
+  }
+
+  async onUseCurrentLocation(): Promise<void> {
+    this.isLocating.set(true);
+    this.locationNotice.set('Detecting current GPS coordinates...');
+    try {
+      const coords = await this.pharmacyService.requestGeolocation();
+      this.isLocating.set(false);
+      this.locationNotice.set(`GPS locked (${coords.lat.toFixed(3)}, ${coords.lng.toFixed(3)}). Distance calculated.`);
+      const activeDocId = this.docService.activeDocument()?.id;
+      this.pharmacyService.searchForDocument(activeDocId, 'Current Location', coords.lat, coords.lng).subscribe();
+    } catch (err: any) {
+      this.isLocating.set(false);
+      this.locationNotice.set(`Location access: ${err.message || 'Denied'}. Defaulting to ${this.selectedPharmacyLocality()}.`);
+    }
+  }
+
+  onClearPharmacyResults(): void {
+    this.pharmacyService.clearResults();
+  }
+
+  pharmacyDistanceLabel(km: number): string {
+    if (km < 1) {
+      return `${Math.round(km * 1000)} m away`;
+    }
+    return `${km.toFixed(1)} km away`;
+  }
+
+  pharmacyDistanceClass(km: number): string {
+    if (km <= 1.5) return 'dist-close';
+    if (km <= 5.0) return 'dist-mid';
+    return 'dist-far';
+  }
+
+  pharmacyStars(rating: number): string[] {
+    const full = Math.round(rating);
+    return Array.from({ length: 5 }, (_, i) => (i < full ? '★' : '☆'));
+  }
 }
+

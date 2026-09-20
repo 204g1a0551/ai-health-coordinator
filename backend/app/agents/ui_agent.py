@@ -14,6 +14,7 @@ ALLOWED_ACTIONS = {
     "SHOW_DOCTOR_DETAILS",
     "SHOW_SLOTS",
     "SHOW_NEARBY_DOCTORS",
+    "SHOW_PHARMACIES",
     "SHOW_APPOINTMENT",
     "HIDE_COMPONENT",
     "CLEAR_DASHBOARD",
@@ -98,6 +99,24 @@ def ui_action_node(state: AgentState) -> AgentState:
     if any(k in user_msg for k in ["clear dashboard", "clear canvas", "reset dashboard", "hide component"]):
         primary_action = "CLEAR_DASHBOARD"
         primary_data = {"message": "Dashboard cleared"}
+
+    # --------------------------------------------------------------------------
+    # 1.5. Pharmacy & Medicine Search
+    # --------------------------------------------------------------------------
+    elif (
+        any(a.get("action") == "SHOW_PHARMACIES" or a.get("type") == "SHOW_PHARMACIES" for a in raw_actions)
+        or state.get("pharmacy_results")
+        or intent in ["SEARCH_PHARMACY", "SEARCH_MEDICINE"]
+    ):
+        primary_action = "SHOW_PHARMACIES"
+        pharm_act = next(
+            (a for a in raw_actions if a.get("action") == "SHOW_PHARMACIES" or a.get("type") == "SHOW_PHARMACIES"),
+            None
+        )
+        if pharm_act:
+            primary_data = pharm_act.get("payload") or pharm_act.get("data") or {}
+        else:
+            primary_data = state.get("pharmacy_results") or {}
 
     # --------------------------------------------------------------------------
     # 2. Appointment Booking / Confirmation

@@ -9,6 +9,7 @@ export type UIActionType =
   | 'SHOW_DOCTOR_DETAILS'
   | 'SHOW_SLOTS'
   | 'SHOW_NEARBY_DOCTORS'
+  | 'SHOW_PHARMACIES'
   | 'SHOW_APPOINTMENT'
   | 'HIDE_COMPONENT'
   | 'CLEAR_DASHBOARD';
@@ -85,6 +86,8 @@ export class UIStateService {
         return 'SHOW_SLOTS';
       case 'SHOW_NEARBY_DOCTORS':
         return 'SHOW_NEARBY_DOCTORS';
+      case 'SHOW_PHARMACIES':
+        return 'SHOW_PHARMACIES';
       case 'SHOW_APPOINTMENT':
       case 'BOOK_APPOINTMENT':
         return 'SHOW_APPOINTMENT';

@@ -1,0 +1,333 @@
+.dynamic-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 4px 24px rgba(16, 185, 129, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  animation: cardSlideIn 0.35s cubic-bezier(0.34, 1.2, 0.64, 1) both;
+}
+
+@keyframes cardSlideIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.card-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.card-top-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #059669;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pharm-icon {
+  font-size: 1.2rem;
+}
+
+.location-tag {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #059669;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 100px;
+  padding: 4px 12px;
+}
+
+.section-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.section-badge {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #1e293b;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.count-tag {
+  font-size: 0.75rem;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+/* Medicines list */
+.med-chips-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.med-chip-card {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.chip-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.chip-name {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #166534;
+}
+
+.rx-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  background: #fee2e2;
+  color: #b91c1c;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid #fecaca;
+}
+
+.chip-class {
+  font-size: 0.78rem;
+  color: #15803d;
+  font-weight: 600;
+}
+
+.chip-desc {
+  font-size: 0.78rem;
+  color: #475569;
+  margin: 0;
+  line-height: 1.35;
+}
+
+.chip-storage {
+  font-size: 0.72rem;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.simple-med-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.simple-pill {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #15803d;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  padding: 4px 10px;
+  border-radius: 100px;
+}
+
+/* Pharmacy stores */
+.pharmacy-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pharm-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 12px 14px;
+  transition: all 0.2s ease;
+}
+
+.pharm-item:hover {
+  border-color: #10b981;
+  background: #ecfdf5;
+  box-shadow: 0 2px 10px rgba(16, 185, 129, 0.1);
+}
+
+.pharm-avatar {
+  font-size: 1.4rem;
+  width: 38px;
+  height: 38px;
+  background: #e2e8f0;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pharm-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pharm-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pharm-name {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.open24-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  background: #dbeafe;
+  color: #1e40af;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.delivery-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  background: #fef3c7;
+  color: #92400e;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.pharm-address {
+  font-size: 0.78rem;
+  color: #475569;
+  margin: 0;
+  line-height: 1.35;
+}
+
+.pharm-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 0.72rem;
+  color: #64748b;
+}
+
+.star-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.star {
+  color: #cbd5e1;
+  font-size: 0.75rem;
+}
+
+.star.filled {
+  color: #f59e0b;
+}
+
+.rating-val {
+  font-weight: 600;
+  color: #475569;
+  margin-left: 3px;
+}
+
+.distance-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.dist-close {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #86efac;
+}
+
+.dist-mid {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.dist-far {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+.empty-state {
+  padding: 20px;
+  text-align: center;
+  background: #f8fafc;
+  border-radius: 10px;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+/* Safety banner */
+.safety-banner {
+  background: #fffbeb;
+  border: 1px solid #fef3c7;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.safety-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.safety-text {
+  font-size: 0.73rem;
+  color: #92400e;
+  line-height: 1.4;
+}
+
+/* Footer link */
+.footer-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.view-doc-link {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #059669;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.view-doc-link:hover {
+  color: #047857;
+  text-decoration: underline;
+}

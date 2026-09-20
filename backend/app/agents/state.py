@@ -33,5 +33,6 @@ class AgentState(TypedDict):
     parsed_intent: Optional[Dict[str, Any]]
     clarification_question: Optional[str]
     actions: List[Dict[str, Any]]
+    pharmacy_results: Optional[Dict[str, Any]]
     final_response: str
 

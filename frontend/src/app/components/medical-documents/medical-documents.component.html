@@ -247,6 +247,9 @@
                   </div>
                 }
               </div>
+            </div>
+          }
+
           <!-- Document Intelligence & RAG Q&A Panel -->
           <div class="extracted-card rag-qa-card">
             <div class="card-head">
@@ -453,8 +456,21 @@
             @if (data.medicines && data.medicines.length > 0) {
               <div class="extracted-card">
                 <div class="card-head">
-                  <span class="head-icon">💊</span>
-                  <h4>Explicitly Prescribed Medicines ({{ data.medicines.length }})</h4>
+                  <div class="card-head-left">
+                    <span class="head-icon">💊</span>
+                    <div>
+                      <h4>Explicitly Prescribed Medicines ({{ data.medicines.length }})</h4>
+                      <p class="section-subtext">Medicines extracted directly from the uploaded prescription.</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    class="quick-pharmacy-btn"
+                    (click)="onSearchPharmacies()"
+                    [disabled]="pharmacyService.isLoading()"
+                  >
+                    <span>🏪 Find Nearby Pharmacies →</span>
+                  </button>
                 </div>
                 <div class="medicines-table-wrap">
                   <table class="med-table">
@@ -492,6 +508,213 @@
             } @else if (data.document_type === 'PRESCRIPTION') {
               <div class="extracted-card empty-med-notice">
                 <span>ℹ️ No medication lines could be identified with high confidence from this prescription.</span>
+              </div>
+            }
+
+            <!-- 3.5. Medicine Search Agent & Nearby Pharmacy Search Panel -->
+            @if (data.medicines && data.medicines.length > 0) {
+              <div class="extracted-card pharmacy-search-card">
+                <div class="card-head">
+                  <div class="card-head-left">
+                    <span class="head-icon">🏪</span>
+                    <div>
+                      <h4>Medicine Search Agent &amp; Nearby Pharmacy Search</h4>
+                      <p class="qa-subtitle">
+                        Search verified pharmacies stocking your prescribed medicines in Bengaluru.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    class="search-now-btn"
+                    [disabled]="pharmacyService.isLoading()"
+                    (click)="onSearchPharmacies()"
+                  >
+                    @if (pharmacyService.isLoading()) {
+                      <span class="btn-spinner"></span>
+                      <span>Searching...</span>
+                    } @else {
+                      <span>🔍 Search Nearby Stores</span>
+                    }
+                  </button>
+                </div>
+
+                <!-- Location Selector: Localities, Custom input, GPS -->
+                <div class="pharmacy-toolbar">
+                  <div class="location-chips-row">
+                    <span class="loc-label">Select Bengaluru Locality:</span>
+                    <div class="locality-chips">
+                      @for (loc of pharmacyService.localities(); track loc) {
+                        <button
+                          type="button"
+                          class="loc-chip"
+                          [class.active]="selectedPharmacyLocality() === loc && !customLocalityInput()"
+                          (click)="onSelectPharmacyLocality(loc)"
+                          [disabled]="pharmacyService.isLoading()"
+                        >
+                          📍 {{ loc }}
+                        </button>
+                      }
+                    </div>
+                  </div>
+
+                  <div class="custom-loc-row">
+                    <div class="custom-input-group">
+                      <input
+                        type="text"
+                        class="custom-loc-input"
+                        placeholder="Or enter area manually (e.g. Bellandur, Marathahalli)..."
+                        [ngModel]="customLocalityInput()"
+                        (ngModelChange)="customLocalityInput.set($event)"
+                        (keyup.enter)="onSearchPharmacies(customLocalityInput())"
+                        name="customLocality"
+                      />
+                      <button
+                        type="button"
+                        class="apply-loc-btn"
+                        (click)="onSearchPharmacies(customLocalityInput())"
+                        [disabled]="pharmacyService.isLoading() || !customLocalityInput().trim()"
+                      >
+                        Search
+                      </button>
+                    </div>
+
+                    <button
+                      type="button"
+                      class="gps-loc-btn"
+                      (click)="onUseCurrentLocation()"
+                      [disabled]="isLocating() || pharmacyService.isLoading()"
+                    >
+                      @if (isLocating()) {
+                        <span class="btn-spinner"></span>
+                        <span>Acquiring GPS...</span>
+                      } @else {
+                        <span>🎯 Use My Current Location</span>
+                      }
+                    </button>
+                  </div>
+
+                  @if (locationNotice()) {
+                    <div class="location-notice-banner">
+                      <span>{{ locationNotice() }}</span>
+                    </div>
+                  }
+                </div>
+
+                <!-- Pharmacy Error -->
+                @if (pharmacyService.error()) {
+                  <div class="error-banner">
+                    <span class="error-icon">⚠️</span>
+                    <span>{{ pharmacyService.error() }}</span>
+                  </div>
+                }
+
+                <!-- Search Results -->
+                @if (pharmacyService.searchResults(); as res) {
+                  <div class="pharmacy-results-box">
+                    <div class="results-header-row">
+                      <div class="results-meta">
+                        <span class="results-tag">📍 Searched Area: <strong>{{ res.location_searched }}</strong></span>
+                        <span class="stores-count-badge">{{ res.total_pharmacies_found }} Pharmacies Found</span>
+                      </div>
+                      <button type="button" class="close-ans-btn" (click)="onClearPharmacyResults()" title="Clear results">✕</button>
+                    </div>
+
+                    <!-- Medicine Public Pharmacological Details -->
+                    @if (res.medicine_details && res.medicine_details.length > 0) {
+                      <div class="medicine-details-panel">
+                        <h5 class="sub-block-title">💊 Prescribed Medicines &amp; Reference Info</h5>
+                        <div class="medicine-cards-grid">
+                          @for (m of res.medicine_details; track m.medicine_name) {
+                            <div class="med-info-card">
+                              <div class="med-card-header">
+                                <span class="med-name">{{ m.medicine_name }}</span>
+                                @if (m.prescription_required) {
+                                  <span class="rx-pill">Rx Required</span>
+                                }
+                              </div>
+                              @if (m.generic_name) {
+                                <span class="generic-row"><strong>Generic:</strong> {{ m.generic_name }}</span>
+                              }
+                              @if (m.therapeutic_class) {
+                                <span class="class-row"><strong>Class:</strong> {{ m.therapeutic_class }}</span>
+                              }
+                              @if (m.public_summary) {
+                                <p class="med-desc">{{ m.public_summary }}</p>
+                              }
+                              <div class="med-footer-tags">
+                                @if (m.storage_instructions) {
+                                  <span class="storage-tag">🌡️ {{ m.storage_instructions }}</span>
+                                }
+                                @if (m.standard_strength) {
+                                  <span class="strength-tag">Strength: {{ m.standard_strength }}</span>
+                                }
+                              </div>
+                            </div>
+                          }
+                        </div>
+                      </div>
+                    }
+
+                    <!-- Nearby Pharmacies List -->
+                    <div class="pharmacies-list-panel">
+                      <h5 class="sub-block-title">🏪 Nearby Pharmacies (Distance Ranked)</h5>
+                      <div class="pharmacies-grid">
+                        @for (store of res.pharmacies; track store.id) {
+                          <div class="pharmacy-store-card">
+                            <div class="store-card-top">
+                              <div class="store-name-row">
+                                <span class="store-avatar">{{ store.is_24x7 ? '🌙' : '🏥' }}</span>
+                                <div>
+                                  <span class="store-name">{{ store.name }}</span>
+                                  <span class="store-chain">{{ store.chain }}</span>
+                                </div>
+                              </div>
+                              <div class="distance-badge" [ngClass]="pharmacyDistanceClass(store.distance_km)">
+                                {{ pharmacyDistanceLabel(store.distance_km) }}
+                              </div>
+                            </div>
+
+                            <p class="store-address">📍 {{ store.address }}</p>
+
+                            <div class="store-features">
+                              <span class="feature-tag">⏰ {{ store.timing }}</span>
+                              @if (store.is_24x7) {
+                                <span class="feature-tag open-24">24x7 Open</span>
+                              }
+                              @if (store.delivery_available) {
+                                <span class="feature-tag delivery">Home Delivery</span>
+                              }
+                              <span class="feature-tag phone">📞 {{ store.phone }}</span>
+                            </div>
+
+                            <div class="store-card-footer">
+                              <div class="store-rating">
+                                @for (s of pharmacyStars(store.rating); track $index) {
+                                  <span class="star" [class.filled]="s === '★'">{{ s }}</span>
+                                }
+                                <span class="rating-num">{{ store.rating }}</span>
+                              </div>
+                              <div class="stock-status">
+                                <span class="stock-badge">✓ In Stock for Prescribed Meds</span>
+                              </div>
+                            </div>
+                          </div>
+                        } @empty {
+                          <div class="empty-pharmacies">
+                            <span>No pharmacies found in {{ res.location_searched }}. Try selecting a nearby Bengaluru locality above.</span>
+                          </div>
+                        }
+                      </div>
+                    </div>
+
+                    <!-- Safety Notice -->
+                    <div class="safety-disclaimer-box">
+                      <span class="disc-icon">🛡️</span>
+                      <span>{{ res.disclaimer }}</span>
+                    </div>
+                  </div>
+                }
               </div>
             }
 

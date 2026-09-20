@@ -76,6 +76,15 @@ LOCATION_QUERY_PATTERNS = [
     r"\bfind\s+doctors?\s+near\b",
 ]
 
+PHARMACY_PATTERNS = [
+    r"\b(?:where\s+can\s+i\s+get|buy|find|purchase)\s+(?:the\s+)?medicines?\b",
+    r"\bwhere\s+(?:to|can\s+i)\s+get\s+(?:medicines?|prescription)\b",
+    r"\bpharmacy\b|\bpharmacies\b|\bchemist\b|\bmedical\s+store\b|\bdrugstore\b",
+    r"\bprescribed\s+medicines?\b",
+    r"\bget\s+(?:the\s+)?medicines?\s+from\s+(?:this\s+)?prescription\b",
+    r"\bmedicines?\s+(?:from\s+)?(?:the\s+)?prescription\b",
+]
+
 
 def supervisor_node(state: AgentState) -> AgentState:
     """
@@ -84,6 +93,7 @@ def supervisor_node(state: AgentState) -> AgentState:
     - 'final_response': for clarification requests or greetings
     - 'patient_info_agent': demographic/contact management
     - 'location_agent': location-aware / radius-based nearby doctor discovery
+    - 'medicine_search_agent': medicine & nearby pharmacy store search
     - 'symptom_agent': clinical symptoms (routes -> department -> doctor/slot -> ui_agent)
     - 'doctor_slot_agent': booking, browsing doctors, filtering slots
     - 'appointment_agent': direct cancellation, status, or clearing
@@ -95,6 +105,8 @@ def supervisor_node(state: AgentState) -> AgentState:
 
     if intent == "CLARIFICATION" or parsed.get("needs_clarification"):
         route = "final_response"
+    elif intent in ["SEARCH_PHARMACY", "SEARCH_MEDICINE"]:
+        route = "medicine_search_agent"
     elif intent == "UPDATE_PATIENT":
         route = "patient_info_agent"
     elif intent == "BOOK_APPOINTMENT":
@@ -109,6 +121,7 @@ def supervisor_node(state: AgentState) -> AgentState:
         route = "symptom_agent"
     else:
         # Fallback to pattern matching
+        is_pharmacy_query = any(re.search(pat, user_msg) for pat in PHARMACY_PATTERNS)
         is_patient_info = any(re.search(pat, user_msg) for pat in PATIENT_INFO_PATTERNS)
         is_booking_action = any(re.search(pat, user_msg) for pat in BOOKING_ACTION_PATTERNS)
         is_direct_appointment = any(re.search(pat, user_msg) for pat in DIRECT_APPOINTMENT_PATTERNS)
@@ -117,7 +130,9 @@ def supervisor_node(state: AgentState) -> AgentState:
         is_browsing_slots = any(re.search(kw, user_msg) for kw in SLOT_BROWSE_KEYWORDS)
         has_dept = any(re.search(kw, user_msg) for kw in DEPARTMENT_KEYWORDS)
 
-        if is_patient_info:
+        if is_pharmacy_query:
+            route = "medicine_search_agent"
+        elif is_patient_info:
             route = "patient_info_agent"
         elif is_booking_action:
             route = "doctor_slot_agent"

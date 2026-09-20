@@ -11,6 +11,7 @@ import { DoctorListComponent } from '../dynamic-cards/doctor-list/doctor-list.co
 import { DoctorDetailsComponent } from '../dynamic-cards/doctor-details/doctor-details.component';
 import { SlotComponent } from '../dynamic-cards/slot/slot.component';
 import { NearbyDoctorsComponent } from '../dynamic-cards/nearby-doctors/nearby-doctors.component';
+import { NearbyPharmaciesComponent } from '../dynamic-cards/nearby-pharmacies/nearby-pharmacies.component';
 import { AppointmentComponent } from '../dynamic-cards/appointment/appointment.component';
 
 @Component({
@@ -26,6 +27,7 @@ import { AppointmentComponent } from '../dynamic-cards/appointment/appointment.c
     DoctorDetailsComponent,
     SlotComponent,
     NearbyDoctorsComponent,
+    NearbyPharmaciesComponent,
     AppointmentComponent,
   ],
   templateUrl: './dashboard.component.html',
