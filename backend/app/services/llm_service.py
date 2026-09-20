@@ -267,27 +267,72 @@ class LLMService:
         # ------------------------------------------------------------------
         # 5. Detect Symptoms (e.g. "I’ve had a headache for two days.")
         # ------------------------------------------------------------------
+        # ------------------------------------------------------------------
+        # 5. Emergency Red-Flag Interceptor (Heart Attack, Stroke, Severe Trauma)
+        # ------------------------------------------------------------------
+        is_cardiac_emergency = bool(re.search(r"\b(?:heart\s*attack|cardiac\s+arrest|myocardial\s+infarction|severe\s+chest\s+pain|chest\s+tightness|chest\s+pressure)\b", lower))
+        is_stroke_emergency = bool(re.search(r"\b(?:stroke|face\s+droop|arm\s+weakness|paralysis)\b", lower))
+        is_acute_emergency = bool(re.search(r"\b(?:unconscious|not\s+breathing|choking|heavy\s+bleeding|severe\s+bleeding|poisoning|anaphylaxis)\b", lower))
+
+        if is_cardiac_emergency or is_stroke_emergency or is_acute_emergency:
+            emergency_dept = "Cardiology" if is_cardiac_emergency else ("Neurology" if is_stroke_emergency else "Emergency Medicine")
+            emergency_sym = "Heart Attack / Acute Chest Pain" if is_cardiac_emergency else ("Stroke / Neurological Emergency" if is_stroke_emergency else "Acute Emergency")
+            return ParsedUserIntent(
+                intent="EXTRACT_SYMPTOMS",
+                symptoms=[ExtractedSymptom(name=emergency_sym, duration="Immediate")],
+                department=emergency_dept,
+            )
+
+        # ------------------------------------------------------------------
+        # 5.1. Detect Symptoms (e.g. "I’ve had a headache for two days.")
+        # ------------------------------------------------------------------
         symptom_keywords = {
+            "heart attack": "Heart Attack",
+            "heartattack": "Heart Attack",
+            "chest pain": "Chest Pain",
+            "chest tightness": "Chest Pain",
+            "palpitation": "Heart Palpitations",
+            "palpitations": "Heart Palpitations",
+            "racing heart": "Heart Palpitations",
+            "shortness of breath": "Shortness of Breath",
+            "difficulty breathing": "Shortness of Breath",
+            "breathless": "Shortness of Breath",
+            "asthma": "Asthma",
+            "wheezing": "Wheezing",
+            "stomach pain": "Stomach Ache",
+            "stomach ache": "Stomach Ache",
+            "abdominal pain": "Stomach Ache",
+            "belly pain": "Stomach Ache",
+            "acid reflux": "Acid Reflux",
+            "heartburn": "Acid Reflux",
+            "gerd": "Acid Reflux",
+            "indigestion": "Indigestion",
+            "migraine": "Migraine",
             "headache": "Headache",
             "fever": "Fever",
             "cough": "Cough",
             "sore throat": "Sore Throat",
-            "throat pain": "Throat Pain",
+            "throat pain": "Sore Throat",
             "earache": "Earache",
             "ear pain": "Ear Pain",
             "rash": "Skin Rash",
             "skin rash": "Skin Rash",
             "acne": "Acne",
-            "chest pain": "Chest Pain",
             "toothache": "Toothache",
             "teeth pain": "Teeth Pain",
             "back pain": "Back Pain",
             "joint pain": "Joint Pain",
+            "knee pain": "Knee Pain",
             "eye pain": "Eye Pain",
             "red eye": "Red Eye",
+            "blurry vision": "Blurry Vision",
             "nausea": "Nausea",
+            "vomiting": "Vomiting",
             "dizziness": "Dizziness",
             "fatigue": "Fatigue",
+            "body ache": "Body Ache",
+            "anxiety": "Anxiety",
+            "depression": "Depression",
         }
 
         found_symptoms: List[ExtractedSymptom] = []
@@ -299,19 +344,30 @@ class LLMService:
                 found_symptoms.append(ExtractedSymptom(name=name, duration=extracted_dur))
 
         if found_symptoms:
-            # Map default suggested department for symptoms
             symptom_names_lower = [s.name.lower() for s in found_symptoms]
             dept = "General Medicine"
-            if any(k in symptom_names_lower for k in ["earache", "ear pain", "sore throat", "throat pain"]):
+
+            # Route to accurate specialist department
+            if any(k in symptom_names_lower for k in ["heart attack", "chest pain", "heart palpitations"]):
+                dept = "Cardiology"
+            elif any(k in symptom_names_lower for k in ["shortness of breath", "asthma", "wheezing"]):
+                dept = "Pulmonology"
+            elif any(k in symptom_names_lower for k in ["stomach ache", "acid reflux", "indigestion"]):
+                dept = "Gastroenterology"
+            elif any(k in symptom_names_lower for k in ["migraine"]):
+                dept = "Neurology"
+            elif any(k in symptom_names_lower for k in ["earache", "ear pain", "sore throat"]):
                 dept = "ENT"
             elif any(k in symptom_names_lower for k in ["skin rash", "rash", "acne"]):
                 dept = "Dermatology"
             elif any(k in symptom_names_lower for k in ["toothache", "teeth pain"]):
                 dept = "Dental"
-            elif any(k in symptom_names_lower for k in ["eye pain", "red eye"]):
+            elif any(k in symptom_names_lower for k in ["eye pain", "red eye", "blurry vision"]):
                 dept = "Ophthalmology"
-            elif any(k in symptom_names_lower for k in ["back pain", "joint pain"]):
+            elif any(k in symptom_names_lower for k in ["back pain", "joint pain", "knee pain"]):
                 dept = "Orthopedics"
+            elif any(k in symptom_names_lower for k in ["anxiety", "depression"]):
+                dept = "Psychiatry"
 
             return ParsedUserIntent(
                 intent="EXTRACT_SYMPTOMS",
@@ -331,7 +387,19 @@ class LLMService:
 
         # Check department keyword
         dept_match = None
-        if re.search(r"\b(?:general\s+physician|general\s+medicine|physician|gp)\b", lower):
+        if re.search(r"\b(?:cardiolog(?:y|ist)|heart|cardiac)\b", lower):
+            dept_match = "Cardiology"
+        elif re.search(r"\b(?:pulmonolog(?:y|ist)|respiratory|lung)\b", lower):
+            dept_match = "Pulmonology"
+        elif re.search(r"\b(?:gastroenterolog(?:y|ist)|gastro|digestive)\b", lower):
+            dept_match = "Gastroenterology"
+        elif re.search(r"\b(?:neurolog(?:y|ist)|neuro|brain)\b", lower):
+            dept_match = "Neurology"
+        elif re.search(r"\b(?:gynecolog(?:y|ist)|obstetric(?:s|ian)|maternity)\b", lower):
+            dept_match = "Gynecology"
+        elif re.search(r"\b(?:psychiatr(?:y|ist)|mental\s+health)\b", lower):
+            dept_match = "Psychiatry"
+        elif re.search(r"\b(?:general\s+physician|general\s+medicine|physician|gp)\b", lower):
             dept_match = "General Medicine"
         elif re.search(r"\b(?:ent|ear\s+nose\s+throat)\b", lower):
             dept_match = "ENT"

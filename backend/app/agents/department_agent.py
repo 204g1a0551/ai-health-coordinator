@@ -5,6 +5,41 @@ from app.agents.state import AgentState
 # Department routing rules mapping keywords & symptoms to appropriate departments
 DEPARTMENT_RULES = [
     (
+        "Cardiology",
+        [
+            r"\bheart\s*attack\b", r"\bcardiac\b", r"\bchest\s+pain\b", r"\bchest\s+tightness\b",
+            r"\bchest\s+pressure\b", r"\bangina\b", r"\bpalpitation(s)?\b", r"\bheart\s+beat\b",
+            r"\bhypertension\b", r"\bhigh\s+bp\b", r"\bcardiolog(y|ist)\b", r"\bheart\b", r"\becg\b"
+        ],
+        "The user’s request can be routed to Cardiology for cardiovascular and heart health evaluation."
+    ),
+    (
+        "Pulmonology",
+        [
+            r"\basthma\b", r"\bwheez(ing)?\b", r"\bshortness\s+of\s+breath\b", r"\bbreathless(ness)?\b",
+            r"\bdifficulty\s+breathing\b", r"\bbronchitis\b", r"\bpneumonia\b", r"\bpulmonolog(y|ist)\b", r"\blung(s)?\b"
+        ],
+        "The user’s request can be routed to Pulmonology for respiratory and lung health evaluation."
+    ),
+    (
+        "Gastroenterology",
+        [
+            r"\bstomach\s+pain\b", r"\bstomach\s+ache\b", r"\babdominal\s+pain\b", r"\bbelly\s+pain\b",
+            r"\bacid\s+reflux\b", r"\bheartburn\b", r"\bgerd\b", r"\bgastric\b", r"\bgastritis\b",
+            r"\bbloat(ing)?\b", r"\bindigestion\b", r"\bulcer\b", r"\bdiarrhea\b", r"\bconstipation\b",
+            r"\bgastroenterolog(y|ist)\b"
+        ],
+        "The user’s request can be routed to Gastroenterology for digestive health evaluation."
+    ),
+    (
+        "Neurology",
+        [
+            r"\bmigraine\b", r"\bseizure(s)?\b", r"\bepilepsy\b", r"\bnumbness\b", r"\btremor(s)?\b",
+            r"\bvertigo\b", r"\bparalysis\b", r"\bstroke\b", r"\bneurolog(y|ist)\b", r"\bnerve\s+pain\b"
+        ],
+        "The user’s request can be routed to Neurology for nervous system evaluation."
+    ),
+    (
         "Dental",
         [r"\btooth\b", r"\bteeth\b", r"\btoothache\b", r"\bgum(s)?\b", r"\bcavity\b", r"\bdental\b", r"\bdentist\b"],
         "The user’s request can be routed to dental consultation for oral and dental evaluation."
@@ -47,11 +82,27 @@ DEPARTMENT_RULES = [
         "The user’s request can be routed to pediatrics for child care consultation."
     ),
     (
+        "Gynecology",
+        [
+            r"\bpregnan(t|cy)\b", r"\bmenstrual\b", r"\bperiod\s+pain\b", r"\bcramps\b",
+            r"\bpcos\b", r"\bpcod\b", r"\bgynecolog(y|ist)\b", r"\bovary\b", r"\bmaternity\b"
+        ],
+        "The user’s request can be routed to Gynecology & Obstetrics consultation."
+    ),
+    (
+        "Psychiatry",
+        [
+            r"\bdepress(ion|ed)?\b", r"\banxiety\b", r"\bpanic\s+attack\b", r"\binsomnia\b",
+            r"\bmental\s+health\b", r"\bpsychiatr(y|ist)\b", r"\bstress\b"
+        ],
+        "The user’s request can be routed to Psychiatry & Mental Health consultation."
+    ),
+    (
         "General Medicine",
         [
             r"\bfever\b", r"\bheadache\b", r"\bcough\b", r"\bfatigue\b", r"\bbody\s+ache\b",
-            r"\bchills\b", r"\bnausea\b", r"\bvomiting\b", r"\bdizziness\b", r"\bstomach\s+ache\b",
-            r"\bgeneral\s+medicine\b", r"\binternal\s+medicine\b", r"\bphysician\b"
+            r"\bchills\b", r"\bnausea\b", r"\bvomiting\b", r"\bdizziness\b",
+            r"\bgeneral\s+medicine\b", r"\binternal\s+medicine\b", r"\bphysician\b", r"\bcheckup\b"
         ],
         "The user’s request can be routed to general medical consultation."
     ),

@@ -26,11 +26,15 @@ DIRECT_APPOINTMENT_PATTERNS = [
 ]
 
 SYMPTOM_KEYWORDS = [
+    r"\bheart\s*attack\b", r"\bcardiac\b", r"\bchest\s+pain\b", r"\bchest\s+tightness\b", r"\bpalpitation(s)?\b",
     r"\bfever\b", r"\bheadache\b", r"\bcough\b", r"\bpain\b", r"\bache\b",
     r"\bhurt(s|ing)?\b", r"\bsick\b", r"\bnausea\b", r"\bvomit\b", r"\bdizzy\b",
     r"\bchills\b", r"\btired(ness)?\b", r"\bfatigue\b", r"\bsore\b", r"\brash\b",
     r"\bsymptom(s)?\b", r"\bswollen\b", r"\bcongestion\b", r"\brunny\b",
     r"\btooth\b", r"\bteeth\b", r"\beye(s)?\b", r"\bear(s)?\b",
+    r"\bstomach\b", r"\babdominal\b", r"\bbelly\b", r"\bacid\s+reflux\b", r"\bheartburn\b",
+    r"\basthma\b", r"\bwheez(ing)?\b", r"\bbreath(less|ing)?\b", r"\bmigraine\b",
+    r"\bseizure\b", r"\bdepress(ion)?\b", r"\banxiety\b",
 ]
 
 SLOT_BROWSE_KEYWORDS = [
@@ -42,6 +46,12 @@ SLOT_BROWSE_KEYWORDS = [
 ]
 
 DEPARTMENT_KEYWORDS = [
+    r"\bcardiolog(y|ist)\b", r"\bheart\b", r"\bcardiac\b",
+    r"\bgastroenterolog(y|ist)\b", r"\bgastro\b", r"\bdigestive\b",
+    r"\bneurolog(y|ist)\b", r"\bneuro\b",
+    r"\bpulmonolog(y|ist)\b", r"\brespiratory\b", r"\blung\b",
+    r"\bgynecolog(y|ist)\b", r"\bmaternity\b",
+    r"\bpsychiatr(y|ist)\b", r"\bmental\s+health\b",
     r"\bgeneral\s+medicine\b", r"\bdermatolog(y|ist)\b", r"\bent\b",
     r"\borthopedic(s)?\b", r"\bpediatric(s|ian)?\b", r"\bophthalmolog(y|ist)\b",
     r"\bdental\b", r"\bdentist\b", r"\bclinic\b", r"\bdepartment\b",
@@ -197,7 +207,33 @@ def post_doctor_slot_router(state: AgentState) -> str:
 
 
 def final_response_node(state: AgentState) -> AgentState:
-    """Final synthesis fallback with clarification support and clinical disclaimer."""
+    """Final synthesis fallback with emergency red-flag interceptor, clarification support, and clinical disclaimer."""
+    user_msg = state.get("user_message", "").strip().lower()
+
+    # 1. Emergency Red-Flag Interceptor (Heart attack, stroke, acute trauma)
+    is_cardiac_emergency = bool(re.search(r"\b(?:heart\s*attack|cardiac\s+arrest|myocardial\s+infarction|severe\s+chest\s+pain|chest\s+tightness|chest\s+pressure)\b", user_msg))
+    is_stroke_emergency = bool(re.search(r"\b(?:stroke|face\s+droop|arm\s+weakness|paralysis)\b", user_msg))
+    is_acute_emergency = bool(re.search(r"\b(?:unconscious|not\s+breathing|choking|heavy\s+bleeding|severe\s+bleeding|poisoning|anaphylaxis)\b", user_msg))
+
+    if is_cardiac_emergency or is_stroke_emergency or is_acute_emergency:
+        emergency_msg = (
+            "🚨 **CRITICAL MEDICAL EMERGENCY WARNING**:\n\n"
+            "If you or someone with you is experiencing symptoms of a **heart attack**, **stroke**, or acute medical emergency, "
+            "**IMMEDIATELY call Emergency Services (108 / 112 in India, or 911) or proceed to the nearest Hospital Emergency Room right now!**\n\n"
+            "⚠️ **Do NOT wait for a routine clinic appointment.** Immediate emergency medical intervention is crucial.\n\n"
+            "**Immediate 24x7 Emergency Cardiac Centers in Bengaluru:**\n"
+            "• **Manipal Hospital Emergency & Cardiac Care**: 080 2502 4444 (Old Airport Road / Indiranagar)\n"
+            "• **Apollo Hospital Emergency Department**: 080 2630 4050 (Bannerghatta Road / Jayanagar)\n"
+            "• **Fortis Hospital 24x7 Emergency**: 080 4199 4444 (Cunningham Road / Central Bengaluru)\n"
+            "• **Aster CMI Hospital Emergency**: 080 4342 0100 (Hebbal)\n\n"
+            "I have prioritized and routed your consultation request to **Cardiology / Emergency Care**."
+        )
+        return {
+            **state,
+            "suggested_department": "Cardiology",
+            "final_response": emergency_msg,
+        }
+
     clarification = state.get("clarification_question")
     if clarification:
         return {
@@ -206,7 +242,6 @@ def final_response_node(state: AgentState) -> AgentState:
         }
 
     symptoms = state.get("symptoms", [])
-    user_msg = state.get("user_message", "").strip().lower()
     clinical_disclaimer = " (Please note: Only a licensed doctor can provide a medical diagnosis. I am here to help coordinate your checkup and appointments.)"
 
     if state.get("final_response"):
@@ -221,13 +256,15 @@ def final_response_node(state: AgentState) -> AgentState:
     dept = state.get("suggested_department")
 
     if dept and dept != "Needs clarification":
-        final_msg = f"Your request has been routed to {dept}. Please let me know your preferred doctor or time slot."
+        final_msg = f"Your request has been routed to **{dept}**. Please let me know your preferred doctor or time slot."
         if symptoms or any(k in user_msg for k in ["diagnos", "do i have", "disease"]):
             final_msg += clinical_disclaimer
+    elif symptoms:
+        final_msg = "I have noted your symptoms. Could you provide a bit more detail or your preferred medical specialty (e.g. Cardiology, Orthopedics, ENT, Dermatology, or General Medicine)?"
     elif any(g in user_msg for g in ["hello", "hi", "hey"]):
         final_msg = "Hello, how can I help you today? You can describe your symptoms or request an appointment with a doctor."
     else:
-        final_msg = "I understand. I can help organize your symptoms and appointment request. Please specify your preferred doctor or time slot."
+        final_msg = "I understand. I can help organize your symptoms and appointment request. Please specify your preferred doctor or medical department."
 
     return {
         **state,
