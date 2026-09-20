@@ -120,6 +120,15 @@ LAB_PATTERNS = [
     r"\bpage\s+3\b",
 ]
 
+BILL_VERIFICATION_PATTERNS = [
+    r"\b(?:verify\s+bill|bill\s+verification|bill\s+comparison|compare\s+(?:the\s+)?(?:prescription\s+and\s+)?bill)\b",
+    r"\bprescription\s+and\s+bill\b",
+    r"\bmissing\s+from\s+(?:the\s+)?bill\b",
+    r"\bbill\s+details?\b",
+    r"\bverification\s+evidence\b",
+    r"\bcompare\s+(?:my\s+)?(?:prescription|medicines?)\s+(?:with\s+)?(?:the\s+)?bill\b",
+]
+
 
 DOCUMENT_PATTERNS = [
     r"\bupload\s+(?:this\s+)?(?:prescription|document|medical\s+report|bill|pdf)\b",
@@ -163,6 +172,7 @@ def supervisor_node(state: AgentState) -> AgentState:
         "UPLOAD_DOCUMENT", "ANALYZE_INSURANCE", "CHECK_COVERAGE", "CHECK_REIMBURSEMENT",
         "SEARCH_PHARMACY", "SEARCH_MEDICINE", "DOCUMENT_SUMMARY", "GET_MEDICINES", "GET_MEDICINE_INFO",
         "LAB_REPORT", "LAB_RESULTS", "LAB_EVIDENCE",
+        "VERIFY_BILL", "COMPARE_BILL", "BILL_COMPARISON", "BILL_DETAILS", "VERIFICATION_EVIDENCE",
     ]:
         route = "document_agent"
     elif intent == "UPDATE_PATIENT":
@@ -180,6 +190,7 @@ def supervisor_node(state: AgentState) -> AgentState:
     else:
         # Fallback to pattern matching
         is_lab_query = any(re.search(pat, user_msg) for pat in LAB_PATTERNS)
+        is_bill_query = any(re.search(pat, user_msg) for pat in BILL_VERIFICATION_PATTERNS)
         is_document_query = any(re.search(pat, user_msg) for pat in DOCUMENT_PATTERNS)
         is_insurance_query = any(re.search(pat, user_msg) for pat in INSURANCE_PATTERNS)
         is_pharmacy_query = any(re.search(pat, user_msg) for pat in PHARMACY_PATTERNS)
@@ -191,7 +202,7 @@ def supervisor_node(state: AgentState) -> AgentState:
         is_browsing_slots = any(re.search(kw, user_msg) for kw in SLOT_BROWSE_KEYWORDS)
         has_dept = any(re.search(kw, user_msg) for kw in DEPARTMENT_KEYWORDS)
 
-        if is_lab_query or is_document_query or is_insurance_query or is_pharmacy_query:
+        if is_lab_query or is_bill_query or is_document_query or is_insurance_query or is_pharmacy_query:
             route = "document_agent"
         elif is_patient_info:
             route = "patient_info_agent"

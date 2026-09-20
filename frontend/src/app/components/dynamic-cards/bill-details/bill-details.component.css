@@ -1,0 +1,78 @@
+.bill-details-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.card-icon { font-size: 24px; }
+.card-header h3 { margin: 0; font-size: 1rem; font-weight: 600; color: #1a202c; }
+
+.meta-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.meta-item {
+  background: #f7fafc;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.meta-label { display: block; font-size: 0.7rem; color: #718096; text-transform: uppercase; letter-spacing: 0.5px; }
+.meta-value { display: block; font-size: 0.85rem; font-weight: 500; color: #2d3748; margin-top: 4px; word-break: break-all; }
+
+.financial-block {
+  background: #f7fafc;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  border: 1px solid #e2e8f0;
+}
+
+.financial-block h4 { margin: 0 0 12px; font-size: 0.9rem; color: #2d3748; }
+
+.fin-rows { display: flex; flex-direction: column; gap: 6px; }
+
+.fin-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  padding: 6px 0;
+  border-bottom: 1px dashed #e2e8f0;
+  color: #4a5568;
+}
+
+.fin-row.total {
+  border-top: 2px solid #4285f4;
+  border-bottom: none;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #276749;
+  padding-top: 10px;
+  margin-top: 6px;
+}
+
+.quick-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.action-btn {
+  padding: 7px 14px;
+  background: #4285f4;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.action-btn:hover { background: #3367d6; }
+
+.empty-state { text-align: center; padding: 24px; color: #a0aec0; font-size: 0.9rem; }

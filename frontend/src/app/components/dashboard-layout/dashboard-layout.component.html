@@ -12,7 +12,7 @@
 
       <!-- Navigation Links -->
       <nav class="header-nav">
-        <a routerLink="/dashboard" class="nav-tab" [class.active]="!isDocumentsPage && !isInsurancePage && !isLabReportsPage">
+        <a routerLink="/dashboard" class="nav-tab" [class.active]="!isDocumentsPage && !isInsurancePage && !isLabReportsPage && !isBillVerificationPage">
           <span class="tab-icon">🩺</span>
           <span>Coordinator &amp; Chat</span>
         </a>
@@ -23,6 +23,10 @@
         <a routerLink="/lab-reports" class="nav-tab" [class.active]="isLabReportsPage">
           <span class="tab-icon">🧪</span>
           <span>Lab Reports</span>
+        </a>
+        <a routerLink="/bill-verification" class="nav-tab" [class.active]="isBillVerificationPage">
+          <span class="tab-icon">🧾</span>
+          <span>Bill Verification</span>
         </a>
         <a routerLink="/insurance" class="nav-tab" [class.active]="isInsurancePage">
           <span class="tab-icon">🛡️</span>
@@ -67,6 +71,10 @@
   @if (isLabReportsPage) {
     <main class="documents-full-main">
       <app-lab-reports></app-lab-reports>
+    </main>
+  } @else if (isBillVerificationPage) {
+    <main class="documents-full-main">
+      <app-bill-verification />
     </main>
   } @else if (isInsurancePage) {
     <main class="documents-full-main">

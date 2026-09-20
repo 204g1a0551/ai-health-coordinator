@@ -117,6 +117,16 @@
       />
     }
 
+    @case ('SHOW_BILL_COMPARISON') {
+      <app-bill-comparison [data]="uiState.state().currentData" (actionClicked)="onPromptSelected($event)" />
+    }
+    @case ('SHOW_BILL_DETAILS') {
+      <app-bill-details [data]="uiState.state().currentData" (actionClicked)="onPromptSelected($event)" />
+    }
+    @case ('SHOW_VERIFICATION_EVIDENCE') {
+      <app-verification-evidence [data]="uiState.state().currentData" (actionClicked)="onPromptSelected($event)" />
+    }
+
     @case ('SHOW_APPOINTMENT') {
       <app-appointment [data]="uiState.state().currentData" />
     }

@@ -31,6 +31,10 @@ ALLOWED_ACTIONS = {
     "SHOW_LAB_REPORT",
     "SHOW_LAB_RESULTS",
     "SHOW_LAB_EVIDENCE",
+    # Bill Verification Predefined Actions
+    "SHOW_BILL_COMPARISON",
+    "SHOW_BILL_DETAILS",
+    "SHOW_VERIFICATION_EVIDENCE",
     # Legacy / alias compatibility
     "UPDATE_SYMPTOMS",
     "UPDATE_DEPARTMENT",
@@ -112,9 +116,12 @@ def ui_action_node(state: AgentState) -> AgentState:
     primary_data: Dict[str, Any] = {}
 
     # --------------------------------------------------------------------------
-    # 0. Direct Lab Action passthrough
+    # 0. Direct Lab / Bill Verification Action passthrough
     # --------------------------------------------------------------------------
-    if state.get("primary_ui_action") in ["SHOW_LAB_REPORT", "SHOW_LAB_RESULTS", "SHOW_LAB_EVIDENCE"]:
+    if state.get("primary_ui_action") in [
+        "SHOW_LAB_REPORT", "SHOW_LAB_RESULTS", "SHOW_LAB_EVIDENCE",
+        "SHOW_BILL_COMPARISON", "SHOW_BILL_DETAILS", "SHOW_VERIFICATION_EVIDENCE",
+    ]:
         primary_action = state["primary_ui_action"]
         primary_data = state.get("primary_ui_data", {})
 
@@ -224,6 +231,24 @@ def ui_action_node(state: AgentState) -> AgentState:
     elif any(a.get("action") == "SHOW_LAB_EVIDENCE" or a.get("type") == "SHOW_LAB_EVIDENCE" for a in raw_actions):
         primary_action = "SHOW_LAB_EVIDENCE"
         act = next((a for a in raw_actions if a.get("action") == "SHOW_LAB_EVIDENCE" or a.get("type") == "SHOW_LAB_EVIDENCE"), None)
+        primary_data = act.get("payload") or act.get("data") or {}
+
+    # --------------------------------------------------------------------------
+    # 1.10 Bill Verification Predefined Actions
+    # --------------------------------------------------------------------------
+    elif any(a.get("action") == "SHOW_BILL_COMPARISON" or a.get("type") == "SHOW_BILL_COMPARISON" for a in raw_actions):
+        primary_action = "SHOW_BILL_COMPARISON"
+        act = next((a for a in raw_actions if a.get("action") == "SHOW_BILL_COMPARISON" or a.get("type") == "SHOW_BILL_COMPARISON"), None)
+        primary_data = act.get("payload") or act.get("data") or {}
+
+    elif any(a.get("action") == "SHOW_BILL_DETAILS" or a.get("type") == "SHOW_BILL_DETAILS" for a in raw_actions):
+        primary_action = "SHOW_BILL_DETAILS"
+        act = next((a for a in raw_actions if a.get("action") == "SHOW_BILL_DETAILS" or a.get("type") == "SHOW_BILL_DETAILS"), None)
+        primary_data = act.get("payload") or act.get("data") or {}
+
+    elif any(a.get("action") == "SHOW_VERIFICATION_EVIDENCE" or a.get("type") == "SHOW_VERIFICATION_EVIDENCE" for a in raw_actions):
+        primary_action = "SHOW_VERIFICATION_EVIDENCE"
+        act = next((a for a in raw_actions if a.get("action") == "SHOW_VERIFICATION_EVIDENCE" or a.get("type") == "SHOW_VERIFICATION_EVIDENCE"), None)
         primary_data = act.get("payload") or act.get("data") or {}
 
     # --------------------------------------------------------------------------

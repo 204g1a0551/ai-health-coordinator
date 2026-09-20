@@ -411,6 +411,24 @@ class LLMService:
         if re.search(r"\bhere\s+is\s+my\s+(?:company\s+)?(?:medical\s+)?policy\b|\bshow\s+policy\b|\bupload\s+policy\b", lower):
             return ParsedUserIntent(intent="SHOW_POLICY")
 
+        # ------------------------------------------------------------------
+        # 8.45 Bill Verification Intents
+        # ------------------------------------------------------------------
+        if re.search(r"\b(?:verify\s+(?:the\s+)?bill|bill\s+verification|compare\s+(?:the\s+)?(?:prescription\s+and\s+)?bill|prescription\s+and\s+bill)\b", lower):
+            return ParsedUserIntent(intent="VERIFY_BILL")
+
+        if re.search(r"\bbill\s+comparison\b", lower):
+            return ParsedUserIntent(intent="BILL_COMPARISON")
+
+        if re.search(r"\bbill\s+details?\b", lower):
+            return ParsedUserIntent(intent="BILL_DETAILS")
+
+        if re.search(r"\bverification\s+evidence\b", lower):
+            return ParsedUserIntent(intent="VERIFICATION_EVIDENCE")
+
+        if re.search(r"\bmissing\s+from\s+(?:the\s+)?bill\b", lower):
+            return ParsedUserIntent(intent="COMPARE_BILL")
+
         if re.search(r"\b(?:where\s+can\s+i\s+(?:buy|get|find)|where\s+to\s+buy)\s+(?:these\s+)?medicines?\b|\b(?:pharmacies?|medical\s+stores?)\s+near\b|\bnearby\s+pharmac", lower):
             return ParsedUserIntent(intent="SEARCH_PHARMACY")
 

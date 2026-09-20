@@ -1,0 +1,183 @@
+<div class="bv-page">
+  <div class="bv-header">
+    <h2>🧾 Prescription & Bill Verification</h2>
+    <p>Upload your prescription and pharmacy bill to compare medicines and detect discrepancies.</p>
+  </div>
+
+  <!-- Upload Section -->
+  @if (uploadStep !== 'done') {
+    <div class="upload-section">
+      <div class="upload-grid">
+        <!-- Prescription Upload -->
+        <div class="upload-zone" [class.uploaded]="prescriptionUploaded"
+             (dragover)="onDragOver($event)" (drop)="onPrescriptionDrop($event)">
+          <div class="upload-zone-inner">
+            <span class="upload-icon">📄</span>
+            <h4>Prescription PDF</h4>
+            @if (prescriptionFile) {
+              <p class="file-name">{{ prescriptionFile.name }}</p>
+            } @else {
+              <p>Drag & drop or click to browse</p>
+            }
+            <input type="file" accept=".pdf,image/*" (change)="onPrescriptionFileSelect($event)" hidden #prescInput>
+            <button class="browse-btn" (click)="prescInput.click()">Browse</button>
+            @if (prescriptionFile && !prescriptionUploaded) {
+              <button class="upload-btn" (click)="uploadPrescription()" [disabled]="uploadStep === 'uploading_prescription'">
+                {{ uploadStep === 'uploading_prescription' ? 'Uploading...' : 'Upload Prescription' }}
+              </button>
+            }
+            @if (prescriptionUploaded) {
+              <span class="success-badge">✓ Uploaded</span>
+            }
+          </div>
+        </div>
+
+        <!-- Bill Upload -->
+        <div class="upload-zone" [class.uploaded]="billUploaded"
+             (dragover)="onDragOver($event)" (drop)="onBillDrop($event)">
+          <div class="upload-zone-inner">
+            <span class="upload-icon">🧾</span>
+            <h4>Pharmacy Bill</h4>
+            @if (billFile) {
+              <p class="file-name">{{ billFile.name }}</p>
+            } @else {
+              <p>Drag & drop or click to browse</p>
+            }
+            <input type="file" accept=".pdf,image/*" (change)="onBillFileSelect($event)" hidden #billInput>
+            <button class="browse-btn" (click)="billInput.click()">Browse</button>
+            @if (billFile && !billUploaded) {
+              <button class="upload-btn" (click)="uploadBill()" [disabled]="uploadStep === 'uploading_bill'">
+                {{ uploadStep === 'uploading_bill' ? 'Uploading...' : 'Upload Bill' }}
+              </button>
+            }
+            @if (billUploaded) {
+              <span class="success-badge">✓ Uploaded</span>
+            }
+          </div>
+        </div>
+      </div>
+
+      @if (uploadError) {
+        <div class="error-msg">{{ uploadError }}</div>
+      }
+
+      @if (prescriptionUploaded && billUploaded) {
+        <div class="verify-action">
+          <button class="verify-btn" (click)="verify()" [disabled]="uploadStep === 'verifying'">
+            {{ uploadStep === 'verifying' ? 'Verifying...' : '🔍 Compare Documents' }}
+          </button>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Results Section -->
+  @if (verificationData) {
+    <div class="results-section">
+      <div class="results-header">
+        <h3>Comparison Results</h3>
+        <button class="reset-btn" (click)="reset()">↺ New Verification</button>
+      </div>
+
+      <!-- Summary chips -->
+      <div class="summary-chips">
+        <span class="chip chip-total">Prescribed: {{ verificationData.total_prescribed }}</span>
+        <span class="chip chip-billed">Billed: {{ verificationData.total_billed }}</span>
+        <span class="chip" [class.chip-alert]="verificationData.discrepancies_found > 0" [class.chip-ok]="verificationData.discrepancies_found === 0">
+          {{ verificationData.discrepancies_found }} discrepanc{{ verificationData.discrepancies_found === 1 ? 'y' : 'ies' }}
+        </span>
+      </div>
+
+      <!-- Comparison table -->
+      <div class="table-wrapper">
+        <table class="comparison-table">
+          <thead>
+            <tr>
+              <th>Medicine</th>
+              <th>Prescription</th>
+              <th>Bill</th>
+              <th>Difference</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of verificationData.comparison_items; track item.medicine_name) {
+              <tr [class.row-discrepancy]="item.discrepancy_type !== 'MATCH'">
+                <td class="med-name">{{ item.medicine_name }}</td>
+                <td>
+                  @if (item.prescription_quantity) { <div>Qty: {{ item.prescription_quantity }}</div> }
+                  @if (item.prescription_dosage) { <div class="sub">{{ item.prescription_dosage }}</div> }
+                  @if (item.prescription_duration) { <div class="sub">{{ item.prescription_duration }}</div> }
+                  @if (!item.prescription_quantity && !item.prescription_dosage) { <span class="na">—</span> }
+                </td>
+                <td>
+                  @if (item.billed_quantity) { <div>Qty: {{ item.billed_quantity }}</div> }
+                  @if (item.billed_price) { <div class="sub">₹ {{ item.billed_price }}</div> }
+                  @if (!item.billed_quantity && !item.billed_price) { <span class="na">—</span> }
+                </td>
+                <td>
+                  <span class="badge" [ngClass]="getDiscrepancyClass(item.discrepancy_type)">
+                    {{ getDiscrepancyLabel(item.discrepancy_type) }}
+                  </span>
+                  @if (item.discrepancy_detail) {
+                    <div class="disc-detail">{{ item.discrepancy_detail }}</div>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Financial summary -->
+      @if (verificationData.financial_summary) {
+        <div class="financial-block">
+          <h4>💰 Bill Financial Summary</h4>
+          <div class="fin-grid">
+            @if (verificationData.financial_summary.pharmacy_name) {
+              <div class="fin-item"><span>Pharmacy</span><span>{{ verificationData.financial_summary.pharmacy_name }}</span></div>
+            }
+            @if (verificationData.financial_summary.invoice_number) {
+              <div class="fin-item"><span>Invoice</span><span>{{ verificationData.financial_summary.invoice_number }}</span></div>
+            }
+            @if (verificationData.financial_summary.subtotal) {
+              <div class="fin-item"><span>Subtotal</span><span>₹ {{ verificationData.financial_summary.subtotal }}</span></div>
+            }
+            @if (verificationData.financial_summary.tax_amount) {
+              <div class="fin-item"><span>GST</span><span>₹ {{ verificationData.financial_summary.tax_amount }}</span></div>
+            }
+            @if (verificationData.financial_summary.total_amount) {
+              <div class="fin-item total-row"><span>Total</span><span>₹ {{ verificationData.financial_summary.total_amount }}</span></div>
+            }
+            @if (verificationData.financial_summary.payment_mode) {
+              <div class="fin-item"><span>Payment</span><span>{{ verificationData.financial_summary.payment_mode }}</span></div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Q&A Section -->
+      <div class="qa-section">
+        <h4>💬 Ask About This Verification</h4>
+        <div class="qa-input-row">
+          <input class="qa-input" type="text" [(ngModel)]="question"
+                 placeholder="e.g. Which medicine is missing from the bill?"
+                 (keyup.enter)="askQuestion()">
+          <button class="qa-btn" (click)="askQuestion()" [disabled]="qaLoading || !question.trim()">
+            {{ qaLoading ? '...' : 'Ask' }}
+          </button>
+        </div>
+        <div class="qa-suggestions">
+          <button class="suggestion-chip" (click)="question = 'Which medicines are missing from the bill?'; askQuestion()">Missing medicines?</button>
+          <button class="suggestion-chip" (click)="question = 'What is the total amount on the bill?'; askQuestion()">Total amount?</button>
+          <button class="suggestion-chip" (click)="question = 'Are there any quantity differences?'; askQuestion()">Quantity differences?</button>
+        </div>
+        @for (item of qaHistory; track item.q) {
+          <div class="qa-item">
+            <div class="qa-q">Q: {{ item.q }}</div>
+            <div class="qa-a">{{ item.a }}</div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>

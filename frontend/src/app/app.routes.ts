@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { LoginComponent } from './components/login/login.component';
 import { RegisterComponent } from './components/register/register.component';
 import { DashboardLayoutComponent } from './components/dashboard-layout/dashboard-layout.component';
+import { BillVerificationComponent } from './components/bill-verification/bill-verification.component';
 import { authGuard, guestGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
@@ -32,6 +33,11 @@ export const routes: Routes = [
   },
   {
     path: 'lab-reports',
+    component: DashboardLayoutComponent,
+    canActivate: [authGuard],
+  },
+  {
+    path: 'bill-verification',
     component: DashboardLayoutComponent,
     canActivate: [authGuard],
   },

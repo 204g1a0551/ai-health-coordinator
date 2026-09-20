@@ -24,6 +24,9 @@ import { LabReportComponent } from '../dynamic-cards/lab-report/lab-report.compo
 import { LabResultsComponent } from '../dynamic-cards/lab-results/lab-results.component';
 import { LabEvidenceComponent } from '../dynamic-cards/lab-evidence/lab-evidence.component';
 import { EmergencyAlertComponent } from '../emergency-alert/emergency-alert.component';
+import { BillComparisonComponent } from '../dynamic-cards/bill-comparison/bill-comparison.component';
+import { BillDetailsComponent } from '../dynamic-cards/bill-details/bill-details.component';
+import { VerificationEvidenceComponent } from '../dynamic-cards/verification-evidence/verification-evidence.component';
 
 @Component({
   selector: 'app-dashboard',
@@ -51,6 +54,9 @@ import { EmergencyAlertComponent } from '../emergency-alert/emergency-alert.comp
     LabResultsComponent,
     LabEvidenceComponent,
     EmergencyAlertComponent,
+    BillComparisonComponent,
+    BillDetailsComponent,
+    VerificationEvidenceComponent,
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css',

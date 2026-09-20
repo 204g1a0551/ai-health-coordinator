@@ -1,0 +1,77 @@
+<div class="bill-details-card">
+  <div class="card-header">
+    <span class="card-icon">📋</span>
+    <h3>Bill Details</h3>
+  </div>
+
+  @if (verificationData) {
+    <div class="meta-info">
+      <div class="meta-item">
+        <span class="meta-label">Verification ID</span>
+        <span class="meta-value">{{ verificationData.session_id }}</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Verified At</span>
+        <span class="meta-value">{{ verificationData.verified_at | date: 'medium' }}</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Prescription Doc</span>
+        <span class="meta-value">{{ verificationData.prescription_doc_id }}</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Bill Doc</span>
+        <span class="meta-value">{{ verificationData.bill_doc_id }}</span>
+      </div>
+    </div>
+
+    @if (verificationData.financial_summary) {
+      <div class="financial-block">
+        <h4>Financial Details</h4>
+        <div class="fin-rows">
+          @if (verificationData.financial_summary.pharmacy_name) {
+            <div class="fin-row">
+              <span>Pharmacy</span><span>{{ verificationData.financial_summary.pharmacy_name }}</span>
+            </div>
+          }
+          @if (verificationData.financial_summary.invoice_number) {
+            <div class="fin-row">
+              <span>Invoice #</span><span>{{ verificationData.financial_summary.invoice_number }}</span>
+            </div>
+          }
+          @if (verificationData.financial_summary.bill_date) {
+            <div class="fin-row">
+              <span>Bill Date</span><span>{{ verificationData.financial_summary.bill_date }}</span>
+            </div>
+          }
+          @if (verificationData.financial_summary.subtotal) {
+            <div class="fin-row">
+              <span>Subtotal</span><span>₹ {{ verificationData.financial_summary.subtotal }}</span>
+            </div>
+          }
+          @if (verificationData.financial_summary.tax_amount) {
+            <div class="fin-row">
+              <span>Tax</span><span>₹ {{ verificationData.financial_summary.tax_amount }}</span>
+            </div>
+          }
+          @if (verificationData.financial_summary.total_amount) {
+            <div class="fin-row total">
+              <span>Total</span><span>₹ {{ verificationData.financial_summary.total_amount }}</span>
+            </div>
+          }
+          @if (verificationData.financial_summary.payment_mode) {
+            <div class="fin-row">
+              <span>Payment Mode</span><span>{{ verificationData.financial_summary.payment_mode }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <div class="quick-actions">
+      <button class="action-btn" (click)="askAbout('Show bill comparison')">View Comparison</button>
+      <button class="action-btn" (click)="askAbout('Show verification evidence')">View Evidence</button>
+    </div>
+  } @else {
+    <div class="empty-state">No bill details available.</div>
+  }
+</div>

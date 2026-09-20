@@ -1,0 +1,122 @@
+<div class="bill-comparison-card">
+  <div class="card-header">
+    <span class="card-icon">🧾</span>
+    <h3>Prescription vs Bill Comparison</h3>
+  </div>
+
+  @if (verificationData) {
+    <div class="summary-chips">
+      <span class="chip chip-total">Prescribed: {{ verificationData.total_prescribed }}</span>
+      <span class="chip chip-billed">Billed: {{ verificationData.total_billed }}</span>
+      <span class="chip" [class.chip-alert]="verificationData.discrepancies_found > 0" [class.chip-ok]="verificationData.discrepancies_found === 0">
+        {{ verificationData.discrepancies_found }} discrepanc{{ verificationData.discrepancies_found === 1 ? 'y' : 'ies' }}
+      </span>
+    </div>
+
+    <div class="comparison-table-wrapper">
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th>Medicine</th>
+            <th>Prescription</th>
+            <th>Bill</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of comparisonItems; track item.medicine_name) {
+            <tr [class.row-discrepancy]="item.discrepancy_type !== 'MATCH'">
+              <td class="medicine-name">{{ item.medicine_name }}</td>
+              <td>
+                @if (item.prescription_quantity) {
+                  <div>Qty: {{ item.prescription_quantity }}</div>
+                }
+                @if (item.prescription_dosage) {
+                  <div class="sub-text">{{ item.prescription_dosage }}</div>
+                }
+                @if (item.prescription_duration) {
+                  <div class="sub-text">{{ item.prescription_duration }}</div>
+                }
+                @if (!item.prescription_quantity && !item.prescription_dosage) {
+                  <span class="not-available">—</span>
+                }
+              </td>
+              <td>
+                @if (item.billed_quantity) {
+                  <div>Qty: {{ item.billed_quantity }}</div>
+                }
+                @if (item.billed_price) {
+                  <div class="sub-text">₹ {{ item.billed_price }}</div>
+                }
+                @if (!item.billed_quantity && !item.billed_price) {
+                  <span class="not-available">—</span>
+                }
+              </td>
+              <td>
+                <span class="badge" [ngClass]="getDiscrepancyClass(item.discrepancy_type)">
+                  {{ getDiscrepancyLabel(item.discrepancy_type) }}
+                </span>
+                @if (item.discrepancy_detail) {
+                  <div class="discrepancy-detail">{{ item.discrepancy_detail }}</div>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (verificationData.financial_summary) {
+      <div class="financial-summary">
+        <h4>💰 Bill Summary</h4>
+        <div class="fin-grid">
+          @if (verificationData.financial_summary.invoice_number) {
+            <div class="fin-item">
+              <span class="fin-label">Invoice</span>
+              <span class="fin-value">{{ verificationData.financial_summary.invoice_number }}</span>
+            </div>
+          }
+          @if (verificationData.financial_summary.pharmacy_name) {
+            <div class="fin-item">
+              <span class="fin-label">Pharmacy</span>
+              <span class="fin-value">{{ verificationData.financial_summary.pharmacy_name }}</span>
+            </div>
+          }
+          @if (verificationData.financial_summary.subtotal) {
+            <div class="fin-item">
+              <span class="fin-label">Subtotal</span>
+              <span class="fin-value">₹ {{ verificationData.financial_summary.subtotal }}</span>
+            </div>
+          }
+          @if (verificationData.financial_summary.tax_amount) {
+            <div class="fin-item">
+              <span class="fin-label">Tax (GST)</span>
+              <span class="fin-value">₹ {{ verificationData.financial_summary.tax_amount }}</span>
+            </div>
+          }
+          @if (verificationData.financial_summary.total_amount) {
+            <div class="fin-item total-row">
+              <span class="fin-label">Total</span>
+              <span class="fin-value total-value">₹ {{ verificationData.financial_summary.total_amount }}</span>
+            </div>
+          }
+          @if (verificationData.financial_summary.payment_mode) {
+            <div class="fin-item">
+              <span class="fin-label">Payment</span>
+              <span class="fin-value">{{ verificationData.financial_summary.payment_mode }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <div class="quick-actions">
+      <button class="action-btn" (click)="askAbout('Show me the bill details')">Bill Details</button>
+      <button class="action-btn" (click)="askAbout('Show verification evidence')">View Evidence</button>
+    </div>
+  } @else {
+    <div class="empty-state">
+      <p>No verification data available. Upload a prescription and bill to compare.</p>
+    </div>
+  }
+</div>

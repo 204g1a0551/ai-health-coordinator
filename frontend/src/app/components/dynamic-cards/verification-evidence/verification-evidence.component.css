@@ -1,0 +1,98 @@
+.evidence-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.card-icon { font-size: 24px; }
+.card-header h3 { margin: 0; font-size: 1rem; font-weight: 600; color: #1a202c; }
+
+.evidence-list { display: flex; flex-direction: column; gap: 12px; }
+
+.evidence-item {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 14px;
+  background: #fff;
+}
+
+.evidence-discrepancy {
+  border-color: #fed7d7;
+  background: #fffbf0;
+}
+
+.evidence-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.medicine-name { font-weight: 700; color: #2d3748; font-size: 0.9rem; }
+
+.discrepancy-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: #e2e8f0;
+  color: #4a5568;
+}
+
+.evidence-body { display: flex; flex-direction: column; gap: 6px; }
+
+.evidence-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  padding: 4px 0;
+  border-bottom: 1px dashed #e2e8f0;
+  gap: 12px;
+}
+
+.ev-label { color: #718096; font-weight: 500; white-space: nowrap; }
+.ev-value { color: #2d3748; text-align: right; }
+
+.evidence-discrepancy-note {
+  margin-top: 6px;
+  padding: 6px 10px;
+  background: #fff5f5;
+  border-radius: 4px;
+  color: #c53030;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.source-info {
+  margin-top: 12px;
+  font-size: 0.72rem;
+  color: #a0aec0;
+  font-style: italic;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 8px;
+}
+
+.quick-actions { display: flex; gap: 8px; margin-top: 12px; }
+
+.action-btn {
+  padding: 7px 14px;
+  background: #4285f4;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.action-btn:hover { background: #3367d6; }
+
+.empty-state { text-align: center; padding: 24px; color: #a0aec0; font-size: 0.9rem; }

@@ -610,6 +610,24 @@ def document_agent_node(state: AgentState) -> AgentState:
         return lab_agent_node(state)
 
     # --------------------------------------------------------------------------
+    # 0.5 Bill Verification Queries
+    # --------------------------------------------------------------------------
+    from app.agents.bill_verification_agent import bill_verification_agent_node
+    is_bill_query = (
+        parsed_intent in ["VERIFY_BILL", "COMPARE_BILL", "BILL_COMPARISON", "BILL_DETAILS", "VERIFICATION_EVIDENCE"]
+        or ("compare" in user_lower and "bill" in user_lower)
+        or "verify bill" in user_lower
+        or "bill comparison" in user_lower
+        or "bill verification" in user_lower
+        or "prescription and bill" in user_lower
+        or "missing from bill" in user_lower
+        or "bill details" in user_lower
+        or "verification evidence" in user_lower
+    )
+    if is_bill_query:
+        return bill_verification_agent_node(state)
+
+    # --------------------------------------------------------------------------
     # 1. Document Upload Request ("Upload this prescription", "Upload document")
     # --------------------------------------------------------------------------
     if any(k in user_lower for k in ["upload this prescription", "upload prescription", "upload document", "upload my document", "upload medical report", "upload pdf", "choose pdf"]):

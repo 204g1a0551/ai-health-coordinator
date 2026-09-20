@@ -1,0 +1,53 @@
+<div class="evidence-card">
+  <div class="card-header">
+    <span class="card-icon">🔍</span>
+    <h3>Verification Evidence</h3>
+  </div>
+
+  @if (evidenceItems.length > 0) {
+    <div class="evidence-list">
+      @for (item of evidenceItems; track item.medicine_name) {
+        <div class="evidence-item" [class.evidence-discrepancy]="item.discrepancy_type !== 'MATCH'">
+          <div class="evidence-header">
+            <span class="medicine-name">{{ item.medicine_name }}</span>
+            <span class="discrepancy-badge">{{ getDiscrepancyLabel(item.discrepancy_type) }}</span>
+          </div>
+          <div class="evidence-body">
+            @if (item.prescription_detail) {
+              <div class="evidence-row">
+                <span class="ev-label">📄 Prescription (p.{{ item.prescription_page }})</span>
+                <span class="ev-value">{{ item.prescription_detail }}</span>
+              </div>
+            }
+            @if (item.bill_detail) {
+              <div class="evidence-row">
+                <span class="ev-label">🧾 Bill (p.{{ item.bill_page }})</span>
+                <span class="ev-value">{{ item.bill_detail }}</span>
+              </div>
+            }
+            @if (item.discrepancy_detail) {
+              <div class="evidence-discrepancy-note">
+                ⚠ {{ item.discrepancy_detail }}
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    @if (evidenceData?.prescription_doc_id) {
+      <div class="source-info">
+        <span>Source: Prescription <em>{{ evidenceData!.prescription_doc_id }}</em></span>
+        @if (evidenceData?.bill_doc_id) {
+          <span> | Bill <em>{{ evidenceData!.bill_doc_id }}</em></span>
+        }
+      </div>
+    }
+
+    <div class="quick-actions">
+      <button class="action-btn" (click)="askAbout('Show bill comparison')">View Comparison</button>
+    </div>
+  } @else {
+    <div class="empty-state">No evidence data available.</div>
+  }
+</div>
