@@ -376,6 +376,33 @@ class LLMService:
             return ParsedUserIntent(intent="UPDATE_PATIENT")
 
         # ------------------------------------------------------------------
+        # 8.5 Document AI, Medicine & Insurance Workspace Intents
+        # ------------------------------------------------------------------
+        if re.search(r"\bupload\s+(?:this\s+)?(?:prescription|document|report|bill|pdf)\b", lower):
+            return ParsedUserIntent(intent="UPLOAD_DOCUMENT")
+
+        if re.search(r"\b(?:document\s+summary|summarize\s+(?:this\s+)?document)\b", lower):
+            return ParsedUserIntent(intent="DOCUMENT_SUMMARY")
+
+        if re.search(r"\bwhat\s+medicines?\s+(?:are\s+)?mentioned\b|\bmedicines?\s+in\s+(?:this\s+)?prescription\b|\bprescribed\s+dosage\b", lower):
+            return ParsedUserIntent(intent="GET_MEDICINES")
+
+        if re.search(r"\b(?:tell\s+me\s+about\s+(?:augmentin|dolo|[a-zA-Z]+)|what\s+is\s+(?:augmentin|dolo)|medicine\s+info(?:rmation)?)\b", lower):
+            return ParsedUserIntent(intent="GET_MEDICINE_INFO")
+
+        if re.search(r"\b(?:what\s+does\s+page\s+\d+|page\s+\d+\s+say|clause\s+evidence)\b", lower):
+            return ParsedUserIntent(intent="DOCUMENT_EVIDENCE")
+
+        if re.search(r"\b(?:is\s+this\s+(?:medicine\s+)?bill\s+covered|will\s+this\s+be\s+covered|covered\s+by\s+my\s+company|coverage\s+analysis)\b", lower):
+            return ParsedUserIntent(intent="ANALYZE_INSURANCE")
+
+        if re.search(r"\bhere\s+is\s+my\s+(?:company\s+)?(?:medical\s+)?policy\b|\bshow\s+policy\b|\bupload\s+policy\b", lower):
+            return ParsedUserIntent(intent="SHOW_POLICY")
+
+        if re.search(r"\b(?:where\s+can\s+i\s+(?:buy|get|find)|where\s+to\s+buy)\s+(?:these\s+)?medicines?\b|\b(?:pharmacies?|medical\s+stores?)\s+near\b|\bnearby\s+pharmac", lower):
+            return ParsedUserIntent(intent="SEARCH_PHARMACY")
+
+        # ------------------------------------------------------------------
         # 9. General / Fallback
         # ------------------------------------------------------------------
         return ParsedUserIntent(

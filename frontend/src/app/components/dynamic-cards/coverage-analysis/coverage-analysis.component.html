@@ -1,0 +1,63 @@
+<div class="dynamic-card coverage-card">
+  <!-- Header -->
+  <div class="card-top-row">
+    <div class="title-with-icon">
+      <span class="shield-icon">🛡️</span>
+      <h2 class="card-heading">Insurance Coverage Analysis</h2>
+    </div>
+    <span class="source-tag">{{ source }}</span>
+  </div>
+
+  <!-- Coverage Status Box -->
+  <div class="coverage-status-box" [class.eligible]="isEligible()">
+    <span class="status-label">Coverage:</span>
+    <span class="status-value">{{ coverage }}</span>
+  </div>
+
+  <!-- Grounded Reason -->
+  <div class="field-block">
+    <span class="field-label">Reason:</span>
+    <p class="field-text reason-box">{{ reason }}</p>
+  </div>
+
+  <!-- Mandatory Conditions -->
+  <div class="field-block">
+    <span class="field-label">Conditions:</span>
+    <ul class="conditions-list">
+      @for (cond of conditions; track cond) {
+        <li class="condition-item">
+          <span class="check-icon">✓</span>
+          <span>{{ cond }}</span>
+        </li>
+      }
+    </ul>
+  </div>
+
+  <!-- Source Reference -->
+  <div class="field-block source-block">
+    <span class="field-label">Source:</span>
+    <span class="source-badge-text">📄 {{ source }}</span>
+  </div>
+
+  <!-- Follow-up Queries -->
+  <div class="actions-row">
+    <span class="actions-label">Ask Policy Agent:</span>
+    <div class="chips-container">
+      <button type="button" class="action-btn-chip" (click)="onSelectAction('What does page 7 say about pharmacy reimbursement?')">
+        📑 What does page 7 say?
+      </button>
+      <button type="button" class="action-btn-chip" (click)="onSelectAction('Where can I buy these medicines?')">
+        🏪 Nearby Pharmacies
+      </button>
+      <button type="button" class="action-btn-chip" (click)="onSelectAction('What medicines are mentioned?')">
+        💊 View Prescribed Medicines
+      </button>
+    </div>
+  </div>
+
+  <!-- Mandatory Insurer Disclaimer -->
+  <div class="disclaimer-footer">
+    <span class="disclaimer-icon">ℹ️</span>
+    <p class="disclaimer-text">{{ disclaimer }}</p>
+  </div>
+</div>

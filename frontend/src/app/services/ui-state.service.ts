@@ -11,6 +11,13 @@ export type UIActionType =
   | 'SHOW_NEARBY_DOCTORS'
   | 'SHOW_PHARMACIES'
   | 'SHOW_APPOINTMENT'
+  | 'SHOW_DOCUMENT_UPLOAD'
+  | 'SHOW_DOCUMENT_SUMMARY'
+  | 'SHOW_MEDICINES'
+  | 'SHOW_MEDICINE_INFO'
+  | 'SHOW_POLICY'
+  | 'SHOW_COVERAGE_ANALYSIS'
+  | 'SHOW_DOCUMENT_EVIDENCE'
   | 'HIDE_COMPONENT'
   | 'CLEAR_DASHBOARD';
 
@@ -91,6 +98,27 @@ export class UIStateService {
       case 'SHOW_APPOINTMENT':
       case 'BOOK_APPOINTMENT':
         return 'SHOW_APPOINTMENT';
+      case 'SHOW_DOCUMENT_UPLOAD':
+      case 'UPLOAD_DOCUMENT':
+        return 'SHOW_DOCUMENT_UPLOAD';
+      case 'SHOW_DOCUMENT_SUMMARY':
+      case 'DOCUMENT_SUMMARY':
+        return 'SHOW_DOCUMENT_SUMMARY';
+      case 'SHOW_MEDICINES':
+      case 'GET_MEDICINES':
+        return 'SHOW_MEDICINES';
+      case 'SHOW_MEDICINE_INFO':
+      case 'GET_MEDICINE_INFO':
+        return 'SHOW_MEDICINE_INFO';
+      case 'SHOW_POLICY':
+        return 'SHOW_POLICY';
+      case 'SHOW_COVERAGE_ANALYSIS':
+      case 'SHOW_INSURANCE_COVERAGE':
+      case 'ANALYZE_INSURANCE':
+        return 'SHOW_COVERAGE_ANALYSIS';
+      case 'SHOW_DOCUMENT_EVIDENCE':
+      case 'DOCUMENT_EVIDENCE':
+        return 'SHOW_DOCUMENT_EVIDENCE';
       case 'CLEAR_DASHBOARD':
       case 'CLEAR_APPOINTMENT':
       case 'HIDE_COMPONENT':

@@ -1,0 +1,52 @@
+<div class="dynamic-card med-info-card">
+  <!-- Header -->
+  <div class="info-header">
+    <div class="info-icon">🔬</div>
+    <div class="info-title-wrap">
+      <span class="info-badge">{{ category }}</span>
+      <h2 class="info-name">{{ medicineName }}</h2>
+      <span class="generic-sub">{{ genericName }}</span>
+    </div>
+  </div>
+
+  <!-- Indication & Administration Box -->
+  <div class="content-box">
+    <div class="box-row">
+      <span class="row-label">Clinical Indication:</span>
+      <p class="row-text">{{ indication }}</p>
+    </div>
+
+    <div class="box-row">
+      <span class="row-label">Dosage Form:</span>
+      <span class="row-badge">{{ dosageForm }}</span>
+    </div>
+
+    <div class="box-row">
+      <span class="row-label">Administration Guidelines:</span>
+      <p class="row-text">{{ administrationAdvice }}</p>
+    </div>
+  </div>
+
+  <!-- Known Side Effects -->
+  <div class="effects-section">
+    <span class="effects-label">Notable Side Effects / Precautions:</span>
+    <div class="effects-tags">
+      @for (effect of sideEffects; track effect) {
+        <span class="effect-tag">⚠️ {{ effect }}</span>
+      }
+    </div>
+  </div>
+
+  <!-- Source Reference -->
+  <div class="source-strip">
+    <span class="source-label">Formulary Reference:</span>
+    <span class="source-text">{{ sourceReference }}</span>
+  </div>
+
+  <!-- Action CTA -->
+  <div class="cta-row">
+    <button type="button" class="pharmacy-cta-btn" (click)="onFindPharmacies()">
+      🏪 Where can I buy these medicines?
+    </button>
+  </div>
+</div>

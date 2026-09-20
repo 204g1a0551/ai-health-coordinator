@@ -39,8 +39,57 @@
       <app-nearby-doctors [data]="uiState.state().currentData" />
     }
 
+    @case ('SHOW_DOCUMENT_UPLOAD') {
+      <app-medical-document-upload
+        [data]="uiState.state().currentData"
+        (uploadComplete)="onDocumentUploaded($event)"
+      />
+    }
+
+    @case ('SHOW_DOCUMENT_SUMMARY') {
+      <app-document-summary
+        [data]="uiState.state().currentData"
+        (actionClicked)="onPromptSelected($event)"
+      />
+    }
+
+    @case ('SHOW_MEDICINES') {
+      <app-extracted-medicines
+        [data]="uiState.state().currentData"
+        (actionClicked)="onPromptSelected($event)"
+      />
+    }
+
+    @case ('SHOW_MEDICINE_INFO') {
+      <app-medicine-information
+        [data]="uiState.state().currentData"
+        (findPharmacies)="onPromptSelected($event)"
+      />
+    }
+
     @case ('SHOW_PHARMACIES') {
       <app-nearby-pharmacies [data]="uiState.state().currentData" />
+    }
+
+    @case ('SHOW_POLICY') {
+      <app-insurance-policy
+        [data]="uiState.state().currentData"
+        (actionClicked)="onPromptSelected($event)"
+      />
+    }
+
+    @case ('SHOW_COVERAGE_ANALYSIS') {
+      <app-coverage-analysis
+        [data]="uiState.state().currentData"
+        (actionClicked)="onPromptSelected($event)"
+      />
+    }
+
+    @case ('SHOW_DOCUMENT_EVIDENCE') {
+      <app-document-evidence
+        [data]="uiState.state().currentData"
+        (actionClicked)="onPromptSelected($event)"
+      />
     }
 
     @case ('SHOW_APPOINTMENT') {

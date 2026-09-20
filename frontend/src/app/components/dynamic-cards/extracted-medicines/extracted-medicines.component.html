@@ -1,0 +1,70 @@
+<div class="dynamic-card rx-card">
+  <!-- Card Header -->
+  <div class="rx-header">
+    <div class="rx-icon">💊</div>
+    <div class="rx-header-info">
+      <div class="top-row">
+        <span class="rx-badge">Prescription Analysis</span>
+        <span class="page-badge">Source: {{ docName }} — Page {{ sourcePage }}</span>
+      </div>
+      <h2 class="rx-title">Extracted Medicines</h2>
+    </div>
+  </div>
+
+  <!-- Medicines List -->
+  <div class="medicines-list">
+    @for (med of medicines; track med.name) {
+      <div class="med-card">
+        <div class="med-top">
+          <span class="med-name">{{ med.name }}</span>
+          <span class="dosage-tag">{{ med.dosage }}</span>
+        </div>
+
+        <div class="med-details-grid">
+          <div class="detail-item">
+            <span class="detail-lbl">Frequency:</span>
+            <span class="detail-val">{{ med.frequency }}</span>
+          </div>
+          @if (med.duration) {
+            <div class="detail-item">
+              <span class="detail-lbl">Duration:</span>
+              <span class="detail-val">{{ med.duration }}</span>
+            </div>
+          }
+        </div>
+
+        @if (med.instructions) {
+          <div class="instructions-row">
+            <span class="inst-icon">ℹ️</span>
+            <span class="inst-text">{{ med.instructions }}</span>
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Interactive Action Chips -->
+  <div class="actions-block">
+    <span class="block-label">Follow-up Actions:</span>
+    <div class="chips-container">
+      <button type="button" class="query-chip" (click)="onSelectAction('Where can I buy these medicines?')">
+        🏪 Where can I buy these medicines?
+      </button>
+      <button type="button" class="query-chip" (click)="onSelectAction('Tell me about Augmentin')">
+        📖 Tell me about Augmentin
+      </button>
+      <button type="button" class="query-chip" (click)="onSelectAction('Is this medicine bill covered by my company policy?')">
+        🛡️ Check Insurance Coverage
+      </button>
+    </div>
+  </div>
+
+  <!-- Clinical Safety Disclaimer -->
+  <div class="safety-notice">
+    <span class="notice-icon">⚠️</span>
+    <p class="notice-text">
+      Medicines listed strictly as extracted from your uploaded prescription.
+      Do not alter doses, substitute, or start any medication without your doctor's explicit consultation.
+    </p>
+  </div>
+</div>

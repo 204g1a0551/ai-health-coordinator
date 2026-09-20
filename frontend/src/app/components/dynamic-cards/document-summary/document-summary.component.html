@@ -1,0 +1,60 @@
+<div class="dynamic-card summary-card">
+  <!-- Card Header -->
+  <div class="summary-header">
+    <div class="icon-wrap">📋</div>
+    <div class="title-wrap">
+      <div class="badge-row">
+        <span class="type-badge">{{ docType }}</span>
+        <span class="source-badge">Source: Page {{ sourcePage }}</span>
+      </div>
+      <h2 class="doc-title">{{ fileName }}</h2>
+    </div>
+  </div>
+
+  <!-- Physician & Hospital Metadata Grid -->
+  <div class="metadata-grid">
+    <div class="meta-item">
+      <span class="meta-label">Consulting Doctor</span>
+      <span class="meta-val">👨‍⚕️ {{ doctor }}</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Facility</span>
+      <span class="meta-val">🏥 {{ hospital }}</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Consultation Date</span>
+      <span class="meta-val">📅 {{ consultationDate }}</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Identified Medicines</span>
+      <span class="meta-val highlight">💊 {{ medicinesCount }} items</span>
+    </div>
+  </div>
+
+  <!-- Grounded Summary Text -->
+  <div class="summary-box">
+    <span class="box-label">Grounded Clinical Summary</span>
+    <p class="summary-p">{{ summary }}</p>
+  </div>
+
+  <!-- Interactive AI Flow Action Buttons -->
+  <div class="actions-section">
+    <span class="actions-label">Next Steps &amp; Inquiries:</span>
+    <div class="chips-wrap">
+      <button type="button" class="action-chip" (click)="onSelectAction('What medicines are mentioned?')">
+        💊 What medicines are mentioned?
+      </button>
+      <button type="button" class="action-chip" (click)="onSelectAction('Where can I buy these medicines?')">
+        🏪 Where can I buy these medicines?
+      </button>
+      <button type="button" class="action-chip" (click)="onSelectAction('Is this medicine bill covered by my company policy?')">
+        🛡️ Is this covered by my company policy?
+      </button>
+    </div>
+  </div>
+
+  <!-- Disclaimer Footer -->
+  <div class="disclaimer-bar">
+    <small>🔒 Extracted strictly from uploaded document for clinical coordination. Does not constitute independent medical advice.</small>
+  </div>
+</div>

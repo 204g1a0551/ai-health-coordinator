@@ -13,6 +13,13 @@ import { SlotComponent } from '../dynamic-cards/slot/slot.component';
 import { NearbyDoctorsComponent } from '../dynamic-cards/nearby-doctors/nearby-doctors.component';
 import { NearbyPharmaciesComponent } from '../dynamic-cards/nearby-pharmacies/nearby-pharmacies.component';
 import { AppointmentComponent } from '../dynamic-cards/appointment/appointment.component';
+import { MedicalDocumentUploadComponent } from '../dynamic-cards/medical-document-upload/medical-document-upload.component';
+import { DocumentSummaryComponent } from '../dynamic-cards/document-summary/document-summary.component';
+import { ExtractedMedicinesComponent } from '../dynamic-cards/extracted-medicines/extracted-medicines.component';
+import { MedicineInformationComponent } from '../dynamic-cards/medicine-information/medicine-information.component';
+import { InsurancePolicyComponent } from '../dynamic-cards/insurance-policy/insurance-policy.component';
+import { CoverageAnalysisComponent } from '../dynamic-cards/coverage-analysis/coverage-analysis.component';
+import { DocumentEvidenceComponent } from '../dynamic-cards/document-evidence/document-evidence.component';
 
 @Component({
   selector: 'app-dashboard',
@@ -29,6 +36,13 @@ import { AppointmentComponent } from '../dynamic-cards/appointment/appointment.c
     NearbyDoctorsComponent,
     NearbyPharmaciesComponent,
     AppointmentComponent,
+    MedicalDocumentUploadComponent,
+    DocumentSummaryComponent,
+    ExtractedMedicinesComponent,
+    MedicineInformationComponent,
+    InsurancePolicyComponent,
+    CoverageAnalysisComponent,
+    DocumentEvidenceComponent,
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css',
@@ -36,6 +50,11 @@ import { AppointmentComponent } from '../dynamic-cards/appointment/appointment.c
 export class DashboardComponent {
   protected readonly uiState = inject(UIStateService);
   protected readonly chatService = inject(ChatService);
+
+  /** Handle document upload completion */
+  onDocumentUploaded(summaryData: any): void {
+    this.uiState.dispatchAction('SHOW_DOCUMENT_SUMMARY', summaryData);
+  }
 
   /** Forward prompt-chip selection from WelcomeComponent to the chat */
   onPromptSelected(prompt: string): void {

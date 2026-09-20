@@ -111,15 +111,33 @@ INSURANCE_PATTERNS = [
 ]
 
 
+DOCUMENT_PATTERNS = [
+    r"\bupload\s+(?:this\s+)?(?:prescription|document|medical\s+report|bill|pdf)\b",
+    r"\bdocument\s+summary\b|\bsummarize\s+(?:this\s+)?document\b",
+    r"\bwhat\s+medicines?\s+(?:are\s+)?mentioned\b",
+    r"\bmedicines?\s+in\s+(?:this\s+)?prescription\b",
+    r"\bwhat\s+is\s+the\s+prescribed\s+dosage\b",
+    r"\btell\s+me\s+about\s+(?:augmentin|dolo|[a-zA-Z]+)\b",
+    r"\bwhat\s+is\s+(?:augmentin|dolo)\b",
+    r"\bmedicine\s+info(?:rmation)?\b",
+    r"\bwhat\s+does\s+page\s+\d+\b",
+    r"\bpage\s+\d+\s+say\b",
+    r"\bhere\s+is\s+my\s+(?:company\s+)?(?:medical\s+)?policy\b",
+]
+
+
 def supervisor_node(state: AgentState) -> AgentState:
     """
     Supervisor Agent:
     Evaluates LLM parsed intent & entities, dynamically routing to the appropriate agent:
+    - 'document_agent': unified document intelligence orchestrator:
+        ├── Prescription Agent (Upload, Document Summary, Medicines extraction)
+        ├── Medicine Agent (Pharmacology reference, indications, dosages)
+        ├── Pharmacy Agent (Nearby pharmacy store discovery)
+        └── Insurance Policy Agent (Policy rules, coverage comparison, evidence)
     - 'final_response': for clarification requests or greetings
-    - 'insurance_agent': insurance & reimbursement policy coverage analysis
     - 'patient_info_agent': demographic/contact management
     - 'location_agent': location-aware / radius-based nearby doctor discovery
-    - 'medicine_search_agent': medicine & nearby pharmacy store search
     - 'symptom_agent': clinical symptoms (routes -> department -> doctor/slot -> ui_agent)
     - 'doctor_slot_agent': booking, browsing doctors, filtering slots
     - 'appointment_agent': direct cancellation, status, or clearing
@@ -131,10 +149,8 @@ def supervisor_node(state: AgentState) -> AgentState:
 
     if intent == "CLARIFICATION" or parsed.get("needs_clarification"):
         route = "final_response"
-    elif intent in ["ANALYZE_INSURANCE", "CHECK_COVERAGE", "CHECK_REIMBURSEMENT"]:
-        route = "insurance_agent"
-    elif intent in ["SEARCH_PHARMACY", "SEARCH_MEDICINE"]:
-        route = "medicine_search_agent"
+    elif intent in ["UPLOAD_DOCUMENT", "ANALYZE_INSURANCE", "CHECK_COVERAGE", "CHECK_REIMBURSEMENT", "SEARCH_PHARMACY", "SEARCH_MEDICINE", "DOCUMENT_SUMMARY", "GET_MEDICINES", "GET_MEDICINE_INFO"]:
+        route = "document_agent"
     elif intent == "UPDATE_PATIENT":
         route = "patient_info_agent"
     elif intent == "BOOK_APPOINTMENT":
@@ -149,6 +165,7 @@ def supervisor_node(state: AgentState) -> AgentState:
         route = "symptom_agent"
     else:
         # Fallback to pattern matching
+        is_document_query = any(re.search(pat, user_msg) for pat in DOCUMENT_PATTERNS)
         is_insurance_query = any(re.search(pat, user_msg) for pat in INSURANCE_PATTERNS)
         is_pharmacy_query = any(re.search(pat, user_msg) for pat in PHARMACY_PATTERNS)
         is_patient_info = any(re.search(pat, user_msg) for pat in PATIENT_INFO_PATTERNS)
@@ -159,10 +176,8 @@ def supervisor_node(state: AgentState) -> AgentState:
         is_browsing_slots = any(re.search(kw, user_msg) for kw in SLOT_BROWSE_KEYWORDS)
         has_dept = any(re.search(kw, user_msg) for kw in DEPARTMENT_KEYWORDS)
 
-        if is_insurance_query:
-            route = "insurance_agent"
-        elif is_pharmacy_query:
-            route = "medicine_search_agent"
+        if is_document_query or is_insurance_query or is_pharmacy_query:
+            route = "document_agent"
         elif is_patient_info:
             route = "patient_info_agent"
         elif is_booking_action:

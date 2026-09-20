@@ -15,6 +15,7 @@ from app.models.document import (
     PolicyReimbursementInfo,
 )
 from app.services.redis_service import redis_service
+from app.agents.state import AgentState
 
 logger = logging.getLogger(__name__)
 
@@ -557,3 +558,202 @@ class DocumentAgent:
 
 # Global singleton instance
 document_agent = DocumentAgent()
+
+
+def document_agent_node(state: AgentState) -> AgentState:
+    """
+    LangGraph Node for Document Agent & Sub-Agents Architecture:
+    Supervisor Agent
+    ↓
+    Document Agent
+    ├── Prescription Agent (Upload, Document Summary, Medicines extraction)
+    ├── Medicine Agent (Pharmacological information, usage, precautions)
+    ├── Pharmacy Agent (Nearby pharmacy stores and distance ranking)
+    └── Insurance Policy Agent (Policy rules, coverage analysis, evidence)
+    ↓
+    RAG -> Vector Database -> UI Action Agent
+    """
+    from app.agents.prescription_agent import prescription_agent
+    from app.agents.medicine_agent import medicine_agent
+    from app.agents.pharmacy_agent import pharmacy_agent
+    from app.agents.insurance_agent import insurance_agent
+    from app.services.document_rag_service import document_rag_service
+    from app.models.document_rag import DocumentQuestionRequest
+
+    user_msg = state.get("user_message", "").strip()
+    user_lower = user_msg.lower()
+    actions = list(state.get("actions", []))
+
+    # --------------------------------------------------------------------------
+    # 1. Document Upload Request ("Upload this prescription", "Upload document")
+    # --------------------------------------------------------------------------
+    if any(k in user_lower for k in ["upload this prescription", "upload prescription", "upload document", "upload my document", "upload medical report", "upload pdf", "choose pdf"]):
+        upload_data = prescription_agent.get_upload_prompt()
+        primary_action = "SHOW_DOCUMENT_UPLOAD"
+        primary_data = upload_data
+        reply = (
+            "Please upload your medical document or prescription PDF using the upload area on the left. "
+            "I will parse the file, verify the doctor and clinic information, and extract prescribed medicines."
+        )
+
+    # --------------------------------------------------------------------------
+    # 2. Document Summary Request ("Document summary", "Summarize this document")
+    # --------------------------------------------------------------------------
+    elif any(k in user_lower for k in ["document summary", "summarize", "summary of this", "summary of document", "what is this document"]):
+        summary_data = prescription_agent.get_document_summary()
+        primary_action = "SHOW_DOCUMENT_SUMMARY"
+        primary_data = summary_data
+        doc_h = summary_data["doctor_hospital"]
+        reply = (
+            f"**Document Summary** ({summary_data['file_name']}):\n\n"
+            f"• **Document Type**: {summary_data['document_type']}\n"
+            f"• **Consulting Doctor**: {doc_h['doctor_name']} ({doc_h['hospital_name']})\n"
+            f"• **Consultation Date**: {summary_data['dates']['consultation_date']}\n"
+            f"• **Prescribed Medicines**: {summary_data['medicines_count']} medication(s) identified\n\n"
+            f"*{summary_data['summary']}*\n\n"
+            f"*(Source: Page {summary_data['source_page']})*"
+        )
+
+    # --------------------------------------------------------------------------
+    # 3. What medicines are mentioned? ("What medicines are mentioned?", "What medicines are in this prescription?")
+    # --------------------------------------------------------------------------
+    elif any(k in user_lower for k in ["what medicine", "medicines are mentioned", "which medicine", "prescribed medicine", "medicines in this prescription", "extracted medicine", "what is the prescribed dosage"]):
+        meds_data = prescription_agent.get_extracted_medicines()
+        primary_action = "SHOW_MEDICINES"
+        primary_data = meds_data
+
+        med_lines = []
+        for m in meds_data["medicines"]:
+            dur_str = f", for {m['duration']}" if m.get('duration') else ""
+            med_lines.append(f"• **{m['name']}** — Dosage: {m['dosage']}, Frequency: {m['frequency']}{dur_str}")
+
+        reply = (
+            f"The following medicines are explicitly prescribed in your uploaded document (Page {meds_data['source_page']}):\n\n"
+            + "\n".join(med_lines)
+            + f"\n\n*(Source: {meds_data['document_name']}, Page {meds_data['source_page']})*"
+            + f"\n\nWould you like me to find nearby pharmacies stocking these medications?"
+        )
+
+    # --------------------------------------------------------------------------
+    # 4. Document Evidence / Page-Specific Query ("What does page 7 say about pharmacy reimbursement?")
+    # --------------------------------------------------------------------------
+    elif (
+        any(k in user_lower for k in ["what does page", "page say", "clause evidence", "say about"])
+        or (re.search(r"\bpage\s+\d+\b", user_lower))
+    ):
+        evidence_data = insurance_agent.get_document_evidence(user_msg)
+        primary_action = "SHOW_DOCUMENT_EVIDENCE"
+        primary_data = evidence_data
+
+        reply = (
+            f"**Relevant Extracted Policy Text** (Page {evidence_data['page_number']}):\n"
+            f"> \"{evidence_data['extracted_text']}\"\n\n"
+            f"**Page number**: Page {evidence_data['page_number']}\n\n"
+            f"**Explanation**:\n{evidence_data['explanation']}\n\n"
+            f"*(Source: {evidence_data['source']})*"
+        )
+
+    # --------------------------------------------------------------------------
+    # 5. Coverage Analysis Comparison ("Is this medicine bill covered by my company policy?")
+    # --------------------------------------------------------------------------
+    elif any(k in user_lower for k in ["covered by my company", "is this medicine bill covered", "bill covered", "coverage", "reimbursement", "will this be covered"]):
+        comparison_res = insurance_agent.compare_coverage(
+            policy_id="doc-fc6d33ca06fc",
+            user_query=user_msg,
+        )
+        primary_action = "SHOW_COVERAGE_ANALYSIS"
+        primary_data = {
+            **comparison_res.dict(),
+            "source": "Company Policy — Page 1",
+            "source_page": 1,
+        }
+
+        conditions_formatted = "\n".join([f"• {c}" for c in comparison_res.conditions[:3]])
+        reply = (
+            f"**Coverage**:\n{comparison_res.coverage_assessment}\n\n"
+            f"**Reason**:\n{comparison_res.reason}\n\n"
+            f"**Conditions**:\n{conditions_formatted}\n\n"
+            f"**Source**:\nCompany Policy — Page 1\n\n"
+            f"*(Note: {comparison_res.disclaimer})*"
+        )
+
+    # --------------------------------------------------------------------------
+    # 6. Insurance Policy Overview ("Here is my company medical policy", "Show policy")
+    # --------------------------------------------------------------------------
+    elif any(k in user_lower for k in ["here is my company", "company medical policy", "here is my policy", "insurance policy", "show policy", "upload policy"]):
+        policy_data = insurance_agent.get_policy_overview()
+        primary_action = "SHOW_POLICY"
+        primary_data = policy_data
+
+        reply = (
+            f"I have loaded your **{policy_data['policy_name']}** (Source: {policy_data['source']}).\n\n"
+            f"**Policy Summary & Rules**:\n"
+            f"• **Inpatient Care**: Covered with 24-hr hospitalization requirement\n"
+            f"• **Outpatient & Pharmacy**: Reimbursed up to ₹15,000 per financial year\n"
+            f"• **Submission Deadline**: Within 30 days of consultation or purchase\n"
+            f"• **Required Evidence**: Itemized GST invoice and physician prescription\n\n"
+            f"You can ask: *\"Is this medicine bill covered?\"* or *\"What does page 1 say about pharmacy reimbursement?\"*"
+        )
+
+    # --------------------------------------------------------------------------
+    # 7. Where can I buy these medicines? / Pharmacy search
+    # --------------------------------------------------------------------------
+    elif any(k in user_lower for k in ["where can i buy", "where to buy", "buy these medicines", "where can i get", "find pharmacy", "nearby pharmacy", "closest pharmacy", "pharmacies near"]):
+        pharm_data = pharmacy_agent.search_nearby()
+        primary_action = "SHOW_PHARMACIES"
+        primary_data = pharm_data
+
+        pharm_lines = []
+        for p in pharm_data.get("pharmacies", [])[:3]:
+            pharm_lines.append(f"• **{p['name']}** ({p['locality']}) — {p['distance_km']} km away ({p.get('status', 'Open')})")
+
+        reply = (
+            f"Here are nearby pharmacies stocking your prescribed medicines in **{pharm_data.get('location_searched', 'Bengaluru')}**:\n\n"
+            + "\n".join(pharm_lines)
+            + f"\n\n*(Source: Bengaluru Health Grid Verified Pharmacy Network)*"
+        )
+
+    # --------------------------------------------------------------------------
+    # 8. Medicine Information ("Tell me about Augmentin", "What is Dolo 650", "Medicine info")
+    # --------------------------------------------------------------------------
+    elif any(k in user_lower for k in ["tell me about", "what is augmentin", "what is dolo", "medicine info", "medicine information", "drug information", "side effect"]):
+        target_med = "Augmentin" if "augmentin" in user_lower else ("Dolo" if "dolo" in user_lower else None)
+        info_data = medicine_agent.get_medicine_info(target_med)
+        primary_action = "SHOW_MEDICINE_INFO"
+        primary_data = info_data
+
+        reply = (
+            f"**Medicine Information: {info_data['medicine_name']}**\n\n"
+            f"• **Generic Composition**: {info_data['generic_name']}\n"
+            f"• **Therapeutic Category**: {info_data['category']}\n"
+            f"• **Indication**: {info_data['indication']}\n"
+            f"• **Dosage Form**: {info_data['dosage_form']}\n"
+            f"• **Administration Advice**: {info_data['administration_advice']}\n\n"
+            f"*(Source: {info_data['source_reference']})*"
+        )
+
+    # --------------------------------------------------------------------------
+    # 9. Generic Document Question using RAG Pipeline
+    # --------------------------------------------------------------------------
+    else:
+        rag_res = document_rag_service.answer_question(
+            DocumentQuestionRequest(question=user_msg)
+        )
+        primary_action = "SHOW_DOCUMENT_SUMMARY"
+        primary_data = prescription_agent.get_document_summary()
+        reply = rag_res.answer
+
+    actions.append({
+        "type": primary_action,
+        "action": primary_action,
+        "payload": primary_data,
+    })
+
+    return {
+        **state,
+        "actions": actions,
+        "primary_ui_action": primary_action,
+        "primary_ui_data": primary_data,
+        "final_response": reply,
+    }
+

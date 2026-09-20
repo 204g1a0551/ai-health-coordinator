@@ -1,0 +1,60 @@
+<div class="dynamic-card policy-card">
+  <!-- Header -->
+  <div class="policy-header">
+    <div class="policy-icon">🛡️</div>
+    <div class="policy-title-wrap">
+      <div class="top-row">
+        <span class="policy-badge">{{ category }}</span>
+        <span class="source-badge">{{ source }}</span>
+      </div>
+      <h2 class="policy-title">{{ policyName }}</h2>
+    </div>
+  </div>
+
+  <!-- Core Rules Grid -->
+  <div class="rules-grid">
+    <div class="rule-box">
+      <span class="rule-lbl">🏥 Inpatient &amp; Day Care</span>
+      <span class="rule-val">Covered for hospitalizations &gt; 24h &amp; listed daycare procedures</span>
+    </div>
+    <div class="rule-box">
+      <span class="rule-lbl">💊 Pharmacy Benefit</span>
+      <span class="rule-val">{{ limits }}</span>
+    </div>
+    <div class="rule-box">
+      <span class="rule-lbl">⏳ Claim Submission Deadline</span>
+      <span class="rule-val">{{ deadline }}</span>
+    </div>
+    <div class="rule-box">
+      <span class="rule-lbl">📑 Required Documentation</span>
+      <span class="rule-val">Original GST invoice + physician prescription</span>
+    </div>
+  </div>
+
+  <!-- Summary Box -->
+  <div class="summary-box">
+    <span class="box-lbl">Policy Summary:</span>
+    <p class="summary-text">{{ summary }}</p>
+  </div>
+
+  <!-- Interactive Action Chips -->
+  <div class="actions-box">
+    <span class="actions-lbl">Check Eligibility &amp; Evidence:</span>
+    <div class="chips-list">
+      <button type="button" class="act-chip" (click)="onSelectAction('Is this medicine bill covered by my company policy?')">
+        ⚖️ Is this medicine bill covered?
+      </button>
+      <button type="button" class="act-chip" (click)="onSelectAction('What does page 7 say about pharmacy reimbursement?')">
+        🔍 What does page 7 say about reimbursement?
+      </button>
+      <button type="button" class="act-chip" (click)="onSelectAction('What medicines are mentioned?')">
+        💊 View Extracted Medicines
+      </button>
+    </div>
+  </div>
+
+  <!-- Insurer Disclaimer -->
+  <div class="disclaimer-bar">
+    <small>⚠️ Preliminary policy extraction. Final claim adjudication belongs exclusively to your insurer or policy administrator.</small>
+  </div>
+</div>

@@ -1,0 +1,157 @@
+.policy-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+}
+
+.policy-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.policy-icon {
+  font-size: 28px;
+  background: #f0fdf4;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid #bbf7d0;
+}
+
+.policy-title-wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.top-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.policy-badge {
+  background: #dcfce7;
+  color: #166534;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.source-badge {
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.policy-title {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.rules-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.rule-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rule-lbl {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+}
+
+.rule-val {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.summary-box {
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.box-lbl {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #0369a1;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.summary-text {
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  color: #0c4a6e;
+}
+
+.actions-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.actions-lbl {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.chips-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.act-chip {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  color: #1e293b;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.act-chip:hover {
+  background: #0284c7;
+  border-color: #0284c7;
+  color: #ffffff;
+}
+
+.disclaimer-bar {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  line-height: 1.35;
+}

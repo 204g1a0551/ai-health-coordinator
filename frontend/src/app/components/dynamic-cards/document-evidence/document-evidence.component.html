@@ -1,0 +1,57 @@
+<div class="dynamic-card evidence-card">
+  <!-- Header -->
+  <div class="evidence-header">
+    <div class="evidence-icon">🔍</div>
+    <div class="evidence-title-box">
+      <div class="badge-row">
+        <span class="evidence-badge">Document Evidence</span>
+        <span class="page-pill">Page {{ pageNumber }}</span>
+      </div>
+      <h2 class="card-title">{{ documentName }}</h2>
+    </div>
+  </div>
+
+  <!-- User Query Echo -->
+  <div class="query-echo">
+    <span class="echo-label">Inquiry:</span>
+    <span class="echo-text">"{{ userQuery }}"</span>
+  </div>
+
+  <!-- Relevant Extracted Policy Text -->
+  <div class="evidence-block">
+    <div class="block-top">
+      <span class="block-label">Relevant Extracted Policy Text:</span>
+      <span class="page-badge">Page {{ pageNumber }}</span>
+    </div>
+    <blockquote class="quote-text">
+      "{{ extractedText }}"
+    </blockquote>
+  </div>
+
+  <!-- Explanation -->
+  <div class="explanation-block">
+    <span class="block-label">Explanation:</span>
+    <p class="explanation-text">{{ explanation }}</p>
+  </div>
+
+  <!-- Interactive Action Chips -->
+  <div class="actions-section">
+    <span class="actions-label">Next Questions:</span>
+    <div class="chips-wrap">
+      <button type="button" class="act-chip" (click)="onSelectAction('Is this medicine bill covered by my company policy?')">
+        ⚖️ Check Bill Coverage
+      </button>
+      <button type="button" class="act-chip" (click)="onSelectAction('Where can I buy these medicines?')">
+        🏪 Nearby Pharmacies
+      </button>
+      <button type="button" class="act-chip" (click)="onSelectAction('What medicines are mentioned?')">
+        💊 Prescribed Medicines
+      </button>
+    </div>
+  </div>
+
+  <!-- Grounding Notice -->
+  <div class="grounding-footer">
+    <small>🔒 Cited directly from document vector store. No LLM hallucinations permitted.</small>
+  </div>
+</div>

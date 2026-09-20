@@ -14,11 +14,19 @@ ALLOWED_ACTIONS = {
     "SHOW_DOCTOR_DETAILS",
     "SHOW_SLOTS",
     "SHOW_NEARBY_DOCTORS",
-    "SHOW_PHARMACIES",
-    "SHOW_INSURANCE_COVERAGE",
     "SHOW_APPOINTMENT",
     "HIDE_COMPONENT",
     "CLEAR_DASHBOARD",
+    # Document AI Predefined Actions
+    "SHOW_DOCUMENT_UPLOAD",
+    "SHOW_DOCUMENT_SUMMARY",
+    "SHOW_MEDICINES",
+    "SHOW_MEDICINE_INFO",
+    "SHOW_PHARMACIES",
+    "SHOW_POLICY",
+    "SHOW_COVERAGE_ANALYSIS",
+    "SHOW_DOCUMENT_EVIDENCE",
+    "SHOW_INSURANCE_COVERAGE",  # alias for SHOW_COVERAGE_ANALYSIS
     # Legacy / alias compatibility
     "UPDATE_SYMPTOMS",
     "UPDATE_DEPARTMENT",
@@ -102,7 +110,72 @@ def ui_action_node(state: AgentState) -> AgentState:
         primary_data = {"message": "Dashboard cleared"}
 
     # --------------------------------------------------------------------------
-    # 1.5. Pharmacy & Medicine Search
+    # 1.1 Document Upload Request ("Upload this prescription")
+    # --------------------------------------------------------------------------
+    elif any(a.get("action") == "SHOW_DOCUMENT_UPLOAD" or a.get("type") == "SHOW_DOCUMENT_UPLOAD" for a in raw_actions):
+        primary_action = "SHOW_DOCUMENT_UPLOAD"
+        act = next((a for a in raw_actions if a.get("action") == "SHOW_DOCUMENT_UPLOAD" or a.get("type") == "SHOW_DOCUMENT_UPLOAD"), None)
+        primary_data = act.get("payload") or act.get("data") or {}
+
+    # --------------------------------------------------------------------------
+    # 1.2 Document Summary ("Document summary", after upload)
+    # --------------------------------------------------------------------------
+    elif any(a.get("action") == "SHOW_DOCUMENT_SUMMARY" or a.get("type") == "SHOW_DOCUMENT_SUMMARY" for a in raw_actions):
+        primary_action = "SHOW_DOCUMENT_SUMMARY"
+        act = next((a for a in raw_actions if a.get("action") == "SHOW_DOCUMENT_SUMMARY" or a.get("type") == "SHOW_DOCUMENT_SUMMARY"), None)
+        primary_data = act.get("payload") or act.get("data") or {}
+
+    # --------------------------------------------------------------------------
+    # 1.3 Extracted Medicines ("What medicines are mentioned?")
+    # --------------------------------------------------------------------------
+    elif any(a.get("action") == "SHOW_MEDICINES" or a.get("type") == "SHOW_MEDICINES" for a in raw_actions):
+        primary_action = "SHOW_MEDICINES"
+        act = next((a for a in raw_actions if a.get("action") == "SHOW_MEDICINES" or a.get("type") == "SHOW_MEDICINES"), None)
+        primary_data = act.get("payload") or act.get("data") or {}
+
+    # --------------------------------------------------------------------------
+    # 1.4 Medicine Information ("Tell me about Augmentin")
+    # --------------------------------------------------------------------------
+    elif any(a.get("action") == "SHOW_MEDICINE_INFO" or a.get("type") == "SHOW_MEDICINE_INFO" for a in raw_actions):
+        primary_action = "SHOW_MEDICINE_INFO"
+        act = next((a for a in raw_actions if a.get("action") == "SHOW_MEDICINE_INFO" or a.get("type") == "SHOW_MEDICINE_INFO"), None)
+        primary_data = act.get("payload") or act.get("data") or {}
+
+    # --------------------------------------------------------------------------
+    # 1.5 Document Evidence ("What does page 7 say about pharmacy reimbursement?")
+    # --------------------------------------------------------------------------
+    elif any(a.get("action") == "SHOW_DOCUMENT_EVIDENCE" or a.get("type") == "SHOW_DOCUMENT_EVIDENCE" for a in raw_actions):
+        primary_action = "SHOW_DOCUMENT_EVIDENCE"
+        act = next((a for a in raw_actions if a.get("action") == "SHOW_DOCUMENT_EVIDENCE" or a.get("type") == "SHOW_DOCUMENT_EVIDENCE"), None)
+        primary_data = act.get("payload") or act.get("data") or {}
+
+    # --------------------------------------------------------------------------
+    # 1.6 Coverage Analysis ("Is this medicine bill covered by my company policy?")
+    # --------------------------------------------------------------------------
+    elif (
+        any(a.get("action") in ["SHOW_COVERAGE_ANALYSIS", "SHOW_INSURANCE_COVERAGE"] or a.get("type") in ["SHOW_COVERAGE_ANALYSIS", "SHOW_INSURANCE_COVERAGE"] for a in raw_actions)
+        or intent == "ANALYZE_INSURANCE"
+    ):
+        primary_action = "SHOW_COVERAGE_ANALYSIS"
+        ins_act = next(
+            (a for a in raw_actions if a.get("action") in ["SHOW_COVERAGE_ANALYSIS", "SHOW_INSURANCE_COVERAGE"] or a.get("type") in ["SHOW_COVERAGE_ANALYSIS", "SHOW_INSURANCE_COVERAGE"]),
+            None
+        )
+        if ins_act:
+            primary_data = ins_act.get("payload") or ins_act.get("data") or {}
+        else:
+            primary_data = {}
+
+    # --------------------------------------------------------------------------
+    # 1.7 Insurance Policy Overview ("Here is my company medical policy")
+    # --------------------------------------------------------------------------
+    elif any(a.get("action") == "SHOW_POLICY" or a.get("type") == "SHOW_POLICY" for a in raw_actions):
+        primary_action = "SHOW_POLICY"
+        act = next((a for a in raw_actions if a.get("action") == "SHOW_POLICY" or a.get("type") == "SHOW_POLICY"), None)
+        primary_data = act.get("payload") or act.get("data") or {}
+
+    # --------------------------------------------------------------------------
+    # 1.8 Pharmacy & Medicine Search ("Where can I buy these medicines?")
     # --------------------------------------------------------------------------
     elif (
         any(a.get("action") == "SHOW_PHARMACIES" or a.get("type") == "SHOW_PHARMACIES" for a in raw_actions)
@@ -118,23 +191,6 @@ def ui_action_node(state: AgentState) -> AgentState:
             primary_data = pharm_act.get("payload") or pharm_act.get("data") or {}
         else:
             primary_data = state.get("pharmacy_results") or {}
-
-    # --------------------------------------------------------------------------
-    # 1.8. Insurance & Reimbursement Policy Coverage
-    # --------------------------------------------------------------------------
-    elif (
-        any(a.get("action") == "SHOW_INSURANCE_COVERAGE" or a.get("type") == "SHOW_INSURANCE_COVERAGE" for a in raw_actions)
-        or intent == "ANALYZE_INSURANCE"
-    ):
-        primary_action = "SHOW_INSURANCE_COVERAGE"
-        ins_act = next(
-            (a for a in raw_actions if a.get("action") == "SHOW_INSURANCE_COVERAGE" or a.get("type") == "SHOW_INSURANCE_COVERAGE"),
-            None
-        )
-        if ins_act:
-            primary_data = ins_act.get("payload") or ins_act.get("data") or {}
-        else:
-            primary_data = {}
 
     # --------------------------------------------------------------------------
     # 2. Appointment Booking / Confirmation
