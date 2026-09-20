@@ -1,5 +1,5 @@
 import { Injectable, signal } from '@angular/core';
-import { DashboardState, Symptom } from '../models/dashboard.model';
+import { DashboardState, Symptom, Doctor, TimeSlot } from '../models/dashboard.model';
 
 export const INITIAL_DASHBOARD_STATE: DashboardState = {
   patient: {
@@ -11,62 +11,14 @@ export const INITIAL_DASHBOARD_STATE: DashboardState = {
   suggestedDepartment: {
     name: '', // Unassigned initially
   },
-  doctors: [
-    {
-      id: 'd1',
-      name: 'Dr. Alex Taylor',
-      department: 'General Medicine',
-      availableStatus: 'Available',
-    },
-    {
-      id: 'd2',
-      name: 'Dr. Brenda Vance',
-      department: 'Internal Medicine',
-      availableStatus: 'Available',
-    },
-    {
-      id: 'd3',
-      name: 'Dr. Marcus Reed',
-      department: 'Neurology',
-      availableStatus: 'Unavailable',
-    },
-  ],
-  availableSlots: [
-    {
-      id: 's1',
-      date: 'Tomorrow, Oct 24',
-      time: '09:30 AM',
-      doctor: 'Dr. Alex Taylor',
-      isAvailable: true,
-    },
-    {
-      id: 's2',
-      date: 'Tomorrow, Oct 24',
-      time: '11:00 AM',
-      doctor: 'Dr. Alex Taylor',
-      isAvailable: true,
-    },
-    {
-      id: 's3',
-      date: 'Tomorrow, Oct 24',
-      time: '02:15 PM',
-      doctor: 'Dr. Brenda Vance',
-      isAvailable: true,
-    },
-    {
-      id: 's4',
-      date: 'Tomorrow, Oct 24',
-      time: '04:00 PM',
-      doctor: 'Dr. Brenda Vance',
-      isAvailable: false,
-    },
-  ],
+  doctors: [], // Initially empty until doctor/slot agent runs
+  availableSlots: [], // Initially empty until slots are queried
   appointmentSummary: {
-    doctor: 'Dr. Alex Taylor',
-    department: 'General Medicine',
-    date: 'Tomorrow, Oct 24',
-    time: '11:00 AM',
-    status: 'Pending Confirmation',
+    doctor: '',
+    department: '',
+    date: '',
+    time: '',
+    status: 'Pending',
   },
 };
 
@@ -106,6 +58,33 @@ export class DashboardService {
   }
 
   /**
+   * Dynamically update available doctors and time slots from Doctor/Slot Agent
+   */
+  updateDoctorsAndSlots(payload: {
+    department?: string;
+    date?: string;
+    doctors: Doctor[];
+    slots: TimeSlot[];
+  }): void {
+    this.state.update((s) => ({
+      ...s,
+      suggestedDepartment: {
+        name: payload.department || s.suggestedDepartment.name,
+      },
+      doctors: payload.doctors,
+      availableSlots: payload.slots,
+      appointmentSummary: {
+        ...s.appointmentSummary,
+        department: payload.department || s.appointmentSummary.department,
+        doctor: payload.doctors.length > 0 ? payload.doctors[0].name : s.appointmentSummary.doctor,
+        date: payload.date || s.appointmentSummary.date,
+        time: payload.slots.length > 0 ? payload.slots[0].time : s.appointmentSummary.time,
+        status: 'Available to Confirm',
+      },
+    }));
+  }
+
+  /**
    * Process structured UI actions returned by the backend coordinator
    */
   applyActions(actions: any[]): void {
@@ -116,6 +95,8 @@ export class DashboardService {
         this.updateSymptoms(action.payload.symptoms);
       } else if (action.type === 'UPDATE_DEPARTMENT' && action.payload?.department) {
         this.updateDepartment(action.payload.department);
+      } else if (action.type === 'UPDATE_DOCTORS_AND_SLOTS' && action.payload) {
+        this.updateDoctorsAndSlots(action.payload);
       }
     }
   }

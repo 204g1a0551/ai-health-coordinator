@@ -3,6 +3,7 @@ from .state import AgentState, SymptomItem, AgentAction
 from .supervisor import supervisor_node
 from .symptom_agent import symptom_node
 from .department_agent import department_node, determine_department
+from .doctor_slot_agent import doctor_slot_node
 
 __all__ = [
     "health_graph",
@@ -13,4 +14,5 @@ __all__ = [
     "symptom_node",
     "department_node",
     "determine_department",
+    "doctor_slot_node",
 ]

@@ -9,30 +9,40 @@ SYMPTOM_KEYWORDS = [
     r"\btooth\b", r"\bteeth\b", r"\beye(s)?\b", r"\bear(s)?\b",
 ]
 
+BOOKING_KEYWORDS = [
+    r"\bbook\b", r"\bappointment\b", r"\bslot(s)?\b", r"\bdoctor(s)?\b",
+    r"\bphysician\b", r"\bschedule\b", r"\btomorrow\b", r"\bevening\b",
+    r"\bmorning\b", r"\bafternoon\b", r"\bvisit\b", r"\bconsult\b"
+]
+
 DEPARTMENT_KEYWORDS = [
     r"\bgeneral\s+medicine\b", r"\bdermatolog(y|ist)\b", r"\bent\b",
     r"\borthopedic(s)?\b", r"\bpediatric(s|ian)?\b", r"\bophthalmolog(y|ist)\b",
     r"\bdental\b", r"\bdentist\b", r"\bclinic\b", r"\bdepartment\b",
-    r"\bconsultation\b", r"\bdoctor\b", r"\bspecialist\b"
+    r"\bgeneral\s+physician\b"
 ]
 
 
 def supervisor_node(state: AgentState) -> AgentState:
     """
     Supervisor Agent:
-    Evaluates incoming request and decides whether to route to:
-    1. 'symptom_agent' (if symptoms are present)
-    2. 'department_agent' (if direct department/doctor request without symptoms)
-    3. 'final_response' (general conversational message)
+    Evaluates the user's intent and determines initial agent routing:
+    - 'symptom_agent' if symptoms are detected
+    - 'doctor_slot_agent' if user specifically requests booking, doctors, or slots
+    - 'department_agent' if direct department inquiry
+    - 'final_response' if general conversational greeting
     """
     user_msg = state.get("user_message", "").strip().lower()
 
     has_symptoms = any(re.search(kw, user_msg) for kw in SYMPTOM_KEYWORDS)
-    has_dept_query = any(re.search(kw, user_msg) for kw in DEPARTMENT_KEYWORDS)
+    has_booking = any(re.search(kw, user_msg) for kw in BOOKING_KEYWORDS)
+    has_dept = any(re.search(kw, user_msg) for kw in DEPARTMENT_KEYWORDS)
 
     if has_symptoms:
         route = "symptom_agent"
-    elif has_dept_query:
+    elif has_booking:
+        route = "doctor_slot_agent"
+    elif has_dept:
         route = "department_agent"
     else:
         route = "final_response"
@@ -44,14 +54,13 @@ def supervisor_node(state: AgentState) -> AgentState:
 
 
 def should_route_from_supervisor(state: AgentState) -> str:
-    """Routing choice from supervisor entry point."""
+    """Entry routing decision from supervisor."""
     return state.get("route", "final_response")
 
 
 def post_symptom_router(state: AgentState) -> str:
     """
-    After symptom extraction, route to department_agent if symptoms were found
-    or if user indicated an appointment / department preference.
+    After symptom extraction, route to department_agent if symptoms or department queries exist.
     """
     symptoms = state.get("symptoms", [])
     user_msg = state.get("user_message", "").lower()
@@ -62,46 +71,76 @@ def post_symptom_router(state: AgentState) -> str:
     return "final_response"
 
 
+def post_department_router(state: AgentState) -> str:
+    """
+    After department suggestion, route to doctor_slot_agent to find available doctors and slots
+    for that department.
+    """
+    dept = state.get("suggested_department")
+    if dept and dept != "Needs clarification":
+        return "doctor_slot_agent"
+    return "final_response"
+
+
 def final_response_node(state: AgentState) -> AgentState:
     """
     Final Response:
-    Synthesizes conversational reply reflecting extracted symptoms and suggested department.
+    Synthesizes the overall response summarizing symptoms, department, and doctor/slot options.
     """
     symptoms = state.get("symptoms", [])
     dept = state.get("suggested_department")
+    doc_results = state.get("doctor_slot_results")
     user_msg = state.get("user_message", "").strip().lower()
 
-    if symptoms and dept and dept != "Needs clarification":
-        formatted = []
-        for s in symptoms:
-            if s.get("duration"):
-                formatted.append(f"{s['name']} ({s['duration']})")
-            else:
-                formatted.append(s["name"])
-        symptoms_str = ", ".join(formatted)
+    # If doctor/slot results were obtained
+    if doc_results and doc_results.get("doctors"):
+        doctors = doc_results["doctors"]
+        target_dept = doc_results.get("department", dept or "the requested department")
 
-        final_msg = (
-            f"I have recorded your symptoms: {symptoms_str}. "
-            f"Suggested department: {dept}. "
-            "Your healthcare dashboard has been updated. Would you like to select an available doctor or time slot?"
-        )
-    elif symptoms:
-        formatted = [f"{s['name']} ({s['duration']})" if s.get('duration') else s['name'] for s in symptoms]
-        final_msg = (
-            f"I have recorded your symptoms: {', '.join(formatted)}. "
-            "Your healthcare dashboard has been updated."
-        )
-    elif dept and dept != "Needs clarification":
-        final_msg = (
-            f"Your request has been routed to the {dept} department. "
-            "Your healthcare dashboard has been updated."
-        )
-    elif any(g in user_msg for g in ["hello", "hi", "hey"]):
-        final_msg = "Hello, how can I help you today? Please describe your symptoms or what appointment you need."
-    elif dept == "Needs clarification":
-        final_msg = "Could you please provide a few more details about your symptoms so I can recommend the right department?"
+        doc_summaries = []
+        for d in doctors:
+            slots_str = ", ".join(d["slots"]) if d["slots"] else "No open slots"
+            doc_summaries.append(f"{d['name']} ({slots_str})")
+
+        doctors_text = "; ".join(doc_summaries)
+
+        if symptoms:
+            sym_text = ", ".join([f"{s['name']}" for s in symptoms])
+            final_msg = (
+                f"I noted your symptoms ({sym_text}) and routed your request to {target_dept}. "
+                f"Available doctors: {doctors_text}. "
+                "The doctors and slots have been updated on your dashboard. Please select your preferred slot."
+            )
+        else:
+            final_msg = (
+                f"Available doctors in {target_dept}: {doctors_text}. "
+                "Your dashboard has been updated with these options. Please select a slot to proceed."
+            )
+        return {
+            **state,
+            "final_response": final_msg,
+        }
+
+    # If department was suggested
+    if dept and dept != "Needs clarification":
+        if symptoms:
+            sym_text = ", ".join([f"{s['name']}" for s in symptoms])
+            final_msg = (
+                f"I have recorded your symptoms: {sym_text}. "
+                f"Suggested department: {dept}. "
+                "Your dashboard has been updated. Please let me know your preferred date and time to see available slots."
+            )
+        else:
+            final_msg = f"Your request has been routed to {dept}. Please let me know if you would like to book a slot."
+        return {
+            **state,
+            "final_response": final_msg,
+        }
+
+    if any(g in user_msg for g in ["hello", "hi", "hey"]):
+        final_msg = "Hello, how can I help you today? You can describe any symptoms you are experiencing or request an appointment."
     else:
-        final_msg = "I understand. I can help organize your symptoms and appointment request."
+        final_msg = "I understand. I can help organize your symptoms and appointment request. Please tell me your symptoms or preferred doctor."
 
     return {
         **state,

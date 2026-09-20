@@ -18,5 +18,6 @@ class AgentState(TypedDict):
     symptoms: List[SymptomItem]
     suggested_department: Optional[str]
     department_reason: Optional[str]
+    doctor_slot_results: Optional[Dict[str, Any]]
     actions: List[AgentAction]
     final_response: str
