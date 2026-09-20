@@ -45,10 +45,13 @@ class LLMService:
         if api_key:
             try:
                 from langchain_google_genai import ChatGoogleGenerativeAI
+                # Use gemini-3.6-flash which is supported by the current Google Generative Language API
                 self._llm = ChatGoogleGenerativeAI(
-                    model="gemini-1.5-flash",
+                    model=os.getenv("GEMINI_MODEL", "gemini-3.6-flash"),
                     google_api_key=api_key,
                     temperature=0.0,
+                    max_retries=1,
+                    timeout=10,
                 )
             except Exception:
                 self._llm = None
