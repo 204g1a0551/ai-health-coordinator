@@ -39,19 +39,24 @@ async def login(request: Request, body: LoginRequest):
     logger.info("Login attempt for email: %s from IP: %s", body.email, client_ip)
     auth_result = auth_service.authenticate_user(body, client_ip=client_ip)
 
+    user_info = auth_result["user"] if isinstance(auth_result, dict) else auth_result.user
+    user_id = user_info["id"] if isinstance(user_info, dict) else getattr(user_info, "id", str(user_info))
+    user_role = user_info.get("role", "PATIENT") if isinstance(user_info, dict) else getattr(user_info, "role", "PATIENT")
+
     # Immutable Audit Log: LOGIN
     audit_trail.record_event(
         action=AuditAction.LOGIN,
-        user_id=auth_result.user.id,
+        user_id=user_id,
         resource_type="USER_SESSION",
-        resource_id=auth_result.user.id,
+        resource_id=user_id,
         purpose="USER_AUTHENTICATION",
         result="SUCCESS",
-        details=f"method=PASSWORD role={getattr(auth_result.user, 'role', 'PATIENT')}",
+        details=f"method=PASSWORD role={user_role}",
         ip_address=client_ip
     )
 
     return auth_result
+
 
 
 @router.get("/auth/me", response_model=UserOut)

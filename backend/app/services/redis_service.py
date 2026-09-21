@@ -294,9 +294,11 @@ class RedisService:
         )
         return bool(acquired)
 
-    def release_slot_lock(self, doctor_id: str, date: str, time: str, session_id: str) -> bool:
-        """Releases the slot lock if held by this session."""
-        key = self._format_slot_lock_key(doctor_id, date, time)
+    def release_slot_lock(self, doctor_id_or_key: str, date: Optional[str] = None, time: Optional[str] = None, session_id: Optional[str] = None) -> bool:
+        """Releases the slot lock (supports single key or doctor/date/time/session tuple)."""
+        if date is None and time is None:
+            return bool(self._client.delete(doctor_id_or_key))
+        key = self._format_slot_lock_key(doctor_id_or_key, date or "", time or "")
         raw = self._client.get(key)
         if raw:
             try:
@@ -306,6 +308,23 @@ class RedisService:
             except Exception:
                 return bool(self._client.delete(key))
         return False
+
+
+    def check_health(self) -> Dict[str, Any]:
+        """Alias for health_check returning status."""
+        diag = self.health_check()
+        return {
+            "status": "connected" if diag.get("connected") else "disconnected",
+            **diag
+        }
+
+    def lock_slot(self, lock_key: str, ttl_seconds: int = 10) -> bool:
+        """Acquires a direct distributed lock by key."""
+        return bool(self._client.set(lock_key, "locked", ex=ttl_seconds, nx=True))
+
+    def release_slot_lock_key(self, lock_key: str) -> bool:
+        """Releases a direct distributed lock by key."""
+        return bool(self._client.delete(lock_key))
 
     def is_slot_locked(self, doctor_id: str, date: str, time: str) -> Optional[str]:
         """Returns the holder's session_id if the slot is currently locked, else None."""
@@ -318,6 +337,7 @@ class RedisService:
             except Exception:
                 return "unknown"
         return None
+
 
     # ----------------------------------------------------------------------
     # 10. Real-Time Slot Availability Caching (Short configurable TTL)
@@ -352,6 +372,12 @@ class RedisService:
         keys_healthcare = self._client.keys("healthcare:bengaluru:slots:*")
         for k in keys_healthcare:
             self._client.delete(k)
+
+    def invalidate_slot_cache(self, doctor_id: str, date: Optional[str] = None) -> None:
+        """Invalidates slot cache for doctor and date."""
+        self.invalidate_all_doctor_availability(doctor_id)
+        if date:
+            self._client.delete(f"doctor:{doctor_id}:availability:{date}")
 
     # ----------------------------------------------------------------------
     # 11. Auth Rate Limiting (ratelimit:login:{key})

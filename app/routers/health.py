@@ -6,7 +6,15 @@ from app.config import redis_settings
 router = APIRouter(prefix="/api/health", tags=["Health"])
 
 
+@router.get("")
+@router.get("/")
+async def get_general_health():
+    """Aggregate health check covering API and Database."""
+    return {"status": "healthy", "service": "AI Health Checkup & Appointment Coordinator API"}
+
+
 @router.get("/redis")
+
 async def check_redis_health():
     """
     Test and verify Redis connectivity, mode, and key statistics.

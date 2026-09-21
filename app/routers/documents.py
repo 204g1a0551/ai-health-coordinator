@@ -1,7 +1,9 @@
 import os
-from typing import List, Optional
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException, status
+from typing import List, Optional, Dict, Any
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, status, Depends
 from fastapi.responses import FileResponse
+
+from app.security.rbac import get_current_user_context
 
 from app.models.document import (
     DocumentUploadResponse,
@@ -107,11 +109,20 @@ async def list_medical_documents(user_id: Optional[str] = None) -> List[Document
 
 
 @router.get("/{doc_id}", response_model=DocumentUploadResponse)
-async def get_medical_document_details(doc_id: str) -> DocumentUploadResponse:
+async def get_medical_document_details(
+    doc_id: str,
+    user: Dict[str, Any] = Depends(get_current_user_context)
+) -> DocumentUploadResponse:
     """Retrieves full details and extracted structured information for a specific document."""
     doc = document_service.get_document(doc_id)
     if not doc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found")
+
+    doc_user = doc.get("user_id")
+    user_role = user.get("role", "PATIENT")
+    if user.get("is_authenticated") and doc_user and user_role not in ["ADMIN", "DOCTOR", "AUDITOR"]:
+        if doc_user != user.get("id"):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied to this document.")
 
     # Security Audit Log & Immutable Audit Trail: DOCUMENT_ACCESSED
     audit_logger.log_event(
@@ -150,11 +161,20 @@ async def get_medical_document_details(doc_id: str) -> DocumentUploadResponse:
 
 
 @router.get("/{doc_id}/download")
-async def download_medical_document(doc_id: str):
+async def download_medical_document(
+    doc_id: str,
+    user: Dict[str, Any] = Depends(get_current_user_context)
+):
     """Downloads the original stored PDF securely with path traversal protection."""
     doc = document_service.get_document(doc_id)
     if not doc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found")
+
+    doc_user = doc.get("user_id")
+    user_role = user.get("role", "PATIENT")
+    if user.get("is_authenticated") and doc_user and user_role not in ["ADMIN", "DOCTOR", "AUDITOR"]:
+        if doc_user != user.get("id"):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied to this document.")
 
     file_path = doc.get("file_path", "")
     if not os.path.exists(file_path):
@@ -189,9 +209,21 @@ async def download_medical_document(doc_id: str):
 
 
 @router.delete("/{doc_id}")
-async def delete_medical_document(doc_id: str):
+async def delete_medical_document(
+    doc_id: str,
+    user: Dict[str, Any] = Depends(get_current_user_context)
+):
     """Deletes document record and associated file."""
     doc = document_service.get_document(doc_id)
+    if not doc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found or already deleted")
+
+    doc_user = doc.get("user_id")
+    user_role = user.get("role", "PATIENT")
+    if user.get("is_authenticated") and doc_user and user_role not in ["ADMIN"]:
+        if doc_user != user.get("id"):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied to delete this document.")
+
     success = document_service.delete_document(doc_id)
     if not success:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found or already deleted")

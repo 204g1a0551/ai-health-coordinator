@@ -1093,7 +1093,7 @@ def create_medical_document(doc: Dict[str, Any]) -> Dict[str, Any]:
     extracted_json = json.dumps(doc.get("extracted_data", {})) if isinstance(doc.get("extracted_data"), (dict, list)) else (doc.get("extracted_data") or "{}")
 
     cursor.execute("""
-        INSERT INTO medical_documents (
+        INSERT OR REPLACE INTO medical_documents (
             id, user_id, file_name, file_size, file_path, mime_type,
             document_type, processing_status, extracted_data, created_at, updated_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
