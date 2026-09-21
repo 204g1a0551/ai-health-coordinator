@@ -33,12 +33,10 @@ async def get_latest_verification(session_id: Optional[str] = None):
     Retrieve the most recent bill verification result for a session.
     """
     try:
-        result = bill_verification_service.get_latest_verification(session_id)
-        if not result:
-            return {"success": False, "message": "No bill verification data found"}
+        result = bill_verification_service.verify_documents()
         return {"success": True, "data": result}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return {"success": False, "message": str(e)}
 
 
 @router.post("/query")

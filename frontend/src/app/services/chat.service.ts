@@ -101,9 +101,16 @@ export class ChatService {
       }),
       catchError((error: HttpErrorResponse) => {
         this.isSending.set(false);
-        const errorText = error.status === 0
-          ? 'Unable to connect to the healthcare backend. Please ensure FastAPI server is running on port 8000.'
-          : (error.error?.detail || 'An unexpected error occurred while communicating with the server.');
+        let errorText = 'An unexpected error occurred while communicating with the server.';
+        if (error.status === 0) {
+          errorText = 'Unable to connect to the healthcare backend. Please ensure the backend server is running.';
+        } else if (typeof error.error === 'string' && error.error.trim()) {
+          errorText = error.error;
+        } else if (error.error?.detail) {
+          errorText = typeof error.error.detail === 'string' ? error.error.detail : JSON.stringify(error.error.detail);
+        } else if (error.message) {
+          errorText = error.message;
+        }
 
         this.errorMessage.set(errorText);
 
