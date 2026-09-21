@@ -3,14 +3,50 @@
     <div class="chat-header-info">
       <div class="header-title-row">
         <h3>AI Health Assistant</h3>
-        <span class="status-indicator">Connected</span>
+        <div class="header-controls">
+          <select class="lang-select" [ngModel]="selectedLanguage()" (ngModelChange)="selectLanguage($event)">
+            @for (lang of supportedLanguages; track lang.code) {
+              <option [value]="lang.code">{{ lang.label }}</option>
+            }
+          </select>
+          <span class="status-indicator">Connected</span>
+        </div>
       </div>
       <div class="session-info">
         <span class="session-label">Session:</span>
         <span class="session-id">{{ sessionId }}</span>
+        <button type="button" class="simulate-followup-btn" (click)="simulateFollowUp()" title="Simulate 48-hour follow-up check-in">
+          ⏱️ Simulate Day 2 Check-in
+        </button>
       </div>
     </div>
   </div>
+
+  <!-- Proactive Follow-Up Active Banner -->
+  @if (activeFollowUp()) {
+    <div class="follow-up-banner">
+      <div class="follow-up-content">
+        <div class="follow-up-title">
+          <span class="follow-up-icon">🩺</span>
+          <strong>Proactive Recovery Check-in (Day 2)</strong>
+        </div>
+        <div class="follow-up-message">
+          {{ activeFollowUp()?.follow_up_prompt_vernacular || activeFollowUp()?.follow_up_prompt_english }}
+        </div>
+        <div class="follow-up-actions">
+          <button type="button" class="btn-recovery better" (click)="respondFollowUp('RECOVERED')">
+            😊 Feeling Much Better
+          </button>
+          <button type="button" class="btn-recovery same" (click)="respondFollowUp('SAME')">
+            😐 Symptoms Persisting
+          </button>
+          <button type="button" class="btn-recovery worse" (click)="respondFollowUp('WORSE')">
+            ⚠️ Need Doctor Callback
+          </button>
+        </div>
+      </div>
+    </div>
+  }
 
   <div class="chat-messages" #messagesScroll>
     @for (msg of messages(); track msg.id) {
@@ -21,7 +57,17 @@
       >
         <div class="message-bubble" [class.error-bubble]="msg.isError">
           <div class="message-sender-label">
-            {{ msg.sender === 'user' ? 'You' : 'AI Assistant' }}
+            <span>{{ msg.sender === 'user' ? 'You' : 'AI Assistant' }}</span>
+            @if (msg.sender === 'assistant') {
+              <button
+                type="button"
+                class="speak-btn"
+                (click)="speakMessage(msg.text)"
+                title="Listen to response"
+              >
+                🔊 Listen
+              </button>
+            }
           </div>
           <div class="message-text">{{ msg.text }}</div>
           <div class="message-time">{{ msg.timestamp }}</div>
@@ -32,7 +78,7 @@
     @if (isSending()) {
       <div class="message-wrapper assistant">
         <div class="message-bubble typing-bubble">
-          <span class="typing-text">AI Assistant is thinking</span>
+          <span class="typing-text">AI Assistant is analyzing</span>
           <span class="typing-dots">
             <span>.</span><span>.</span><span>.</span>
           </span>
@@ -46,11 +92,14 @@
       <button type="button" class="chip-btn" (click)="sendPreset('Doctors near Koramangala')" [disabled]="isSending()">
         📍 Koramangala
       </button>
-      <button type="button" class="chip-btn" (click)="sendPreset('General physicians near Indiranagar')" [disabled]="isSending()">
-        📍 Indiranagar GP
+      <button type="button" class="chip-btn telugu-chip" (click)="sendPreset('నాకు రెండు రోజులుగా జ్వరం ఉంది.')" [disabled]="isSending()" title="Telugu: Fever for 2 days">
+        🇮🇳 నాకు జ్వరం ఉంది (Telugu)
       </button>
-      <button type="button" class="chip-btn" (click)="sendPreset('ENT doctors near Whitefield')" [disabled]="isSending()">
-        📍 Whitefield ENT
+      <button type="button" class="chip-btn hindi-chip" (click)="sendPreset('मुझे दो दिन से बुखार है।')" [disabled]="isSending()" title="Hindi: Fever for 2 days">
+        🇮🇳 मुझे बुखार है (Hindi)
+      </button>
+      <button type="button" class="chip-btn emergency-chip" (click)="sendPreset('నాకు తీవ్రమైన గుండె నొప్పి ఉంది')" [disabled]="isSending()" title="Emergency Red-Flag in Telugu">
+        🚨 గుండె నొప్పి (Telugu Red-Flag)
       </button>
       <button type="button" class="chip-btn loc-chip" (click)="searchNearMe()" [disabled]="isSending()" title="Use browser location permission">
         🎯 Near Me
@@ -61,11 +110,20 @@
       <input
         type="text"
         class="chat-input"
-        placeholder="Type a message (e.g. 'Doctors near Koramangala')..."
+        placeholder="Type or click 🎙️ to speak (English, తెలుగు, हिन्दी)..."
         [(ngModel)]="userInput"
         (keydown)="onKeyDown($event)"
         [disabled]="isSending()"
       />
+      <button
+        type="button"
+        class="mic-btn"
+        [class.recording]="isRecording()"
+        (click)="toggleVoice()"
+        [title]="isRecording() ? 'Listening... click to stop' : 'Click to speak in your language'"
+      >
+        {{ isRecording() ? '⏹️' : '🎙️' }}
+      </button>
       <button
         type="button"
         class="send-btn"

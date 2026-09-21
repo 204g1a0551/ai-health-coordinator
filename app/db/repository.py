@@ -162,6 +162,40 @@ def init_db():
         )
     """)
 
+    # Phase 37: Proactive Follow-Up Scheduler & Notifications Store
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS follow_up_tasks (
+            task_id TEXT PRIMARY KEY,
+            patient_id TEXT NOT NULL,
+            patient_name TEXT,
+            patient_phone TEXT,
+            patient_language TEXT,
+            source_type TEXT,
+            source_id TEXT,
+            created_at TEXT NOT NULL,
+            trigger_at TEXT NOT NULL,
+            status TEXT NOT NULL,
+            channels_json TEXT,
+            clinical_context_json TEXT,
+            follow_up_prompt_english TEXT,
+            follow_up_prompt_vernacular TEXT,
+            patient_response_json TEXT
+        )
+    """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS follow_up_notifications (
+            notification_id TEXT PRIMARY KEY,
+            task_id TEXT NOT NULL,
+            channel TEXT NOT NULL,
+            recipient TEXT NOT NULL,
+            message TEXT NOT NULL,
+            language TEXT,
+            dispatched_at TEXT NOT NULL,
+            status TEXT NOT NULL,
+            delivery_metadata_json TEXT
+        )
+    """)
+
     # Seed or sync doctors and slots
     seed_data(cursor)
 

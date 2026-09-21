@@ -16,6 +16,8 @@ from app.routers.mcp import router as mcp_router
 from app.routers.security import router as security_router
 from app.routers.anonymizer import router as anonymizer_router
 from app.routers.audit import router as audit_router
+from app.routers.voice import router as voice_router
+from app.routers.follow_up import router as follow_up_router
 from app.config import security_settings
 
 app = FastAPI(
@@ -34,7 +36,7 @@ async def add_security_headers(request: Request, call_next):
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["X-XSS-Protection"] = "1; mode=block"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-        response.headers["Permissions-Policy"] = "geolocation=(), camera=(), microphone=()"
+        response.headers["Permissions-Policy"] = "geolocation=(self), camera=(), microphone=(self)"
     return response
 
 # Configure CORS to allow communication from Angular frontend (default http://localhost:4200)
@@ -69,6 +71,8 @@ app.include_router(mcp_router)
 app.include_router(security_router)
 app.include_router(anonymizer_router)
 app.include_router(audit_router)
+app.include_router(voice_router)
+app.include_router(follow_up_router)
 
 
 

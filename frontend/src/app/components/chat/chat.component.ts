@@ -1,7 +1,9 @@
-import { Component, ElementRef, ViewChild, inject } from '@angular/core';
+import { Component, ElementRef, ViewChild, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ChatService } from '../../services/chat.service';
+import { VoiceService } from '../../services/voice.service';
+import { FollowUpService } from '../../services/follow-up.service';
 
 @Component({
   selector: 'app-chat',
@@ -10,15 +12,79 @@ import { ChatService } from '../../services/chat.service';
   templateUrl: './chat.component.html',
   styleUrl: './chat.component.css',
 })
-export class ChatComponent {
+export class ChatComponent implements OnInit {
   protected readonly chatService = inject(ChatService);
+  protected readonly voiceService = inject(VoiceService);
+  protected readonly followUpService = inject(FollowUpService);
+
   protected readonly messages = this.chatService.messages;
   protected readonly isSending = this.chatService.isSending;
   protected readonly sessionId = this.chatService.sessionId;
 
+  protected readonly isRecording = this.voiceService.isRecording;
+  protected readonly isSpeaking = this.voiceService.isSpeaking;
+  protected readonly selectedLanguage = this.voiceService.selectedLanguage;
+  protected readonly supportedLanguages = this.voiceService.supportedLanguages;
+  protected readonly activeFollowUp = this.followUpService.activeNotification;
+
   @ViewChild('messagesScroll') private messagesScroll?: ElementRef<HTMLDivElement>;
 
   userInput = '';
+
+  ngOnInit(): void {
+    // Load existing follow-up tasks on init
+    this.followUpService.loadTasks().subscribe();
+  }
+
+  toggleVoice(): void {
+    if (this.isRecording()) {
+      this.voiceService.stopListening();
+    } else {
+      this.voiceService.startListening(
+        (transcript) => {
+          this.userInput = transcript;
+          this.sendMessage();
+        },
+        (err) => {
+          console.warn('Voice recognition error:', err);
+        }
+      );
+    }
+  }
+
+  speakMessage(text: string): void {
+    this.voiceService.speakText(text, this.selectedLanguage());
+  }
+
+  selectLanguage(langCode: string): void {
+    this.voiceService.selectedLanguage.set(langCode);
+  }
+
+  simulateFollowUp(): void {
+    // Check if there are tasks to trigger, or schedule a fresh demo task
+    const tasks = this.followUpService.tasks();
+    if (tasks.length > 0) {
+      this.followUpService.triggerDay2Simulation(tasks[0].task_id).subscribe();
+    } else {
+      // Create and trigger instant demo task
+      this.followUpService.loadTasks().subscribe((tList) => {
+        if (tList.length > 0) {
+          this.followUpService.triggerDay2Simulation(tList[0].task_id).subscribe();
+        }
+      });
+    }
+  }
+
+  respondFollowUp(status: string): void {
+    const active = this.activeFollowUp();
+    if (!active) return;
+    const text = status === 'RECOVERED' ? 'Feeling much better, fever is gone!' : (status === 'SAME' ? 'Symptoms persisting, still having mild fever.' : 'Feeling worse, need doctor assistance.');
+    this.followUpService.submitResponse(active.task_id, text, status).subscribe({
+      next: () => {
+        this.chatService.sendMessage(`[Follow-Up Response]: ${text}`).subscribe();
+      }
+    });
+  }
 
   sendMessage(): void {
     const text = this.userInput.trim();

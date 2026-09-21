@@ -135,6 +135,23 @@ class PrescriptionAgent:
                 purpose="PRESCRIPTION_ANALYSIS",
                 details=f"document_id={target_id} agent=PRESCRIPTION_AGENT medicines_count={len(meds_list)}"
             )
+        # Phase 37 Proactive Follow-Up: Schedule 48-Hour Medication Adherence Check-in
+        try:
+            from app.services.follow_up_service import follow_up_service
+            from app.models.follow_up import FollowUpCreateRequest
+            med_names = [m.get("medicine_name", "") for m in meds_list if isinstance(m, dict)]
+            follow_up_service.schedule_follow_up(FollowUpCreateRequest(
+                patient_id="patient_session",
+                patient_name="Patient",
+                source_type="PRESCRIPTION",
+                source_id=target_id,
+                delay_hours=48.0,
+                clinical_context={
+                    "document_id": target_id,
+                    "document_name": doc_name,
+                    "medicines": med_names[:3],
+                }
+            ))
         except Exception:
             pass
 

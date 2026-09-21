@@ -296,6 +296,26 @@ def appointment_node(state: AgentState) -> AgentState:
         except Exception:
             pass
 
+        # Phase 37 Proactive Follow-Up: Schedule 48-Hour Recovery Check-in (Day 0 -> Day 2)
+        try:
+            from app.services.follow_up_service import follow_up_service
+            from app.models.follow_up import FollowUpCreateRequest
+            follow_up_service.schedule_follow_up(FollowUpCreateRequest(
+                patient_id=session_id,
+                patient_name="Patient",
+                source_type="APPOINTMENT",
+                source_id=f"{doc_id}_{date_query}_{time_query}",
+                delay_hours=48.0,
+                clinical_context={
+                    "doctor": appt_data.get("doctor", "Doctor"),
+                    "department": appt_data.get("department", "General Medicine"),
+                    "date": appt_data.get("displayDate"),
+                    "time": appt_data.get("displayTime"),
+                }
+            ))
+        except Exception:
+            pass
+
         return {
             **state,
             "suggested_department": appt_data["department"],
