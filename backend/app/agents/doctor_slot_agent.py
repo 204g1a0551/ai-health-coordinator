@@ -2,6 +2,7 @@ import re
 from datetime import datetime
 from typing import Dict, Any, List, Optional
 from app.agents.state import AgentState
+from app.mcp.client import mcp_client
 from app.services.provider_service import provider_service
 from app.services.redis_service import redis_service
 from app.services.llm_service import llm_service
@@ -137,19 +138,49 @@ def doctor_slot_node(state: AgentState) -> AgentState:
         unique_depts = [target_dept]
 
     doctors_found = []
+    session_id = state.get("session_id", "default")
+    user_id = state.get("user_id")
+
     for dept_to_search in unique_depts:
         dept_docs = []
         if locality_pref:
-            dept_docs = provider_service.search_by_location(locality=locality_pref, department=dept_to_search)
+            mcp_res = mcp_client.call_tool(
+                server_name="doctor_mcp",
+                tool_name="search_by_location",
+                arguments={"location": locality_pref, "department": dept_to_search},
+                caller_agent="doctor_slot_agent",
+                session_id=session_id,
+                user_id=user_id,
+            )
+            if mcp_res.success and mcp_res.data:
+                dept_docs = mcp_res.data.get("doctors", [])
         if not dept_docs:
-            dept_docs = provider_service.search_by_department(department=dept_to_search)
+            mcp_res = mcp_client.call_tool(
+                server_name="doctor_mcp",
+                tool_name="search_by_department",
+                arguments={"department": dept_to_search, "location": locality_pref},
+                caller_agent="doctor_slot_agent",
+                session_id=session_id,
+                user_id=user_id,
+            )
+            if mcp_res.success and mcp_res.data:
+                dept_docs = mcp_res.data.get("doctors", [])
         # Include top verified specialists for each matched department
         limit = 2 if len(unique_depts) > 1 else 4
         doctors_found.extend(dept_docs[:limit])
 
     # Fallback to general search if department had zero doctors
     if not doctors_found:
-        doctors_found = provider_service.search_doctors(query=None)[:4]
+        mcp_res = mcp_client.call_tool(
+            server_name="doctor_mcp",
+            tool_name="search_doctors",
+            arguments={"query": None},
+            caller_agent="doctor_slot_agent",
+            session_id=session_id,
+            user_id=user_id,
+        )
+        if mcp_res.success and mcp_res.data:
+            doctors_found = mcp_res.data.get("doctors", [])[:4]
 
     current_timestamp = datetime.utcnow().strftime("%d %b %Y, %I:%M %p")
     provider_name = provider_service.provider.provider_name
@@ -159,20 +190,18 @@ def doctor_slot_node(state: AgentState) -> AgentState:
     flat_doctor_cards = []
 
     for d in doctors_found:
-        # 2. Controlled Backend Tool Call: Query Redis availability cache or provider_service
-        cached_slots = redis_service.get_slot_availability(d["id"], date_pref)
-        if cached_slots:
-            slots = cached_slots
-            if period_pref:
-                slots = [s for s in slots if s.get("period") == period_pref]
-        else:
-            slots = provider_service.get_available_slots(
-                doctor_id=d["id"],
-                date=date_pref,
-                period=period_pref,
-            )
-            # Cache availability in Redis for short configurable period (default 60s)
-            redis_service.set_slot_availability(d["id"], date_pref, slots)
+        # 2. Controlled MCP Tool Call: Query appointment_mcp for real-time slots
+        slot_res = mcp_client.call_tool(
+            server_name="appointment_mcp",
+            tool_name="get_available_slots",
+            arguments={"doctor_id": d["id"], "date": date_pref, "period": period_pref},
+            caller_agent="doctor_slot_agent",
+            session_id=session_id,
+            user_id=user_id,
+        )
+        slots = slot_res.data.get("slots", []) if slot_res.success and slot_res.data else []
+        if period_pref and slots:
+            slots = [s for s in slots if s.get("period") == period_pref]
 
         # Real-time database availability & lock check: mark slot unavailable if booked or locked
         current_session = state.get("session_id", "")

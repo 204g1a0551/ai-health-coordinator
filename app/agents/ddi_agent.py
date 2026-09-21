@@ -7,6 +7,7 @@ from app.models.drug_interaction import (
     DDIQuestionResponse,
     DrugInteractionPair,
 )
+from app.mcp.client import mcp_client
 from app.services.ddi_service import ddi_service
 from app.agents.state import AgentState
 
@@ -16,14 +17,24 @@ logger = logging.getLogger(__name__)
 class DDICheckerAgent:
     """
     Drug-Drug Interaction (DDI) Checker Agent.
-    Analyzes medicines extracted across multiple prescriptions and documents.
+    Analyzes medicines extracted across multiple prescriptions and documents via medicine_mcp.
     Flow:
     Prescriptions -> Document Agent -> Medicine Extraction -> Medicine Normalization
-    -> DDI Checker Agent -> Drug Interaction Database -> Interaction Results -> UI Action Agent
+    -> DDI Checker Agent -> Medicine MCP Server -> Drug Interaction Database -> Interaction Results -> UI Action Agent
     """
 
     def __init__(self):
         self.service = ddi_service
+
+    def check_interaction_pair(self, med_a: str, med_b: str) -> Dict[str, Any]:
+        """Queries the verified pharmacology interaction database via medicine_mcp."""
+        mcp_res = mcp_client.call_tool(
+            server_name="medicine_mcp",
+            tool_name="check_drug_interaction",
+            arguments={"medicine_a": med_a, "medicine_b": med_b},
+            caller_agent="ddi_agent",
+        )
+        return mcp_res.data if mcp_res.success and mcp_res.data else {}
 
     def analyze_interactions(
         self,

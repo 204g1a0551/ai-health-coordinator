@@ -6,6 +6,7 @@ from app.models.cost_saver import (
     CostSaverQuestionResponse,
     MedicineComparison,
 )
+from app.mcp.client import mcp_client
 from app.services.cost_saver_service import cost_saver_service
 from app.agents.state import AgentState
 
@@ -15,14 +16,34 @@ logger = logging.getLogger(__name__)
 class CostSaverAgent:
     """
     Generic Medicine & Cost-Saver Agent.
-    Provides informational price comparisons for medicines extracted from prescriptions.
+    Provides informational price comparisons for medicines extracted from prescriptions via medicine_mcp.
     Flow:
     Prescription -> Medicine Extraction -> Normalization -> Cost-Saver Agent
-    -> Medicine/Price Data Source -> Generic/Equivalent Info -> Price Comparison -> UI Action Agent
+    -> Medicine MCP Server -> Medicine/Price Data Source -> Generic/Equivalent Info -> Price Comparison -> UI Action Agent
     """
 
     def __init__(self):
         self.service = cost_saver_service
+
+    def get_generic_for_medicine(self, medicine_name: str) -> Dict[str, Any]:
+        """Queries Jan Aushadhi / PMBJP generic equivalents via medicine_mcp."""
+        mcp_res = mcp_client.call_tool(
+            server_name="medicine_mcp",
+            tool_name="find_generic_information",
+            arguments={"medicine_name": medicine_name},
+            caller_agent="cost_saver_agent",
+        )
+        return mcp_res.data if mcp_res.success and mcp_res.data else {}
+
+    def get_medicine_price_comparison(self, medicine_name: str) -> Dict[str, Any]:
+        """Queries side-by-side brand vs generic price comparison via medicine_mcp."""
+        mcp_res = mcp_client.call_tool(
+            server_name="medicine_mcp",
+            tool_name="get_medicine_price",
+            arguments={"medicine_name": medicine_name},
+            caller_agent="cost_saver_agent",
+        )
+        return mcp_res.data if mcp_res.success and mcp_res.data else {}
 
     def analyze_costs(
         self,

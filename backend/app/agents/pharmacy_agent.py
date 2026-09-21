@@ -1,5 +1,6 @@
 import logging
 from typing import Dict, Any, List, Optional
+from app.mcp.client import mcp_client
 from app.services.pharmacy_service import pharmacy_service
 from app.db.repository import list_medical_documents, get_medical_document
 
@@ -10,7 +11,7 @@ class PharmacyAgent:
     """
     Sub-agent: Pharmacy Agent
     Responsibilities:
-    1. Search nearby pharmacies stocking prescribed medications.
+    1. Search nearby pharmacies stocking prescribed medications via pharmacy_mcp.
     2. Rank pharmacies by distance from the user's selected or detected location.
     3. Return store details: address, hours, contact, in-stock status.
     4. Adhere strictly to safe dispensing constraints.
@@ -36,6 +37,20 @@ class PharmacyAgent:
 
         if not medicines:
             medicines = ["Augmentin 625mg", "Dolo 650"]
+
+        mcp_res = mcp_client.call_tool(
+            server_name="pharmacy_mcp",
+            tool_name="search_pharmacies",
+            arguments={
+                "medicines": medicines,
+                "locality": locality,
+                "lat": lat,
+                "lng": lng,
+            },
+            caller_agent="pharmacy_agent",
+        )
+        if mcp_res.success and mcp_res.data:
+            return mcp_res.data
 
         response = pharmacy_service.search_pharmacies(
             medicines=medicines,

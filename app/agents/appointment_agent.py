@@ -1,6 +1,7 @@
 import re
 from typing import Dict, Any, Optional
 from app.agents.state import AgentState
+from app.mcp.client import mcp_client
 from app.db.repository import (
     book_appointment,
     cancel_appointment,
@@ -68,7 +69,15 @@ def appointment_node(state: AgentState) -> AgentState:
 
     # Case 1: Cancel appointment
     if any(k in lower_msg for k in ["cancel", "delete", "drop appointment"]):
-        cancel_res = cancel_appointment(session_id)
+        mcp_res = mcp_client.call_tool(
+            server_name="appointment_mcp",
+            tool_name="cancel_appointment",
+            arguments={"session_id": session_id},
+            caller_agent="doctor_agent",
+            session_id=session_id,
+            user_id=state.get("user_id"),
+        )
+        cancel_res = mcp_res.data if mcp_res.success and mcp_res.data else {"success": False, "error": mcp_res.error}
         if cancel_res.get("success"):
             redis_service.invalidate_doctor_availability("doc-ravi")
             redis_service.invalidate_doctor_availability("doc-priya")
@@ -94,7 +103,15 @@ def appointment_node(state: AgentState) -> AgentState:
 
     # Case 2: Show / Details
     if any(k in lower_msg for k in ["show appointment", "my appointment", "appointment details", "status"]):
-        active = get_active_appointment(session_id)
+        mcp_res = mcp_client.call_tool(
+            server_name="appointment_mcp",
+            tool_name="get_appointment",
+            arguments={"session_id": session_id},
+            caller_agent="doctor_agent",
+            session_id=session_id,
+            user_id=state.get("user_id"),
+        )
+        active = mcp_res.data.get("appointment") if mcp_res.success and mcp_res.data else None
         if active:
             appointment_info = {
                 "action": "SHOW_APPOINTMENT",
@@ -195,8 +212,21 @@ def appointment_node(state: AgentState) -> AgentState:
             ),
         }
 
-    # 4. Create appointment in PostgreSQL & SQLite
-    booking_res = book_appointment(session_id, doctor_query, time_query, date_query)
+    # 4. Create appointment in PostgreSQL & SQLite via appointment_mcp
+    mcp_booking = mcp_client.call_tool(
+        server_name="appointment_mcp",
+        tool_name="book_appointment",
+        arguments={
+            "doctor_id": doctor_query,
+            "time": time_query,
+            "date": date_query,
+            "session_id": session_id,
+        },
+        caller_agent="doctor_agent",
+        session_id=session_id,
+        user_id=state.get("user_id"),
+    )
+    booking_res = mcp_booking.data if mcp_booking.success and mcp_booking.data else {"success": False, "error": mcp_booking.error}
 
     # 5. Invalidate Redis availability cache & release lock
     redis_service.invalidate_all_doctor_availability(doc_id)

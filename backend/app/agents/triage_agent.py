@@ -2,6 +2,7 @@ import re
 from typing import Any, Dict, List
 
 from app.agents.state import AgentState
+from app.mcp.client import mcp_client
 from app.services.emergency_service import get_emergency_contacts
 
 
@@ -75,10 +76,20 @@ def triage_node(state: AgentState) -> AgentState:
         }
 
     country_region = state.get("country_region") or "IN"
+    # Controlled MCP tool call to retrieve verified emergency information
+    mcp_info = mcp_client.call_tool(
+        server_name="emergency_mcp",
+        tool_name="get_emergency_information",
+        arguments={"country_region": country_region, "locality": state.get("location_query")},
+        caller_agent="triage_agent",
+        session_id=state.get("session_id", ""),
+    )
+    contacts = mcp_info.data.get("primary_contacts", []) if mcp_info.success and mcp_info.data else get_emergency_contacts(country_region)
+
     emergency_data = {
         "reason": "Potential emergency symptoms detected",
         "matched_categories": matched_categories,
-        "contacts": get_emergency_contacts(country_region),
+        "contacts": contacts,
         "country_region": country_region,
         "location_options": {
             "permission_available": True,

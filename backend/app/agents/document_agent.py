@@ -15,6 +15,7 @@ from app.models.document import (
     PolicyReimbursementInfo,
 )
 from app.services.redis_service import redis_service
+from app.mcp.client import mcp_client
 from app.agents.state import AgentState
 
 logger = logging.getLogger(__name__)
@@ -61,6 +62,26 @@ class DocumentAgent:
             except Exception as e:
                 logger.warning(f"Could not initialize Gemini LLM in DocumentAgent: {e}")
                 self._llm = None
+
+    def get_document_via_mcp(self, doc_id: str, user_id: Optional[str] = None) -> Dict[str, Any]:
+        """Retrieves verified document and extracted data via document_mcp."""
+        mcp_res = mcp_client.call_tool(
+            server_name="document_mcp",
+            tool_name="get_document",
+            arguments={"document_id": doc_id, "user_id": user_id},
+            caller_agent="document_agent",
+        )
+        return mcp_res.data if mcp_res.success and mcp_res.data else {}
+
+    def get_evidence_via_mcp(self, doc_id: str, query: str, user_id: Optional[str] = None) -> Dict[str, Any]:
+        """Retrieves semantic chunks and page evidence via document_mcp with prompt injection protection."""
+        mcp_res = mcp_client.call_tool(
+            server_name="document_mcp",
+            tool_name="get_document_evidence",
+            arguments={"document_id": doc_id, "query": query, "user_id": user_id},
+            caller_agent="document_agent",
+        )
+        return mcp_res.data if mcp_res.success and mcp_res.data else {}
 
     def process_document(self, raw_text: str, file_name: str) -> ExtractedDocumentData:
         """

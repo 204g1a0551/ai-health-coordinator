@@ -1,6 +1,7 @@
 import logging
 from typing import Dict, Any, List, Optional
 from app.models.pharmacy import MedicineSearchResponse
+from app.mcp.client import mcp_client
 from app.services.pharmacy_service import pharmacy_service
 from app.db.repository import get_medical_document, list_medical_documents
 
@@ -67,6 +68,20 @@ class MedicineSearchAgent:
                 disclaimer="No explicitly prescribed medicines found in the selected document. Please upload a valid prescription PDF first.",
             )
 
+        mcp_res = mcp_client.call_tool(
+            server_name="pharmacy_mcp",
+            tool_name="search_pharmacies",
+            arguments={
+                "medicines": medicine_names,
+                "locality": locality,
+                "lat": lat,
+                "lng": lng,
+            },
+            caller_agent="medicine_search_agent",
+        )
+        if mcp_res.success and mcp_res.data:
+            return MedicineSearchResponse(**mcp_res.data)
+
         return pharmacy_service.search_pharmacies(
             medicines=medicine_names,
             locality=locality,
@@ -82,9 +97,23 @@ class MedicineSearchAgent:
         lng: Optional[float] = None,
     ) -> MedicineSearchResponse:
         """
-        Finds public info and nearby pharmacies for a list of explicitly extracted medicines.
+        Finds public info and nearby pharmacies for a list of explicitly extracted medicines via pharmacy_mcp.
         """
         clean_meds = [m.strip() for m in medicines if m and m.strip()]
+        mcp_res = mcp_client.call_tool(
+            server_name="pharmacy_mcp",
+            tool_name="search_pharmacies",
+            arguments={
+                "medicines": clean_meds,
+                "locality": locality,
+                "lat": lat,
+                "lng": lng,
+            },
+            caller_agent="medicine_search_agent",
+        )
+        if mcp_res.success and mcp_res.data:
+            return MedicineSearchResponse(**mcp_res.data)
+
         return pharmacy_service.search_pharmacies(
             medicines=clean_meds,
             locality=locality,

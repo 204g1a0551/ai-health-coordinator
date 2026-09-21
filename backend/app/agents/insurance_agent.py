@@ -7,6 +7,7 @@ from app.models.insurance import (
     PolicyAnswerResponse,
     PolicyUploadCategory,
 )
+from app.mcp.client import mcp_client
 from app.services.insurance_rag_service import insurance_rag_service
 from app.agents.state import AgentState
 
@@ -16,7 +17,7 @@ logger = logging.getLogger(__name__)
 class InsurancePolicyAgent:
     """
     Autonomous Insurance Policy & Reimbursement Agent.
-    Implements 9 core clinical and insurance adjudication analysis responsibilities:
+    Implements 9 core clinical and insurance adjudication analysis responsibilities via insurance_mcp:
     1. Extract policy rules.
     2. Identify coverage categories.
     3. Identify exclusions.
@@ -30,6 +31,21 @@ class InsurancePolicyAgent:
 
     def __init__(self):
         self.rag_service = insurance_rag_service
+
+    def get_policy_evidence_via_mcp(
+        self,
+        question: str,
+        policy_id: Optional[str] = None,
+        user_id: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Retrieves policy clause and evidence via insurance_mcp."""
+        mcp_res = mcp_client.call_tool(
+            server_name="insurance_mcp",
+            tool_name="search_policy",
+            arguments={"query": question, "policy_id": policy_id, "user_id": user_id},
+            caller_agent="insurance_agent",
+        )
+        return mcp_res.data if mcp_res.success and mcp_res.data else {}
 
     def extract_rules(self, policy_id: str) -> ExtractedPolicyRules:
         """Responsibilities 1-8: Extract multi-dimensional insurance rules."""
