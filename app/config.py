@@ -37,6 +37,16 @@ class AuthSettings(BaseModel):
     login_rate_limit_window: int = int(os.getenv("LOGIN_RATE_LIMIT_WINDOW", "300"))  # 5 minutes
 
 
+class SecuritySettings(BaseModel):
+    encryption_secret_key: str = os.getenv("ENCRYPTION_SECRET_KEY", "healthcare-aes256-super-secure-master-encryption-key-2026")
+    enable_security_headers: bool = os.getenv("ENABLE_SECURITY_HEADERS", "true").lower() in ("true", "1", "yes")
+    rate_limit_requests_per_minute: int = int(os.getenv("RATE_LIMIT_REQUESTS_PER_MINUTE", "120"))
+    document_retention_days: int = int(os.getenv("DOCUMENT_RETENTION_DAYS", "365"))
+    abdm_enabled: bool = os.getenv("ABDM_ENABLED", "true").lower() in ("true", "1", "yes")
+    dpdp_right_to_erasure_enabled: bool = os.getenv("DPDP_RIGHT_TO_ERASURE_ENABLED", "true").lower() in ("true", "1", "yes")
+
+
 redis_settings = RedisSettings()
 postgres_settings = PostgresSettings()
 auth_settings = AuthSettings()
+security_settings = SecuritySettings()

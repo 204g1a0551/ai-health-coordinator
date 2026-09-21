@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.routers.chat import router as chat_router
@@ -13,12 +13,27 @@ from app.routers.bill_verification import router as bill_verification_router
 from app.routers.drug_interaction import router as drug_interaction_router
 from app.routers.cost_saver import router as cost_saver_router
 from app.routers.mcp import router as mcp_router
+from app.routers.security import router as security_router
+from app.config import security_settings
 
 app = FastAPI(
     title="AI Health Checkup & Appointment Coordinator",
     description="Backend service powering the healthcare dashboard and AI chat assistant",
     version="1.0.0",
 )
+
+# Security Headers Middleware
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response: Response = await call_next(request)
+    if security_settings.enable_security_headers:
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = "geolocation=(), camera=(), microphone=()"
+    return response
 
 # Configure CORS to allow communication from Angular frontend (default http://localhost:4200)
 app.add_middleware(
@@ -49,6 +64,7 @@ app.include_router(bill_verification_router)
 app.include_router(drug_interaction_router)
 app.include_router(cost_saver_router)
 app.include_router(mcp_router)
+app.include_router(security_router)
 
 
 
@@ -59,3 +75,4 @@ async def root_health_check():
         "service": "AI Health Checkup & Appointment Coordinator API",
         "version": "1.0.0",
     }
+

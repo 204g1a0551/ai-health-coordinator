@@ -6,6 +6,8 @@ import logging
 from datetime import datetime
 from typing import List, Dict, Any, Optional, Tuple
 from app.db.postgres import postgres_service
+from app.security.crypto import crypto_service
+from app.security.consent_manager import consent_manager
 
 logger = logging.getLogger(__name__)
 
@@ -78,10 +80,24 @@ def init_db():
             phone TEXT NOT NULL,
             dob TEXT,
             password_hash TEXT NOT NULL,
+            role TEXT DEFAULT 'PATIENT',
+            abha_id TEXT,
+            is_active INTEGER DEFAULT 1,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
+
+    # Ensure role, abha_id, is_active exist on older sqlite DBs
+    for col_def in [
+        "ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'PATIENT'",
+        "ALTER TABLE users ADD COLUMN abha_id TEXT",
+        "ALTER TABLE users ADD COLUMN is_active INTEGER DEFAULT 1"
+    ]:
+        try:
+            cursor.execute(col_def)
+        except Exception:
+            pass
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS medical_documents (
@@ -96,6 +112,35 @@ def init_db():
             extracted_data TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    # Security Audit Logs (ABDM/DPDP/HIPAA immutable event log)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS security_audit_logs (
+            id TEXT PRIMARY KEY,
+            event_type TEXT NOT NULL,
+            actor_id TEXT NOT NULL,
+            resource_id TEXT,
+            details TEXT,
+            ip_address TEXT,
+            severity TEXT DEFAULT 'LOW',
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    # ABDM / DPDP electronic Consent Artefacts
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS consent_records (
+            id TEXT PRIMARY KEY,
+            patient_id TEXT NOT NULL,
+            requester_id TEXT NOT NULL,
+            requester_name TEXT,
+            purpose TEXT NOT NULL,
+            state TEXT NOT NULL,
+            granted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            expires_at TIMESTAMP NOT NULL,
+            revoked_at TIMESTAMP
         )
     """)
 
@@ -847,6 +892,7 @@ def update_patient_info(session_id: str, updates: Dict[str, Any]) -> Dict[str, A
 def create_user_record(user_data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Creates a user record in both SQLite and PostgreSQL (dual-storage).
+    Applies AES-256 field-level encryption at rest for sensitive PII/PHI.
     Raises ValueError if email is already registered.
     """
     init_db()
@@ -858,13 +904,24 @@ def create_user_record(user_data: Dict[str, Any]) -> Dict[str, Any]:
         raise ValueError("An account with this email address already exists.")
 
     user_id = user_data.get("id") or f"usr_{uuid.uuid4().hex[:12]}"
+    raw_phone = user_data["phone"].strip()
+    raw_abha = user_data.get("abha_id")
+    role = user_data.get("role", "PATIENT").upper()
+
+    # Field-level AES-256 encryption at rest
+    encrypted_phone = crypto_service.encrypt(raw_phone)
+    encrypted_abha = crypto_service.encrypt(raw_abha) if raw_abha else None
+
     record = {
         "id": user_id,
         "full_name": user_data["full_name"].strip(),
         "email": email_clean,
-        "phone": user_data["phone"].strip(),
+        "phone": encrypted_phone,
         "dob": user_data.get("dob"),
         "password_hash": user_data["password_hash"],
+        "role": role,
+        "abha_id": encrypted_abha,
+        "is_active": 1,
         "created_at": datetime.utcnow().isoformat(),
         "updated_at": datetime.utcnow().isoformat(),
     }
@@ -873,8 +930,8 @@ def create_user_record(user_data: Dict[str, Any]) -> Dict[str, Any]:
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("""
-        INSERT INTO users (id, full_name, email, phone, dob, password_hash, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO users (id, full_name, email, phone, dob, password_hash, role, abha_id, is_active, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         record["id"],
         record["full_name"],
@@ -882,6 +939,9 @@ def create_user_record(user_data: Dict[str, Any]) -> Dict[str, Any]:
         record["phone"],
         record["dob"],
         record["password_hash"],
+        record["role"],
+        record["abha_id"],
+        record["is_active"],
         record["created_at"],
         record["updated_at"]
     ))
@@ -894,11 +954,16 @@ def create_user_record(user_data: Dict[str, Any]) -> Dict[str, Any]:
     except Exception as e:
         logger.warning("Postgres user dual-storage notice: %s", str(e))
 
-    return record
+    # Return clean decrypted representation to caller
+    return {
+        **record,
+        "phone": raw_phone,
+        "abha_id": raw_abha,
+    }
 
 
 def get_user_by_email(email: str) -> Optional[Dict[str, Any]]:
-    """Retrieves user by email, checking PostgreSQL first, with SQLite fallback."""
+    """Retrieves user by email, checking PostgreSQL first, with SQLite fallback, decrypting sensitive fields."""
     init_db()
     email_clean = email.strip().lower()
 
@@ -906,6 +971,11 @@ def get_user_by_email(email: str) -> Optional[Dict[str, Any]]:
     try:
         pg_user = postgres_service.get_user_by_email(email_clean)
         if pg_user:
+            pg_user["phone"] = crypto_service.decrypt(pg_user.get("phone"))
+            if pg_user.get("abha_id"):
+                pg_user["abha_id"] = crypto_service.decrypt(pg_user.get("abha_id"))
+            if "role" not in pg_user:
+                pg_user["role"] = "PATIENT"
             return pg_user
     except Exception:
         pass
@@ -917,17 +987,28 @@ def get_user_by_email(email: str) -> Optional[Dict[str, Any]]:
     row = cursor.fetchone()
     conn.close()
     if row:
-        return dict(row)
+        user_dict = dict(row)
+        user_dict["phone"] = crypto_service.decrypt(user_dict.get("phone"))
+        if user_dict.get("abha_id"):
+            user_dict["abha_id"] = crypto_service.decrypt(user_dict.get("abha_id"))
+        if "role" not in user_dict or not user_dict["role"]:
+            user_dict["role"] = "PATIENT"
+        return user_dict
     return None
 
 
 def get_user_by_id(user_id: str) -> Optional[Dict[str, Any]]:
-    """Retrieves user by ID, checking PostgreSQL first, with SQLite fallback."""
+    """Retrieves user by ID, checking PostgreSQL first, with SQLite fallback, decrypting sensitive fields."""
     init_db()
 
     try:
         pg_user = postgres_service.get_user_by_id(user_id)
         if pg_user:
+            pg_user["phone"] = crypto_service.decrypt(pg_user.get("phone"))
+            if pg_user.get("abha_id"):
+                pg_user["abha_id"] = crypto_service.decrypt(pg_user.get("abha_id"))
+            if "role" not in pg_user:
+                pg_user["role"] = "PATIENT"
             return pg_user
     except Exception:
         pass
@@ -938,7 +1019,13 @@ def get_user_by_id(user_id: str) -> Optional[Dict[str, Any]]:
     row = cursor.fetchone()
     conn.close()
     if row:
-        return dict(row)
+        user_dict = dict(row)
+        user_dict["phone"] = crypto_service.decrypt(user_dict.get("phone"))
+        if user_dict.get("abha_id"):
+            user_dict["abha_id"] = crypto_service.decrypt(user_dict.get("abha_id"))
+        if "role" not in user_dict or not user_dict["role"]:
+            user_dict["role"] = "PATIENT"
+        return user_dict
     return None
 
 
@@ -974,8 +1061,15 @@ def create_medical_document(doc: Dict[str, Any]) -> Dict[str, Any]:
     return get_medical_document(doc["id"])
 
 
-def get_medical_document(doc_id: str) -> Optional[Dict[str, Any]]:
-    """Fetches a medical document record by its ID."""
+def get_medical_document(
+    doc_id: str,
+    requester_id: Optional[str] = None,
+    requester_role: Optional[str] = None
+) -> Optional[Dict[str, Any]]:
+    """
+    Fetches a medical document record by ID.
+    Enforces user-level document isolation and ABDM consent verification.
+    """
     import json
     init_db()
 
@@ -989,6 +1083,15 @@ def get_medical_document(doc_id: str) -> Optional[Dict[str, Any]]:
         return None
 
     record = dict(row)
+
+    # Document isolation & consent check
+    owner_id = record.get("user_id")
+    if requester_id and owner_id and requester_id != owner_id:
+        if (requester_role or "").upper() not in ["ADMIN", "AUDITOR"]:
+            # Secondary access requires active consent
+            if not consent_manager.is_consent_active(patient_id=owner_id, requester_id=requester_id):
+                return None
+
     if record.get("extracted_data") and isinstance(record["extracted_data"], str):
         try:
             record["extracted_data"] = json.loads(record["extracted_data"])
@@ -997,10 +1100,23 @@ def get_medical_document(doc_id: str) -> Optional[Dict[str, Any]]:
     return record
 
 
-def list_medical_documents(user_id: Optional[str] = None) -> List[Dict[str, Any]]:
-    """Retrieves all medical documents, optionally filtered by user_id."""
+def list_medical_documents(
+    user_id: Optional[str] = None,
+    requester_id: Optional[str] = None,
+    requester_role: Optional[str] = None
+) -> List[Dict[str, Any]]:
+    """
+    Retrieves medical documents, optionally filtered by user_id,
+    with ABDM consent gating if requested by another party.
+    """
     import json
     init_db()
+
+    # Enforce consent gating if requester is looking at another patient's documents
+    if user_id and requester_id and user_id != requester_id:
+        if (requester_role or "").upper() not in ["ADMIN", "AUDITOR"]:
+            if not consent_manager.is_consent_active(patient_id=user_id, requester_id=requester_id):
+                return []
 
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -1023,9 +1139,21 @@ def list_medical_documents(user_id: Optional[str] = None) -> List[Dict[str, Any]
     return results
 
 
-def delete_medical_document(doc_id: str) -> bool:
-    """Deletes a medical document record by ID."""
+def delete_medical_document(doc_id: str, requester_id: Optional[str] = None, requester_role: Optional[str] = None) -> bool:
+    """
+    Deletes a medical document record by ID.
+    Enforces that only the document owner or an ADMIN can delete.
+    """
     init_db()
+    existing = get_medical_document(doc_id)
+    if not existing:
+        return False
+
+    owner_id = existing.get("user_id")
+    if requester_id and owner_id and requester_id != owner_id:
+        if (requester_role or "").upper() != "ADMIN":
+            return False
+
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("DELETE FROM medical_documents WHERE id = ?", (doc_id,))

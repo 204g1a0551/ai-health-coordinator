@@ -150,6 +150,21 @@ class DocumentService:
             timestamp=now_str()
         ))
 
+        # Security Check: Prompt Injection & Adversarial Document Defense
+        from app.security.prompt_guard import detect_prompt_injections, sanitize_untrusted_medical_text
+        from app.security.audit import audit_logger, SecurityEventType
+        threats = detect_prompt_injections(raw_text)
+        if threats:
+            logger.warning("Prompt injection threats detected in uploaded document %s: %s", safe_filename, threats)
+            audit_logger.log_event(
+                event_type=SecurityEventType.PROMPT_INJECTION_DETECTED,
+                actor_id=user_id or "anonymous",
+                resource_id=doc_id,
+                details=f"Threats detected in {safe_filename}: {', '.join(threats)}. Neutralizing text before agent processing.",
+                severity="HIGH"
+            )
+            raw_text = sanitize_untrusted_medical_text(raw_text)
+
         # Stage 4: Document Agent Processing
         stages.append(ProcessingStage(
             stage="ANALYZING",
@@ -186,9 +201,18 @@ class DocumentService:
             "mime_type": "application/pdf",
             "document_type": extracted_data.document_type.value,
             "processing_status": "COMPLETED",
-            "extracted_data": extracted_data.dict(),
+            "extracted_data": extracted_data.dict() if hasattr(extracted_data, 'dict') else extracted_data.model_dump(),
         }
         create_medical_document(record)
+
+        # Audit log document upload
+        audit_logger.log_event(
+            event_type=SecurityEventType.DOCUMENT_UPLOADED,
+            actor_id=user_id or "anonymous",
+            resource_id=doc_id,
+            details=f"Uploaded {safe_filename} ({len(file_bytes)} bytes) as {extracted_data.document_type.value}.",
+            severity="LOW"
+        )
 
         return DocumentUploadResponse(
             id=doc_id,

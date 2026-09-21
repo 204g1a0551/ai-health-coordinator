@@ -82,6 +82,10 @@ async def upload_medical_document(
         )
 
 
+from app.security.document_storage import validate_storage_path
+from app.security.audit import audit_logger, SecurityEventType
+from app.services.document_service import STORAGE_DIR
+
 @router.get("", response_model=List[DocumentListItem])
 async def list_medical_documents(user_id: Optional[str] = None) -> List[DocumentListItem]:
     """Retrieves all uploaded medical documents and their extraction status."""
@@ -94,6 +98,15 @@ async def get_medical_document_details(doc_id: str) -> DocumentUploadResponse:
     doc = document_service.get_document(doc_id)
     if not doc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found")
+
+    # Security Audit Log
+    audit_logger.log_event(
+        event_type=SecurityEventType.DOCUMENT_ACCESSED,
+        actor_id=doc.get("user_id") or "anonymous",
+        resource_id=doc_id,
+        details=f"Accessed document metadata: {doc.get('file_name')}",
+        severity="LOW"
+    )
 
     ext_data = None
     if doc.get("extracted_data"):
@@ -115,7 +128,7 @@ async def get_medical_document_details(doc_id: str) -> DocumentUploadResponse:
 
 @router.get("/{doc_id}/download")
 async def download_medical_document(doc_id: str):
-    """Downloads the original stored PDF securely."""
+    """Downloads the original stored PDF securely with path traversal protection."""
     doc = document_service.get_document(doc_id)
     if not doc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found")
@@ -123,6 +136,18 @@ async def download_medical_document(doc_id: str):
     file_path = doc.get("file_path", "")
     if not os.path.exists(file_path):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Physical file not found on server")
+
+    # Path traversal validation
+    validate_storage_path(STORAGE_DIR, file_path)
+
+    # Security Audit Log
+    audit_logger.log_event(
+        event_type=SecurityEventType.DOCUMENT_ACCESSED,
+        actor_id=doc.get("user_id") or "anonymous",
+        resource_id=doc_id,
+        details=f"Downloaded binary file: {doc.get('file_name')}",
+        severity="LOW"
+    )
 
     return FileResponse(
         path=file_path,
@@ -134,7 +159,18 @@ async def download_medical_document(doc_id: str):
 @router.delete("/{doc_id}")
 async def delete_medical_document(doc_id: str):
     """Deletes document record and associated file."""
+    doc = document_service.get_document(doc_id)
     success = document_service.delete_document(doc_id)
     if not success:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found or already deleted")
+
+    # Security Audit Log
+    audit_logger.log_event(
+        event_type=SecurityEventType.DOCUMENT_ERASED,
+        actor_id=doc.get("user_id") if doc else "anonymous",
+        resource_id=doc_id,
+        details=f"Deleted document {doc_id}",
+        severity="MEDIUM"
+    )
+
     return {"message": "Document deleted successfully", "id": doc_id}
