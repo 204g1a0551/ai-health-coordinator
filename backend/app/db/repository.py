@@ -411,6 +411,23 @@ def seed_data(cursor: sqlite3.Cursor):
             sample_docs
         )
 
+    # Seed default verified users if users table is empty
+    cursor.execute("SELECT COUNT(*) FROM users")
+    count_users = cursor.fetchone()[0]
+    if count_users == 0:
+        cursor.execute(
+            """INSERT INTO users (id, full_name, email, phone, dob, password_hash)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (
+                "usr_sarah_connor",
+                "Dr. Sarah Connor",
+                "sarah.connor@healthcare.org",
+                "+91 98765 43210",
+                "1985-05-12",
+                "$2b$12$WhROVzvxpCh23itwh1uzv.M45Hv/qD6kXV4kH73Bnc3gFQy7jlmHK" # SecurePassword123!
+            )
+        )
+
 
 def query_doctors_and_slots(
     department: str,
