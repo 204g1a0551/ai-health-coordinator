@@ -72,6 +72,19 @@ async def upload_medical_document(
             original_filename=file.filename,
             user_id=user_id
         )
+
+        # Immutable Audit Trail: DOCUMENT_UPLOADED
+        from app.security.audit_trail import audit_trail, AuditAction
+        audit_trail.record_event(
+            action=AuditAction.DOCUMENT_UPLOADED,
+            user_id=user_id or "anonymous",
+            resource_type="MEDICAL_DOCUMENT",
+            resource_id=response.id,
+            purpose="CARE_COORDINATION",
+            result="SUCCESS",
+            details=f"document_id={response.id} file_name={response.file_name}"
+        )
+
         return response
     except ValueError as ve:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
@@ -84,6 +97,7 @@ async def upload_medical_document(
 
 from app.security.document_storage import validate_storage_path
 from app.security.audit import audit_logger, SecurityEventType
+from app.security.audit_trail import audit_trail, AuditAction
 from app.services.document_service import STORAGE_DIR
 
 @router.get("", response_model=List[DocumentListItem])
@@ -99,13 +113,22 @@ async def get_medical_document_details(doc_id: str) -> DocumentUploadResponse:
     if not doc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found")
 
-    # Security Audit Log
+    # Security Audit Log & Immutable Audit Trail: DOCUMENT_ACCESSED
     audit_logger.log_event(
         event_type=SecurityEventType.DOCUMENT_ACCESSED,
         actor_id=doc.get("user_id") or "anonymous",
         resource_id=doc_id,
         details=f"Accessed document metadata: {doc.get('file_name')}",
         severity="LOW"
+    )
+    audit_trail.record_event(
+        action=AuditAction.DOCUMENT_ACCESSED,
+        user_id=doc.get("user_id") or "anonymous",
+        resource_type="MEDICAL_DOCUMENT",
+        resource_id=doc_id,
+        purpose="DOCUMENT_ANALYSIS",
+        result="SUCCESS",
+        details=f"document_id={doc_id} agent=DOCUMENT_AGENT"
     )
 
     ext_data = None
@@ -140,13 +163,22 @@ async def download_medical_document(doc_id: str):
     # Path traversal validation
     validate_storage_path(STORAGE_DIR, file_path)
 
-    # Security Audit Log
+    # Security Audit Log & Immutable Audit Trail: DOCUMENT_DOWNLOADED
     audit_logger.log_event(
         event_type=SecurityEventType.DOCUMENT_ACCESSED,
         actor_id=doc.get("user_id") or "anonymous",
         resource_id=doc_id,
         details=f"Downloaded binary file: {doc.get('file_name')}",
         severity="LOW"
+    )
+    audit_trail.record_event(
+        action=AuditAction.DOCUMENT_DOWNLOADED,
+        user_id=doc.get("user_id") or "anonymous",
+        resource_type="MEDICAL_DOCUMENT",
+        resource_id=doc_id,
+        purpose="RECORDS_ACCESS",
+        result="SUCCESS",
+        details=f"document_id={doc_id} format=PDF"
     )
 
     return FileResponse(
@@ -164,13 +196,22 @@ async def delete_medical_document(doc_id: str):
     if not success:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found or already deleted")
 
-    # Security Audit Log
+    # Security Audit Log & Immutable Audit Trail: DOCUMENT_DELETED
     audit_logger.log_event(
         event_type=SecurityEventType.DOCUMENT_ERASED,
         actor_id=doc.get("user_id") if doc else "anonymous",
         resource_id=doc_id,
         details=f"Deleted document {doc_id}",
         severity="MEDIUM"
+    )
+    audit_trail.record_event(
+        action=AuditAction.DOCUMENT_DELETED,
+        user_id=doc.get("user_id") if doc else "anonymous",
+        resource_type="MEDICAL_DOCUMENT",
+        resource_id=doc_id,
+        purpose="DATA_ERASURE",
+        result="SUCCESS",
+        details=f"document_id={doc_id}"
     )
 
     return {"message": "Document deleted successfully", "id": doc_id}

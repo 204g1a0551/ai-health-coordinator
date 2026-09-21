@@ -144,6 +144,24 @@ def init_db():
         )
     """)
 
+    # Phase 36: Cryptographically Verifiable Immutable Audit Trail Store
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS audit_trail_events (
+            event_id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            action TEXT NOT NULL,
+            resource_type TEXT NOT NULL,
+            resource_id TEXT,
+            timestamp TEXT NOT NULL,
+            purpose TEXT,
+            result TEXT NOT NULL,
+            details TEXT,
+            ip_address TEXT,
+            previous_hash TEXT NOT NULL,
+            record_hash TEXT NOT NULL
+        )
+    """)
+
     # Seed or sync doctors and slots
     seed_data(cursor)
 

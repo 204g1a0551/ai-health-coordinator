@@ -90,6 +90,21 @@ def appointment_node(state: AgentState) -> AgentState:
                 "status": "Cancelled"
             }
             final_msg = "Your appointment has been successfully cancelled. The reserved slot has been freed."
+
+            # Immutable Audit Trail: APPOINTMENT_CANCELLED
+            try:
+                from app.security.audit_trail import audit_trail, AuditAction
+                audit_trail.record_event(
+                    action=AuditAction.APPOINTMENT_CANCELLED,
+                    user_id=session_id,
+                    resource_type="APPOINTMENT_SLOT",
+                    resource_id=session_id,
+                    purpose="APPOINTMENT_CANCELLATION",
+                    result="SUCCESS",
+                    details=f"session_id={session_id}"
+                )
+            except Exception:
+                pass
         else:
             appointment_info = {"action": "CANCEL_APPOINTMENT", "status": "Failed"}
             final_msg = cancel_res.get("error", "No active appointment found to cancel.")
@@ -265,6 +280,21 @@ def appointment_node(state: AgentState) -> AgentState:
             f"on {appt_data['displayDate']} at {appt_data['displayTime']}. "
             "Your appointment summary on the dashboard has been updated."
         )
+
+        # Immutable Audit Trail: APPOINTMENT_CREATED
+        try:
+            from app.security.audit_trail import audit_trail, AuditAction
+            audit_trail.record_event(
+                action=AuditAction.APPOINTMENT_CREATED,
+                user_id=session_id,
+                resource_type="APPOINTMENT_SLOT",
+                resource_id=f"{doc_id}_{date_query}_{time_query}",
+                purpose="APPOINTMENT_BOOKING",
+                result="SUCCESS",
+                details=f"doctor_id={doc_id} department={appt_data.get('department')}"
+            )
+        except Exception:
+            pass
 
         return {
             **state,

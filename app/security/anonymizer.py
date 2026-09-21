@@ -131,18 +131,22 @@ class AnonymizationGateway:
     def deanonymize(
         self,
         text: str,
-        token_map_or_session_id: Union[Dict[str, str], str]
+        token_map_or_session_id: Optional[Union[Dict[str, str], str]] = None,
+        session_id: Optional[str] = None
     ) -> str:
         """
         Replaces surrogate tokens in an LLM-generated response with original real-world values.
+        Accepts mapping dictionary, session_id as positional, or session_id as keyword argument.
         """
         if not text or not isinstance(text, str):
             return text
 
-        if isinstance(token_map_or_session_id, str):
-            mapping = self.vault.get_mappings_for_session(token_map_or_session_id)
-        elif isinstance(token_map_or_session_id, dict):
-            mapping = token_map_or_session_id
+        target = session_id if session_id is not None else token_map_or_session_id
+
+        if isinstance(target, str):
+            mapping = self.vault.get_mappings_for_session(target)
+        elif isinstance(target, dict):
+            mapping = target
         else:
             mapping = {}
 

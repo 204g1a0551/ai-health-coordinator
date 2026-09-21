@@ -77,6 +77,22 @@ class MCPClient:
             f"duration={duration_ms}ms status={status} cached={cached}"
         )
 
+        # Phase 36: Cryptographic Immutable Audit Trail Recording
+        try:
+            from app.security.audit_trail import audit_trail, AuditAction
+            audit_action = AuditAction.MCP_TOOL_CALLED if status == "SUCCESS" else AuditAction.MCP_TOOL_FAILED
+            audit_trail.record_event(
+                action=audit_action,
+                user_id=agent or "mcp_client",
+                resource_type="MCP_TOOL",
+                resource_id=f"{server}.{tool}",
+                purpose="TOOL_EXECUTION",
+                result="SUCCESS" if status == "SUCCESS" else "FAILURE",
+                details=f"server={server} tool={tool} duration_ms={duration_ms} cached={cached}"
+            )
+        except Exception:
+            pass
+
     def get_audit_logs(
         self,
         limit: int = 100,

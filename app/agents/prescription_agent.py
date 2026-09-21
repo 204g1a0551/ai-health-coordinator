@@ -123,9 +123,24 @@ class PrescriptionAgent:
         if not meds_list:
             meds_list = DEFAULT_MEDICINES
 
+        target_id = doc.get("id") if doc else "doc-f133b396fca5"
+        # Immutable Audit Trail: PRESCRIPTION_ANALYZED
+        try:
+            from app.security.audit_trail import audit_trail, AuditAction
+            audit_trail.record_event(
+                action=AuditAction.PRESCRIPTION_ANALYZED,
+                user_id="patient_session",
+                resource_type="CLINICAL_ARTIFACT",
+                resource_id=target_id,
+                purpose="PRESCRIPTION_ANALYSIS",
+                details=f"document_id={target_id} agent=PRESCRIPTION_AGENT medicines_count={len(meds_list)}"
+            )
+        except Exception:
+            pass
+
         return {
             "document_name": doc_name,
-            "document_id": doc.get("id") if doc else "doc-f133b396fca5",
+            "document_id": target_id,
             "source_page": 1,
             "medicines": meds_list,
             "total_medicines": len(meds_list),

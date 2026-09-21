@@ -15,6 +15,7 @@ from app.routers.cost_saver import router as cost_saver_router
 from app.routers.mcp import router as mcp_router
 from app.routers.security import router as security_router
 from app.routers.anonymizer import router as anonymizer_router
+from app.routers.audit import router as audit_router
 from app.config import security_settings
 
 app = FastAPI(
@@ -67,6 +68,7 @@ app.include_router(cost_saver_router)
 app.include_router(mcp_router)
 app.include_router(security_router)
 app.include_router(anonymizer_router)
+app.include_router(audit_router)
 
 
 

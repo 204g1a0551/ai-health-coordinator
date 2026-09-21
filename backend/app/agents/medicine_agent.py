@@ -39,6 +39,19 @@ class MedicineAgent:
                 "storage_instructions": "Store below 25°C in moisture-proof packaging",
             })
 
+        try:
+            from app.security.audit_trail import audit_trail, AuditAction
+            audit_trail.record_event(
+                action=AuditAction.MEDICINE_INFORMATION_REQUESTED,
+                user_id="patient_session",
+                resource_type="PHARMACOLOGY_DATABASE",
+                resource_id=matched.get("name", target),
+                purpose="DRUG_INFORMATION_LOOKUP",
+                details=f"medicine={matched.get('name', target)} agent=MEDICINE_AGENT"
+            )
+        except Exception:
+            pass
+
         return {
             "medicine_name": matched.get("name", medicine_name or "Augmentin 625mg"),
             "generic_name": matched.get("generic_name", "Broad Spectrum Formulation"),

@@ -80,11 +80,11 @@ AGE_REGEX = re.compile(
 
 # Structured Patient / Doctor Name headers
 STRUCTURED_PATIENT_NAME_REGEX = re.compile(
-    r"\b(?:Patient(?:\s*Name)?|Pt\s*Name|Patient\s*:\s*Name)\s*[:=\-]\s*([A-Za-z][A-Za-z\s\.\']{2,35})\b",
+    r"\b(?:Patient(?:\s*Name)?|Pt\s*Name|Patient\s*:\s*Name)\s*[:=\-]\s*([A-Za-z][A-Za-z \.\']{1,35})\b",
     re.I
 )
 STRUCTURED_DOCTOR_NAME_REGEX = re.compile(
-    r"\b(?:Doctor(?:\s*Name)?|Consultant|Physician|Attending)\s*[:=\-]\s*(?:Dr\.?\s*)?([A-Za-z][A-Za-z\s\.\']{2,35})\b",
+    r"\b(?:Doctor(?:\s*Name)?|Consultant|Physician|Attending)\s*[:=\-]\s*(?:Dr\.?\s*)?([A-Za-z][A-Za-z \.\']{1,35})\b",
     re.I
 )
 HONORIFIC_DOCTOR_REGEX = re.compile(

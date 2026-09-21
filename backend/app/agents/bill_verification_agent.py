@@ -30,7 +30,20 @@ class BillVerificationAgent:
         prescription_id: Optional[str] = None,
         bill_id: Optional[str] = None,
     ) -> BillVerificationData:
-        return self.service.verify_documents(prescription_id, bill_id)
+        res = self.service.verify_documents(prescription_id, bill_id)
+        try:
+            from app.security.audit_trail import audit_trail, AuditAction
+            audit_trail.record_event(
+                action=AuditAction.BILL_ANALYZED,
+                user_id="patient_session",
+                resource_type="FINANCIAL_DOCUMENT",
+                resource_id=bill_id or "default_bill",
+                purpose="INSURANCE_ANALYSIS",
+                details=f"document_id={bill_id or 'default_bill'} agent=BILL_VERIFICATION_AGENT discrepancies_count={res.discrepancy_count}"
+            )
+        except Exception:
+            pass
+        return res
 
     def get_evidence(
         self,

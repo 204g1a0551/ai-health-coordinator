@@ -42,11 +42,24 @@ class DDICheckerAgent:
         document_ids: Optional[List[str]] = None,
         manual_meds: Optional[List[str]] = None,
     ) -> DDIAnalysisResult:
-        return self.service.analyze_cross_prescription_interactions(
+        res = self.service.analyze_cross_prescription_interactions(
             session_id=session_id,
             document_ids=document_ids,
             manual_meds=manual_meds,
         )
+        try:
+            from app.security.audit_trail import audit_trail, AuditAction
+            audit_trail.record_event(
+                action=AuditAction.DDI_CHECK_PERFORMED,
+                user_id="patient_session",
+                resource_type="PHARMACOLOGY_DATABASE",
+                resource_id=session_id,
+                purpose="DRUG_INTERACTION_CHECK",
+                details=f"session_id={session_id} agent=DDI_AGENT checked_meds_count={len(res.analyzed_medicines)} interactions_found={len(res.interaction_pairs)}"
+            )
+        except Exception:
+            pass
+        return res
 
     def answer_query(self, question: str, session_id: str = "default") -> DDIQuestionResponse:
         return self.service.answer_interaction_query(question, session_id=session_id)

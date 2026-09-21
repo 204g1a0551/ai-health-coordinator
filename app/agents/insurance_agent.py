@@ -49,7 +49,20 @@ class InsurancePolicyAgent:
 
     def extract_rules(self, policy_id: str) -> ExtractedPolicyRules:
         """Responsibilities 1-8: Extract multi-dimensional insurance rules."""
-        return self.rag_service.extract_policy_rules(policy_id)
+        res = self.rag_service.extract_policy_rules(policy_id)
+        try:
+            from app.security.audit_trail import audit_trail, AuditAction
+            audit_trail.record_event(
+                action=AuditAction.INSURANCE_POLICY_ACCESSED,
+                user_id="patient_session",
+                resource_type="INSURANCE_POLICY",
+                resource_id=policy_id,
+                purpose="INSURANCE_ANALYSIS",
+                details=f"document_id={policy_id} agent=INSURANCE_AGENT action=EXTRACT_RULES"
+            )
+        except Exception:
+            pass
+        return res
 
     def compare_coverage(
         self,
@@ -58,11 +71,24 @@ class InsurancePolicyAgent:
         user_query: Optional[str] = None,
     ) -> CoverageComparisonResponse:
         """Responsibility 9: Compare policy against user's uploaded prescription or bill."""
-        return self.rag_service.compare_documents(
+        res = self.rag_service.compare_documents(
             policy_id=policy_id,
             medical_doc_id=medical_document_id,
             user_query=user_query,
         )
+        try:
+            from app.security.audit_trail import audit_trail, AuditAction
+            audit_trail.record_event(
+                action=AuditAction.INSURANCE_POLICY_ACCESSED,
+                user_id="patient_session",
+                resource_type="INSURANCE_POLICY",
+                resource_id=policy_id,
+                purpose="INSURANCE_ANALYSIS",
+                details=f"document_id={policy_id} medical_document_id={medical_document_id or 'none'} agent=INSURANCE_AGENT action=COMPARE_COVERAGE"
+            )
+        except Exception:
+            pass
+        return res
 
     def answer_policy_inquiry(
         self,

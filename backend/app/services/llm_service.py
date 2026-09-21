@@ -86,6 +86,8 @@ class LLMService:
         if self._llm and os.getenv("USE_LOCAL_NLU") != "1":
             try:
                 import concurrent.futures
+                from app.security.audit_trail import audit_trail, AuditAction
+
                 prompt = (
                     "You are an AI Healthcare Intent & Entity Extraction Assistant. "
                     "Extract structured intents and entities from the user's message according to the schema. "
@@ -95,11 +97,29 @@ class LLMService:
                     "Never diagnose diseases. If required information is missing for an action, "
                     "set needs_clarification=True and provide clarification_question."
                 )
+
+                audit_trail.record_event(
+                    action=AuditAction.LLM_REQUEST,
+                    user_id=session_id,
+                    resource_type="LLM_GATEWAY",
+                    resource_id="gemini-2.0-flash",
+                    purpose="INTENT_EXTRACTION",
+                    details=f"prompt_tokens_est={len(prompt) // 4} model=gemini-2.0-flash"
+                )
+
                 structured_llm = self._llm.with_structured_output(ParsedUserIntent)
                 with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
                     future = executor.submit(structured_llm.invoke, prompt)
                     result = future.result(timeout=4)
                 if result:
+                    audit_trail.record_event(
+                        action=AuditAction.LLM_RESPONSE,
+                        user_id=session_id,
+                        resource_type="LLM_GATEWAY",
+                        resource_id="gemini-2.0-flash",
+                        purpose="INTENT_EXTRACTION",
+                        details=f"extracted_intent={result.intent}"
+                    )
                     if result.clarification_question:
                         result.clarification_question = anonymization_gateway.deanonymize(result.clarification_question, session_id)
                     self._persist_extracted_context(session_id, result)

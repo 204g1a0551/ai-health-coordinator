@@ -44,6 +44,7 @@ from app.security.audit import AuditLogger, SecurityEventType, audit_logger
 from app.security.phi_detector import PHIDetector, phi_detector, DetectedEntity
 from app.security.anonymization_vault import AnonymizationVault, anonymization_vault
 from app.security.anonymizer import AnonymizationGateway, anonymization_gateway, AnonymizationResult
+from app.security.audit_trail import AuditAction, AuditEvent, ImmutableAuditTrail, audit_trail
 
 __all__ = [
     "CryptoService",
@@ -86,4 +87,8 @@ __all__ = [
     "AnonymizationGateway",
     "anonymization_gateway",
     "AnonymizationResult",
+    "AuditAction",
+    "AuditEvent",
+    "ImmutableAuditTrail",
+    "audit_trail",
 ]
