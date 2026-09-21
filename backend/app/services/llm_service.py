@@ -77,6 +77,11 @@ class LLMService:
         """
         context = self.get_conversation_context(session_id)
 
+        # Privacy Gateway: Anonymize user input before external LLM processing
+        from app.security.anonymizer import anonymization_gateway
+        anon_result = anonymization_gateway.anonymize(user_message, session_id=session_id)
+        sanitized_user_msg = anon_result.sanitized_text
+
         # 1. Attempt live LLM structured extraction if configured and not explicitly opted out
         if self._llm and os.getenv("USE_LOCAL_NLU") != "1":
             try:
@@ -86,7 +91,7 @@ class LLMService:
                     "Extract structured intents and entities from the user's message according to the schema. "
                     "Context from previous turns:\n"
                     f"{json.dumps(context)}\n\n"
-                    f"User message: {user_message}\n\n"
+                    f"User message: {sanitized_user_msg}\n\n"
                     "Never diagnose diseases. If required information is missing for an action, "
                     "set needs_clarification=True and provide clarification_question."
                 )
@@ -95,6 +100,8 @@ class LLMService:
                     future = executor.submit(structured_llm.invoke, prompt)
                     result = future.result(timeout=4)
                 if result:
+                    if result.clarification_question:
+                        result.clarification_question = anonymization_gateway.deanonymize(result.clarification_question, session_id)
                     self._persist_extracted_context(session_id, result)
                     return result
             except Exception:

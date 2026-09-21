@@ -337,6 +337,7 @@ class DocumentIntelligenceRAG:
         """
         try:
             import concurrent.futures
+            from app.security.anonymizer import anonymization_gateway
 
             context_blocks = []
             for chunk, score in retrieved:
@@ -344,6 +345,11 @@ class DocumentIntelligenceRAG:
                     f"--- Source Excerpt (Document: {chunk.doc_name}, Page: {chunk.page_number}) ---\n{chunk.text}"
                 )
             context_str = "\n\n".join(context_blocks)
+
+            # Privacy Gateway: Anonymize document context and question before sending to external LLM
+            rag_session = f"rag_{doc_name or 'doc'}"
+            anon_context = anonymization_gateway.anonymize(context_str, session_id=rag_session).sanitized_text
+            anon_question = anonymization_gateway.anonymize(question, session_id=rag_session).sanitized_text
 
             prompt = (
                 "You are an AI Clinical Document Intelligence Assistant. "
@@ -354,15 +360,17 @@ class DocumentIntelligenceRAG:
                 "   'I couldn’t find this information in the uploaded document.'\n"
                 "3. For every piece of information, mention the document page number (e.g. 'According to Page 1...').\n"
                 "4. Keep medical advice completely separate from document extraction: report only what is written.\n\n"
-                f"Retrieved Document Context:\n{context_str}\n\n"
-                f"Question: {question}"
+                f"Retrieved Document Context:\n{anon_context}\n\n"
+                f"Question: {anon_question}"
             )
 
             with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
                 future = executor.submit(self._llm.invoke, prompt)
                 response = future.result(timeout=16)
 
-            ans_text = response.content.strip() if hasattr(response, "content") else str(response).strip()
+            raw_ans_text = response.content.strip() if hasattr(response, "content") else str(response).strip()
+            # De-anonymize answer back to real values for the authorized user
+            ans_text = anonymization_gateway.deanonymize(raw_ans_text, rag_session)
 
             is_not_found = (
                 "couldn't find" in ans_text.lower() or

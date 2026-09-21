@@ -41,6 +41,9 @@ from app.security.consent_manager import (
 from app.security.retention import execute_right_to_erasure
 from app.security.rate_limiter import SlidingWindowRateLimiter, rate_limiter, enforce_rate_limit
 from app.security.audit import AuditLogger, SecurityEventType, audit_logger
+from app.security.phi_detector import PHIDetector, phi_detector, DetectedEntity
+from app.security.anonymization_vault import AnonymizationVault, anonymization_vault
+from app.security.anonymizer import AnonymizationGateway, anonymization_gateway, AnonymizationResult
 
 __all__ = [
     "CryptoService",
@@ -75,4 +78,12 @@ __all__ = [
     "AuditLogger",
     "SecurityEventType",
     "audit_logger",
+    "PHIDetector",
+    "phi_detector",
+    "DetectedEntity",
+    "AnonymizationVault",
+    "anonymization_vault",
+    "AnonymizationGateway",
+    "anonymization_gateway",
+    "AnonymizationResult",
 ]
