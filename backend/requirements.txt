@@ -12,3 +12,4 @@ pyjwt>=2.8.0
 pypdf>=4.0.0
 python-multipart>=0.0.20
 numpy>=1.26.0
+anthropic>=0.40.0

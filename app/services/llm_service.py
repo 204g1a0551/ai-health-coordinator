@@ -39,9 +39,21 @@ class LLMService:
 
     def __init__(self):
         self._llm = None
+        self._claude = None
+        self._claude_model = os.getenv("ANTHROPIC_MODEL", "claude-3-5-sonnet-20241022")
         self._init_live_model()
 
     def _init_live_model(self):
+        # 1. Claude / Anthropic Provider
+        claude_key = os.getenv("ANTHROPIC_API_KEY") or os.getenv("CLAUDE_API_KEY")
+        if claude_key:
+            try:
+                import anthropic
+                self._claude = anthropic.Anthropic(api_key=claude_key)
+            except Exception:
+                self._claude = None
+
+        # 2. Google Gemini Provider
         api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
         if api_key:
             try:
@@ -82,7 +94,65 @@ class LLMService:
         anon_result = anonymization_gateway.anonymize(user_message, session_id=session_id)
         sanitized_user_msg = anon_result.sanitized_text
 
-        # 1. Attempt live LLM structured extraction if configured and not explicitly opted out
+        # 1. Attempt live Claude / Anthropic structured extraction if configured
+        if self._claude and os.getenv("USE_LOCAL_NLU") != "1":
+            try:
+                import concurrent.futures
+                from app.security.audit_trail import audit_trail, AuditAction
+
+                schema_json = json.dumps(ParsedUserIntent.model_json_schema())
+                claude_prompt = (
+                    "You are an AI Healthcare Intent & Entity Extraction Assistant. "
+                    "Extract structured intents and entities from the user's message. "
+                    f"Return strictly valid JSON adhering to this JSON Schema:\n{schema_json}\n\n"
+                    "Context from previous turns:\n"
+                    f"{json.dumps(context)}\n\n"
+                    f"User message: {sanitized_user_msg}\n\n"
+                    "Never diagnose diseases. Return JSON only without any markdown formatting or commentary."
+                )
+
+                audit_trail.record_event(
+                    action=AuditAction.LLM_REQUEST,
+                    user_id=session_id,
+                    resource_type="LLM_GATEWAY",
+                    resource_id=self._claude_model,
+                    purpose="INTENT_EXTRACTION",
+                    details=f"prompt_tokens_est={len(claude_prompt) // 4} model={self._claude_model}"
+                )
+
+                def call_claude():
+                    msg = self._claude.messages.create(
+                        model=self._claude_model,
+                        max_tokens=1024,
+                        temperature=0.0,
+                        messages=[{"role": "user", "content": claude_prompt}]
+                    )
+                    raw_text = msg.content[0].text.strip()
+                    if raw_text.startswith("```"):
+                        raw_text = re.sub(r"^```(?:json)?\s*", "", raw_text)
+                        raw_text = re.sub(r"\s*```$", "", raw_text)
+                    return ParsedUserIntent.model_validate_json(raw_text)
+
+                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                    future = executor.submit(call_claude)
+                    result = future.result(timeout=5)
+                if result:
+                    audit_trail.record_event(
+                        action=AuditAction.LLM_RESPONSE,
+                        user_id=session_id,
+                        resource_type="LLM_GATEWAY",
+                        resource_id=self._claude_model,
+                        purpose="INTENT_EXTRACTION",
+                        details=f"extracted_intent={result.intent}"
+                    )
+                    if result.clarification_question:
+                        result.clarification_question = anonymization_gateway.deanonymize(result.clarification_question, session_id)
+                    self._persist_extracted_context(session_id, result)
+                    return result
+            except Exception:
+                pass
+
+        # 2. Attempt live Gemini LLM structured extraction if configured and not explicitly opted out
         if self._llm and os.getenv("USE_LOCAL_NLU") != "1":
             try:
                 import concurrent.futures
