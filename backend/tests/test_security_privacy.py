@@ -160,7 +160,7 @@ class TestSecurityPrivacyCompliance(unittest.TestCase):
             "email": unique_email,
             "phone": raw_phone,
             "abha_id": raw_abha,
-            "password_hash": "dummy_hash_123",
+            "password_hash": "$2b$12$e80Vj2bK65Y9k9zN8uP0ueO9r1G.K5P2m6mZ1mZ1mZ1mZ1mZ1mZ1m",
             "role": "PATIENT"
         })
         self.assertEqual(user["phone"], raw_phone)

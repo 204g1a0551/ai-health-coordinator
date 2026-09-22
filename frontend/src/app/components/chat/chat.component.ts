@@ -1,6 +1,7 @@
 import { Component, ElementRef, ViewChild, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ChatService } from '../../services/chat.service';
 import { VoiceService } from '../../services/voice.service';
 import { FollowUpService } from '../../services/follow-up.service';
@@ -16,6 +17,7 @@ export class ChatComponent implements OnInit {
   protected readonly chatService = inject(ChatService);
   protected readonly voiceService = inject(VoiceService);
   protected readonly followUpService = inject(FollowUpService);
+  private readonly sanitizer = inject(DomSanitizer);
 
   protected readonly messages = this.chatService.messages;
   protected readonly isSending = this.chatService.isSending;
@@ -134,6 +136,33 @@ export class ChatComponent implements OnInit {
       event.preventDefault();
       this.sendMessage();
     }
+  }
+
+  formatMessage(text: string): SafeHtml {
+    if (!text) return '';
+    // 1. HTML-escape raw text to prevent XSS
+    let formatted = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+
+    // 2. Bold: **text** or __text__ -> <strong>text</strong>
+    formatted = formatted.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    formatted = formatted.replace(/__(.+?)__/g, '<strong>$1</strong>');
+
+    // 3. Italic: *text* -> <em>text</em>
+    formatted = formatted.replace(/(^|[^\*])\*([^\*\n]+?)\*([^\*]|$)/g, '$1<em>$2</em>$3');
+
+    // 4. Remove any remaining stray asterisks like ****, ***, or unclosed **
+    formatted = formatted.replace(/\*{2,}/g, '');
+    formatted = formatted.replace(/(^|\s)\*(\s|$)/g, '$1•$2');
+
+    // 5. Convert newlines to <br/>
+    formatted = formatted.replace(/\n/g, '<br/>');
+
+    return this.sanitizer.bypassSecurityTrustHtml(formatted);
   }
 
   private scrollToBottom(): void {

@@ -165,7 +165,8 @@ export class VoiceService {
     if (!('speechSynthesis' in window)) return;
 
     window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
+    const cleanText = text.replace(/[*_#`~]/g, '').trim();
+    const utterance = new SpeechSynthesisUtterance(cleanText);
     const langLocaleMap: Record<string, string> = {
       te: 'te-IN',
       hi: 'hi-IN',

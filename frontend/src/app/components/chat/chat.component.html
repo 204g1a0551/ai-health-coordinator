@@ -69,7 +69,7 @@
               </button>
             }
           </div>
-          <div class="message-text">{{ msg.text }}</div>
+          <div class="message-text" [innerHTML]="formatMessage(msg.text)"></div>
           <div class="message-time">{{ msg.timestamp }}</div>
         </div>
       </div>
